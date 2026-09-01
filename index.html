@@ -338,13 +338,34 @@ button{cursor:pointer;}
   .print-area,.print-area *{visibility:visible;}
   .print-area{position:absolute;top:0;left:0;right:0;}
   .print-area.a4{width:210mm;padding:15mm;}
-  .print-area.receipt-80{width:80mm;padding:5mm;font-size:11px;}
+.print-area.receipt-80{width:80mm;padding:5mm;font-size:11px;}
 }
+/* Akuma (豪鬼) login animation */
+#akumaFx{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;pointer-events:none;}
+#akumaFx.hidden{display:none;}
+.akuma-glow{position:absolute;width:340px;height:340px;border-radius:50%;background:radial-gradient(circle,rgba(220,20,20,0.55),rgba(120,0,0,0.25) 55%,transparent 75%);filter:blur(2px);animation:akumaFlash 1.25s ease-out forwards;}
+.akuma-ring{position:absolute;border-radius:50%;border:2px solid rgba(255,40,40,0.7);box-shadow:0 0 18px rgba(255,0,0,0.55);animation:akumaRing 1.15s ease-out forwards;opacity:0;}
+.akuma-ring.r1{width:220px;height:220px;}
+.akuma-ring.r2{width:320px;height:320px;border-color:rgba(255,80,60,0.5);box-shadow:0 0 26px rgba(255,40,0,0.4);}
+.akuma-char{position:relative;color:#ff2a1e;text-shadow:0 0 12px #ff1a0a,0 0 30px #d40000,0 0 55px #8b0000;font-weight:900;font-size:150px;line-height:1;letter-spacing:-4px;-webkit-text-stroke:2px rgba(255,60,40,0.35);animation:akumaIn 0.28s cubic-bezier(0.2,1.4,0.4,1) forwards,akumaOut 0.9s ease-in 0.7s forwards;}
+@keyframes akumaIn{0%{transform:scale(0.4);opacity:0;}55%{transform:scale(1.12);opacity:1;}100%{transform:scale(1);opacity:1;}}
+@keyframes akumaOut{0%{transform:scale(1) translateY(0);opacity:1;}100%{transform:scale(1.05) translateY(-8px);opacity:0;}}
+@keyframes akumaFlash{0%{opacity:0;}10%{opacity:1;}100%{opacity:0;}}
+@keyframes akumaRing{0%{transform:scale(0.3);opacity:0;}25%{opacity:0.9;}100%{transform:scale(1.6);opacity:0;}}
+@media(max-width:640px){.akuma-char{font-size:110px;}.akuma-glow{width:260px;height:260px;}}
 </style>
 </head>
 <body>
 
 <canvas id="flowCanvas" aria-hidden="true"></canvas>
+
+<!-- ===== AKUMA LOGIN ANIMATION ===== -->
+<div id="akumaFx" class="hidden">
+  <div class="akuma-ring r1"></div>
+  <div class="akuma-ring r2"></div>
+  <div class="akuma-glow"></div>
+  <div class="akuma-char">豪鬼</div>
+</div>
 
 <!-- ===== AUTH SCREEN ===== -->
 <div id="authScreen" class="hidden">
@@ -2783,6 +2804,22 @@ function authMsg(msg, type){
   el.textContent = msg || '';
 }
 
+function playAkumaFx(){
+  const fx = document.getElementById('akumaFx');
+  if(!fx) return;
+  fx.classList.remove('hidden');
+  try{
+    const rings = fx.querySelectorAll('.akuma-ring');
+    const chars = fx.querySelectorAll('.akuma-char');
+    const glows = fx.querySelectorAll('.akuma-glow');
+    // restart animations by cloning
+    rings.forEach(r => { const c = r.cloneNode(true); r.parentNode.replaceChild(c, r); });
+    glows.forEach(g => { const c = g.cloneNode(true); g.parentNode.replaceChild(c, g); });
+    chars.forEach(c => { const n = c.cloneNode(true); c.parentNode.replaceChild(n, c); });
+  }catch(e){}
+  setTimeout(() => { fx.classList.add('hidden'); }, 1600);
+}
+
 function beginSession(acc){
   authUser = acc;
   Store.account = acc.uid;
@@ -2815,6 +2852,7 @@ function gotoTenantScreen(){
 
 async function authSubmit(e){
   e.preventDefault();
+  playAkumaFx();
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
 
