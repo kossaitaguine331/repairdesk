@@ -394,6 +394,10 @@ button{cursor:pointer;}
         <label data-i18n="confirm_password">Confirm password</label>
         <input type="password" id="authConfirm" autocomplete="new-password">
       </div>
+      <div class="field" id="authCodeField" style="display:none;">
+        <label data-i18n="access_code">Access code</label>
+        <input id="authCode" autocomplete="one-time-code">
+      </div>
       <button type="submit" class="btn primary full" id="authSubmitBtn" data-i18n="login">Log in</button>
     </form>
     <div class="auth-toggle">
@@ -493,6 +497,7 @@ button{cursor:pointer;}
     <button class="nav-item" data-view="builder"><span class="ni-icon">&#9998;</span><span data-i18n="nav_builder">Template Builder</span></button>
     <div class="nav-section" data-i18n="nav_manage">Manage</div>
     <button class="nav-item" data-view="settings"><span class="ni-icon">&#9881;</span><span data-i18n="nav_settings">Settings</span></button>
+    <button class="nav-item" data-view="users" id="navUsersBtn" style="display:none;"><span class="ni-icon">&#128101;</span><span data-i18n="nav_users">Users</span></button>
     <button class="nav-item" id="changeLangBtn"><span class="ni-icon">&#127760;</span><span data-i18n="nav_language">Language</span></button>
     <button class="nav-item nav-logout" id="logoutBtn"><span class="ni-icon">&#8614;</span><span data-i18n="logout">Log out</span></button>
   </nav>
@@ -525,12 +530,16 @@ const I18N = {
       nav_builder:'Template Builder',
       nav_manage:'Manage',
       nav_settings:'Settings',
+      nav_users:'Users',
       login:'Log in',
       sign_up:'Sign up',
       logout:'Log out',
       email:'Email',
       password:'Password',
       confirm_password:'Confirm password',
+      access_code:'Access code',
+      access_code_invalid:'Invalid or inactive access code. Please contact the administrator.',
+      access_blocked:'This account is not authorized. Please contact the administrator.',
       no_account:'No account yet?',
       have_account:'Already have an account?',
       create_account:'Create account',
@@ -545,6 +554,26 @@ const I18N = {
       auth_email_invalid:'Please enter a valid email address.',
       auth_password_mismatch:'Passwords do not match.',
       auth_signed_out:'You have been signed out.',
+      users_restricted:'Only administrators can manage users.',
+      users_hint:'Issue a unique access code per client so they can sign up. Revoke a code to block that client.',
+      users_issue:'Issue a new access code',
+      users_note:'Note',
+      users_note_ph:'e.g. Client - monthly',
+      users_gen:'Generate code',
+      users_list:'Access codes',
+      users_code:'Code',
+      users_empty:'No codes issued yet.',
+      users_used:'used',
+      users_active:'Active',
+      users_blocked:'Blocked',
+      users_revoke:'Revoke',
+      users_reactivate:'Activate',
+      users_accounts:'Customer accounts',
+      users_no_accounts:'No customer accounts yet.',
+      users_already_has:'This email already has an active code',
+      users_publish:'Publish codes',
+      users_publish_hint:'Copy the code list snippet, then have it embedded into the app and redeployed so clients receive these codes.',
+      users_publish_copied:'Code list copied. Paste it into the app code and redeploy to release it to clients.',
       full_name:'Full name',
       full_name_ph:'e.g. Alice Smith',
       full_name_required:'Please enter your name.',
@@ -637,6 +666,7 @@ const I18N = {
       template_name:'Template name:',
       a4_question:'Use A4 format?\n\nOK = A4\nCancel = 80mm Receipt',
       confirm_delete_template:'Delete template "{name}"?',
+      users_delete_confirm:'Delete this access code?',
       invalid_template_json:'Invalid template JSON: ',
       builder:'Template Builder',
       add_field:'+ Add Field',
@@ -746,12 +776,16 @@ const I18N = {
       nav_builder:'Éditeur de modèle',
       nav_manage:'Gérer',
       nav_settings:'Paramètres',
+      nav_users:'Utilisateurs',
       login:'Se connecter',
       sign_up:'S\'inscrire',
       logout:'Se déconnecter',
       email:'Email',
       password:'Mot de passe',
       confirm_password:'Confirmer le mot de passe',
+      access_code:'Code d\'accès',
+      access_code_invalid:'Code d\'accès invalide ou inactif. Contactez l\'administrateur.',
+      access_blocked:'Ce compte n\'est pas autorisé. Contactez l\'administrateur.',
       no_account:'Pas encore de compte ?',
       have_account:'Déjà un compte ?',
       create_account:'Créer un compte',
@@ -766,6 +800,26 @@ const I18N = {
       auth_email_invalid:'Veuillez saisir une adresse email valide.',
       auth_password_mismatch:'Les mots de passe ne correspondent pas.',
       auth_signed_out:'Vous avez été déconnecté.',
+      users_restricted:'Seuls les administrateurs peuvent gérer les utilisateurs.',
+      users_hint:'Émettez un code d\'accès unique par client afin qu\'il puisse s\'inscrire. Révoquez un code pour bloquer ce client.',
+      users_issue:'Émettre un nouveau code d\'accès',
+      users_note:'Note',
+      users_note_ph:'ex. Client - mensuel',
+      users_gen:'Générer le code',
+      users_list:'Codes d\'accès',
+      users_code:'Code',
+      users_empty:'Aucun code émis pour le moment.',
+      users_used:'utilisé',
+      users_active:'Actif',
+      users_blocked:'Bloqué',
+      users_revoke:'Révoquer',
+      users_reactivate:'Activer',
+      users_accounts:'Comptes clients',
+      users_no_accounts:'Aucun compte client pour le moment.',
+      users_already_has:'Cet email possède déjà un code actif',
+      users_publish:'Publier les codes',
+      users_publish_hint:'Copiez l\'extrait de la liste des codes, puis faites-le intégrer dans l\'application et redéployez pour que les clients les reçoivent.',
+      users_publish_copied:'Liste des codes copiée. Collez-la dans le code de l\'application et redéployez pour la diffuser aux clients.',
       full_name:'Nom complet',
       full_name_ph:'ex. Alice Martin',
       full_name_required:'Veuillez saisir votre nom.',
@@ -858,6 +912,7 @@ const I18N = {
       template_name:'Nom du modèle :',
       a4_question:'Utiliser le format A4 ?\n\nOK = A4\nAnnuler = Reçu 80mm',
       confirm_delete_template:'Supprimer le modèle « {name} » ?',
+      users_delete_confirm:'Supprimer ce code d\'accès ?',
       invalid_template_json:'JSON de modèle invalide : ',
       builder:'Éditeur de modèle',
       add_field:'+ Ajouter un champ',
@@ -967,12 +1022,16 @@ ar: {
       nav_builder:'مصمم النماذج',
       nav_manage:'إدارة',
       nav_settings:'الإعدادات',
+      nav_users:'المستخدمون',
       login:'تسجيل الدخول',
       sign_up:'إنشاء حساب',
       logout:'تسجيل الخروج',
       email:'البريد الإلكتروني',
       password:'كلمة المرور',
       confirm_password:'تأكيد كلمة المرور',
+      access_code:'رمز الدخول',
+      access_code_invalid:'رمز الدخول غير صالح أو غير نشط. يرجى التواصل مع المسؤول.',
+      access_blocked:'هذا الحساب غير مصرح له. يرجى التواصل مع المسؤول.',
       no_account:'ليس لديك حساب؟',
       have_account:'لديك حساب بالفعل؟',
       create_account:'إنشاء حساب',
@@ -987,6 +1046,26 @@ ar: {
       auth_email_invalid:'يرجى إدخال بريد إلكتروني صالح.',
       auth_password_mismatch:'كلمتا المرور غير متطابقتين.',
       auth_signed_out:'تم تسجيل خروجك.',
+      users_restricted:'يمكن للمسؤولين فقط إدارة المستخدمين.',
+      users_hint:'أصدر رمز دخول فريداً لكل عميل ليتمكن من التسجيل. ألغِ الرمز لحظر العميل وإيقاف دخوله.',
+      users_issue:'إصدار رمز دخول جديد',
+      users_note:'ملاحظة',
+      users_note_ph:'مثال: عميل - شهري',
+      users_gen:'توليد الرمز',
+      users_list:'رموز الدخول',
+      users_code:'الرمز',
+      users_empty:'لم يتم إصدار أي رموز بعد.',
+      users_used:'مستعمل',
+      users_active:'نشط',
+      users_blocked:'محظور',
+      users_revoke:'إبطال',
+      users_reactivate:'تفعيل',
+      users_accounts:'حسابات العملاء',
+      users_no_accounts:'لا توجد حسابات عملاء بعد.',
+      users_already_has:'هذا البريد لديه رمز نشط بالفعل',
+      users_publish:'نشر الرموز',
+      users_publish_hint:'انسخ مقتطف قائمة الرموز، ثم ادمجه في التطبيق وأعد النشر ليتمكن العملاء من استلام هذه الرموز.',
+      users_publish_copied:'تم نسخ قائمة الرموز. ألصقها في كود التطبيق وأعد النشر لإتاحتها للعملاء.',
       full_name:'الاسم الكامل',
       full_name_ph:'مثال: أحمد محمود',
       full_name_required:'يرجى إدخال اسمك.',
@@ -1078,6 +1157,7 @@ ar: {
       template_name:'اسم النموذج:',
       a4_question:'استخدام تنسيق A4؟\n\nموافق = A4\nإلغاء = إيصال 80 مم',
       confirm_delete_template:'حذف النموذج «{name}»؟',
+      users_delete_confirm:'حذف رمز الدخول هذا؟',
       invalid_template_json:'نموذج JSON غير صالح: ',
       builder:'مصمم النماذج',
       add_field:'+ إضافة حقل',
@@ -1572,6 +1652,7 @@ function renderView(){
     case 'templates': renderTemplatesView(content); break;
     case 'builder': renderBuilderView(content); break;
     case 'settings': renderSettingsView(content); break;
+    case 'users': renderUsersView(content); break;
   }
 }
 
@@ -2885,6 +2966,122 @@ function renderSettingsView(el){
   });
 }
 
+/* ----- USERS / ACCESS CODES VIEW (admin only) ----- */
+function renderUsersView(el){
+  if(!authUser || authUser.role !== 'admin'){
+    el.innerHTML = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div><p style="color:var(--muted);">' + esc(I18N.t('users_restricted')) + '</p>';
+    return;
+  }
+  const reg = getRegistry();
+  const accounts = Store._accounts();
+  const emailOf = (uid) => { const a = accounts.find(x => x.uid === uid); return a ? a.email : ''; };
+
+  let html = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div>';
+  html += '<p class="field-hint" style="margin-bottom:16px;">' + esc(I18N.t('users_hint')) + '</p>';
+
+  /* Issue a code */
+  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_issue')) + '</h3>';
+  html += '<div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;">';
+  html += '<div class="field" style="flex:1;min-width:180px;"><label>' + esc(I18N.t('email')) + '</label><input id="newUserEmail" placeholder="client@beemail.com"></div>';
+  html += '<div class="field"><label>' + esc(I18N.t('users_note')) + '</label><input id="newUserNote" placeholder="' + esc(I18N.t('users_note_ph')) + '"></div>';
+  html += '<div class="field" style="align-self:flex-end;"><label>&nbsp;</label><button class="btn primary" id="genUserCodeBtn">' + esc(I18N.t('users_gen')) + '</button></div>';
+  html += '</div>';
+  html += '<div id="genCodeResult" style="margin-top:10px;font-weight:700;color:var(--purple);"></div>';
+  html += '<button class="btn" id="publishCodesBtn" style="margin-top:10px;">' + esc(I18N.t('users_publish')) + '</button>';
+  html += '<div class="field-hint" style="margin-top:6px;">' + esc(I18N.t('users_publish_hint')) + '</div>';
+  html += '</div>';
+
+  /* Registered / existing codes */
+  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_list')) + '</h3>';
+  html += '<div class="table-wrap" style="overflow-x:auto;">';
+  html += '<table class="rc-table" style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<thead><tr><th style="text-align:left;padding:8px;">' + esc(I18N.t('email')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('users_note')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('users_code')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('status')) + '</th><th style="padding:8px;"></th></tr></thead><tbody>';
+  if(reg.length === 0){
+    html += '<tr><td colspan="5" style="padding:12px;color:var(--muted);">' + esc(I18N.t('users_empty')) + '</td></tr>';
+  }
+  reg.forEach((r, idx) => {
+    const active = r.active !== false;
+    html += '<tr>'
+      + '<td style="padding:8px;">' + esc(r.email) + '</td>'
+      + '<td style="padding:8px;">' + esc(r.note || '') + '</td>'
+      + '<td style="padding:8px;font-family:monospace;">' + esc(r.code) + (r.used ? ' <span style="color:var(--green-ink);">' + esc(I18N.t('users_used')) + '</span>' : '') + '</td>'
+      + '<td style="padding:8px;">' + (active ? '<span style="color:var(--green-ink);">' + esc(I18N.t('users_active')) + '</span>' : '<span style="color:var(--danger);">' + esc(I18N.t('users_blocked')) + '</span>') + '</td>'
+      + '<td style="padding:8px;text-align:right;">'
+      + '<button class="btn" data-rev="' + idx + '" style="padding:5px 10px;font-size:12px;">' + (active ? esc(I18N.t('users_revoke')) : esc(I18N.t('users_reactivate'))) + '</button>'
+      + '<button class="btn danger" data-del="' + idx + '" style="padding:5px 10px;font-size:12px;margin-left:6px;">' + esc(I18N.t('delete')) + '</button>'
+      + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  /* Registered accounts & approval status */
+  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_accounts')) + '</h3>';
+  html += '<div class="table-wrap" style="overflow-x:auto;">';
+  html += '<table class="rc-table" style="width:100%;border-collapse:collapse;font-size:13px;">';
+  html += '<thead><tr><th style="text-align:left;padding:8px;">' + esc(I18N.t('email')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('full_name')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('status')) + '</th></tr></thead><tbody>';
+  const userAccounts = accounts.filter(a => a.role !== 'admin');
+  if(userAccounts.length === 0){
+    html += '<tr><td colspan="3" style="padding:12px;color:var(--muted);">' + esc(I18N.t('users_no_accounts')) + '</td></tr>';
+  }
+  userAccounts.forEach(a => {
+    html += '<tr><td style="padding:8px;">' + esc(a.email) + '</td><td style="padding:8px;">' + esc(a.name||'') + '</td>'
+      + '<td style="padding:8px;">' + (isApproved(a) ? '<span style="color:var(--green-ink);">' + esc(I18N.t('users_active')) + '</span>' : '<span style="color:var(--danger);">' + esc(I18N.t('users_blocked')) + '</span>') + '</td></tr>';
+  });
+  html += '</tbody></table></div></div>';
+
+  el.innerHTML = html;
+
+  /* Issue code */
+  document.getElementById('genUserCodeBtn').addEventListener('click', () => {
+    const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert(I18N.t('auth_email_invalid')); return; }
+    const note = document.getElementById('newUserNote').value.trim();
+    const code = genAccessCode();
+    const list = getRegistry();
+    const existing = list.find(r => r.email === email && r.active !== false);
+    if(existing){ document.getElementById('genCodeResult').textContent = I18N.t('users_already_has') + ': ' + existing.code; }
+    else{
+      list.push({ email:email, code:code, note:note, active:true, used:false, issuedAt:Date.now() });
+      saveRegistry(list);
+      document.getElementById('genCodeResult').textContent = email + ' \u2192 ' + code;
+    }
+    renderUsersView(document.getElementById('appContent'));
+  });
+
+  /* Publish: copy the embedded code-book snippet so it can be deployed */
+  const pubBtn = document.getElementById('publishCodesBtn');
+  if(pubBtn) pubBtn.addEventListener('click', () => {
+    const snippet = 'const EMBEDDED_REGISTRY = ' + JSON.stringify(getRegistry()) + ';';
+    try{
+      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(snippet); }
+      else { const ta = document.createElement('textarea'); ta.value = snippet; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); }
+      alert(I18N.t('users_publish_copied'));
+    }catch(e){ alert(snippet); }
+  });
+
+  /* Revoke / reactivate / delete */
+  el.querySelectorAll('[data-rev]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.getAttribute('data-rev'), 10);
+      const list = getRegistry();
+      if(!list[idx]) return;
+      list[idx].active = (list[idx].active !== false) ? false : true;
+      saveRegistry(list);
+      renderUsersView(document.getElementById('appContent'));
+    });
+  });
+  el.querySelectorAll('[data-del]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const idx = parseInt(e.target.getAttribute('data-del'), 10);
+      const list = getRegistry();
+      if(!list[idx]) return;
+      if(!confirm(I18N.t('users_delete_confirm'))) return;
+      list.splice(idx, 1);
+      saveRegistry(list);
+      renderUsersView(document.getElementById('appContent'));
+    });
+  });
+}
+
 /* ===================================================================
    TENANT SCREEN
    =================================================================== */
@@ -3022,6 +3219,7 @@ function setAuthMode(signup){
   authMode.isSignup = !!signup;
   document.getElementById('authNameField').style.display = signup ? '' : 'none';
   document.getElementById('authConfirmField').style.display = signup ? '' : 'none';
+  document.getElementById('authCodeField').style.display = signup ? '' : 'none';
   document.getElementById('authSubmitBtn').textContent = I18N.t(signup ? 'sign_up' : 'login');
   document.getElementById('authToggleText').textContent = I18N.t(signup ? 'have_account' : 'no_account');
   document.getElementById('authToggleLink').textContent = I18N.t(signup ? 'login' : 'create_account');
@@ -3032,6 +3230,51 @@ function authMsg(msg, type){
   const el = document.getElementById('authMsg');
   el.className = 'auth-msg ' + (type || 'error');
   el.textContent = msg || '';
+}
+
+/* ===================================================================
+   ACCESS CODES – manual approval registry (admin issues/revokes)
+   Stored locally (no backend). Each code is tied to an email.
+   =================================================================== */
+/* Embedded (deployed) access-code book. The administrator edits codes in the
+   Users panel, then publishes this list by redeploying the app so clients
+   receive the updated codes. Format: [{email, code, note, active, used}] */
+const EMBEDDED_REGISTRY = [];
+function getRegistry(){
+  try{
+    let v = localStorage.getItem('rd_registry');
+    if(v === null){
+      /* Seed from the embedded, deployed code book so clients can sign up with
+         the codes the administrator publishes. */
+      saveRegistry((typeof EMBEDDED_REGISTRY !== 'undefined' && Array.isArray(EMBEDDED_REGISTRY)) ? EMBEDDED_REGISTRY : []);
+      return getRegistry();
+    }
+    return JSON.parse(v) || [];
+  }catch(e){ return []; }
+}
+function saveRegistry(list){
+  try{ localStorage.setItem('rd_registry', JSON.stringify(list)); }catch(e){}
+}
+function regFind(email, code){
+  const list = getRegistry();
+  const e = (email||'').trim().toLowerCase();
+  const c = (code||'').trim();
+  return list.find(r => (r.email||'').toLowerCase() === e && (r.code||'') === c);
+}
+function genAccessCode(){
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let s = '';
+  for(let i=0;i<4;i++){
+    let g='';
+    for(let j=0;j<3;j++){ g += chars[Math.floor(Math.random()*chars.length)]; }
+    if(s) s += '-';
+    s += g;
+  }
+  return s;
+}
+function isApproved(acc){
+  if(acc && acc.role === 'admin') return true;
+  return !!(acc && acc.approved);
 }
 
 function playAkumaFx(){
@@ -3051,9 +3294,15 @@ function playAkumaFx(){
 }
 
 function beginSession(acc){
+  if(!isApproved(acc)){
+    authMsg(I18N.t('access_blocked'));
+    return;
+  }
   authUser = acc;
   Store.account = acc.uid;
   Store._saveSession(acc.uid);
+  const uBtn = document.getElementById('navUsersBtn');
+  if(uBtn) uBtn.style.display = (acc.role === 'admin') ? '' : 'none';
   hideAuthScreen();
   gotoTenantScreen();
   renderTenantScreen();
@@ -3105,14 +3354,21 @@ async function authSubmit(e){
   if(authMode.isSignup){
     const name = document.getElementById('authName').value.trim();
     const confirmPw = document.getElementById('authConfirm').value;
+    const code = document.getElementById('authCode').value.trim();
     if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
     if(!name){ authMsg(I18N.t('full_name_required')); return; }
     const accounts = Store._accounts();
     if(accounts.some(a => a.email === email)){ authMsg(I18N.t('auth_exists')); return; }
+    /* Access code gate: every signup must use a valid, active code for this email */
+    const reg = getRegistry();
+    const rec = reg.find(r => (r.email||'').toLowerCase() === email && (r.code||'') === code && r.active !== false);
+    if(!rec){ authMsg(I18N.t('access_code_invalid')); return; }
+    rec.used = true;
+    saveRegistry(reg);
     const salt = makeSalt();
     const hash = await hashPassword(password, salt);
     const uid = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    accounts.push({ uid:uid, email:email, name:name, salt:salt, hash:hash, createdAt:Date.now() });
+    accounts.push({ uid:uid, email:email, name:name, salt:salt, hash:hash, createdAt:Date.now(), approved:true, approvedAt:rec.issuedAt || Date.now() });
     Store._saveAccounts(accounts);
     beginSession(accounts[accounts.length - 1]);
     return;
@@ -3145,7 +3401,7 @@ function bootstrapAfterLang(){
   const uid = Store.getSession();
   if(uid){
     const acc = Store._accounts().find(a => a.uid === uid);
-    if(acc){ beginSession(acc); return; }
+    if(acc && isApproved(acc)){ beginSession(acc); return; }
   }
   showAuthScreen();
 }
