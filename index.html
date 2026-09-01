@@ -253,7 +253,7 @@ button{cursor:pointer;}
 .empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
 
 /* ===== RECEIPT HISTORY / DASHBOARD ===== */
-.rh-dash{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.rh-dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:20px;}
 .rh-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-micro);}
 .rh-stat .rh-num{font-size:24px;font-weight:700;letter-spacing:-0.5px;}
 .rh-stat .rh-lab{font-size:11.5px;color:var(--muted);margin-top:2px;font-weight:500;}
@@ -262,6 +262,9 @@ button{cursor:pointer;}
 .rh-stat.repaired .rh-num{color:var(--green);}
 .rh-stat.unpaid .rh-num{color:var(--danger);}
 .rh-stat.paid .rh-num{color:var(--green);}
+.rh-stat.earnings{background:linear-gradient(135deg,var(--purple-subtle),var(--panel));border-color:rgba(113,50,245,0.35);}
+.rh-stat.earnings .rh-num{color:var(--purple-dark);}
+.rh-stat.earnings .rh-lab{color:var(--purple-dark);font-weight:600;}
 .rh-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
 .rh-toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;}
 .rh-toolbar input[type=text]:focus{border-color:var(--purple);}
@@ -535,6 +538,7 @@ const I18N = {
       not_repaired:'Not Repaired',
       unpaid:'Unpaid',
       paid:'Paid',
+      earnings_this_month:'Earnings {month}',
       search_receipts:'Search by name, phone, number or device...',
       all_statuses:'All Statuses',
       all:'All',
@@ -742,6 +746,7 @@ const I18N = {
       not_repaired:'Non réparé',
       unpaid:'Non payé',
       paid:'Payé',
+      earnings_this_month:'Gains {month}',
       search_receipts:'Rechercher par nom, téléphone, numéro ou appareil...',
       all_statuses:'Tous les statuts',
       all:'Tous',
@@ -1164,6 +1169,16 @@ function fmtMoney(val, s){
   if(isNaN(n)){ return String(val) + ' ' + cur; }
   return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ' + cur;
 }
+function money(val, cur){
+  const n = parseFloat(val);
+  if(isNaN(n)){ n = 0; }
+  return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ' + (cur || 'DZD');
+}
+function monthLabel(){
+  try{
+    return new Date().toLocaleString(I18N.lang === 'fr' ? 'fr' : undefined, { month:'long', year:'numeric' });
+  }catch(e){ return new Date().toLocaleDateString(undefined, { month:'long', year:'numeric' }); }
+}
 function renderTemplateVars(text, data){
   return text.replace(/\{\{(\w+)\}\}/g, (m, key) => data[key] != null ? data[key] : '');
 }
@@ -1271,6 +1286,21 @@ function renderReceiptsView(el){
     if(r.paid){ paidC++; } else { unpaidC++; }
   });
 
+  /* Monthly earnings (receipts marked Paid this calendar month) */
+  const now = new Date();
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+  let paidMoney = 0;
+  receipts.forEach(r => {
+    if(!r.paid) return;
+    const paidTs = r.paidAt || r.updatedAt || r.createdAt || 0;
+    if(paidTs >= monthStart){
+      const v = parseFloat(r.fields.total);
+      if(!isNaN(v)) paidMoney += v;
+    }
+  });
+  const settings = Store.getSettings(currentTenantId);
+  const cur = settings.currency || 'DZD';
+
   /* Search + filter */
   const q = (st.q || '').toLowerCase();
   let filtered = receipts.filter(r => {
@@ -1301,6 +1331,7 @@ function renderReceiptsView(el){
   html += '<div class="rh-stat repaired"><div class="rh-num">'+repCount+'</div><div class="rh-lab">'+I18N.t('repaired')+'</div></div>';
   html += '<div class="rh-stat unpaid"><div class="rh-num">'+unpaidC+'</div><div class="rh-lab">'+I18N.t('unpaid')+'</div></div>';
   html += '<div class="rh-stat paid"><div class="rh-num">'+paidC+'</div><div class="rh-lab">'+I18N.t('paid')+'</div></div>';
+  html += '<div class="rh-stat earnings"><div class="rh-num">'+esc(money(paidMoney, cur))+'</div><div class="rh-lab">'+I18N.t('earnings_this_month',{month:monthLabel()})+'</div></div>';
   html += '</div>';
 
   /* Toolbar */
@@ -1391,7 +1422,10 @@ function setReceiptStatus(id, status){
   if(idx === -1) return;
   const r = list[idx];
   if(status === 'repaired'){ r.repaired = !r.repaired; }
-  if(status === 'paid'){ r.paid = !r.paid; }
+  if(status === 'paid'){
+    r.paid = !r.paid;
+    r.paidAt = r.paid ? Date.now() : (r.paidAt || null);
+  }
   r.updatedAt = Date.now();
   Store.setReceipts(currentTenantId, list);
   renderView();
