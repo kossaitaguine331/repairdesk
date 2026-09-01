@@ -455,19 +455,9 @@ button{cursor:pointer;}
 <!-- ===== PRINT AREA ===== -->
 <div id="printArea" class="print-area hidden"></div>
 
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 (function(){
 "use strict";
-
-/* ===================================================================
-   SUPABASE CONFIG
-   =================================================================== */
-const SUPABASE_URL = 'https://kjfiljoxpmrypzclmdyx.supabase.co';
-const SUPABASE_ANON = 'sb_publishable_QAxLtU2w6e9tBmAUHWeZgA_9a_O9SyI';
-const rdBucketMigrated = 'rd_sb_migrated';
-const supabase = (typeof window.supabase !== 'undefined') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
-const sbReady = !!supabase;
 
 /* ===================================================================
    I18N – English / French
@@ -495,7 +485,7 @@ const I18N = {
       login_title:'Welcome back',
       signup_title:'Create your account',
       auth_welcome:'Sign in to manage your shops',
-      auth_sub:'Sign in or create an account to sync your data securely',
+      auth_sub:'Sign in or create an account. Your data is stored in this browser.',
       auth_invalid:'Invalid email or password.',
       auth_exists:'An account with this email already exists. Try logging in.',
       auth_failed:'Something went wrong. Please try again.',
@@ -505,7 +495,7 @@ const I18N = {
       auth_signed_out:'You have been signed out.',
       full_name:'Full name',
       full_name_ph:'e.g. Alice Smith',
-      auth_check_email:'Check your email to confirm your account, then log in.',
+      full_name_required:'Please enter your name.',
       switch_shop:'switch shop',
       switch_shop_title:'Switch shop',
       tenant_sub:'Multi-tenant receipt & template management',
@@ -696,7 +686,7 @@ const I18N = {
       login_title:'Bon retour',
       signup_title:'Créez votre compte',
       auth_welcome:'Connectez-vous pour gérer vos boutiques',
-      auth_sub:'Connectez-vous ou créez un compte pour synchroniser vos données en toute sécurité',
+      auth_sub:'Connectez-vous ou créez un compte. Vos données sont stockées dans ce navigateur.',
       auth_invalid:'Email ou mot de passe invalide.',
       auth_exists:'Un compte existe déjà avec cet email. Essayez de vous connecter.',
       auth_failed:'Une erreur est survenue. Veuillez réessayer.',
@@ -706,7 +696,7 @@ const I18N = {
       auth_signed_out:'Vous avez été déconnecté.',
       full_name:'Nom complet',
       full_name_ph:'ex. Alice Martin',
-      auth_check_email:'Vérifiez votre email pour confirmer votre compte, puis connectez-vous.',
+      full_name_required:'Veuillez saisir votre nom.',
       switch_shop:'changer de boutique',
       switch_shop_title:'Changer de boutique',
       tenant_sub:'Gestion multi-tenant de reçus & de modèles',
@@ -930,7 +920,11 @@ I18N.applyStatic = function(){
    STORE – tenant-isolated localStorage
    =================================================================== */
 const Store = {
-  _prefix(tenantId){ return 'rd_' + tenantId + '_'; },
+  account: null,
+  _readLocal(key){ try{ return JSON.parse(localStorage.getItem('rd_' + key)); }catch(e){ return null; } },
+  _writeLocal(key, val){ try{ localStorage.setItem('rd_' + key, JSON.stringify(val)); }catch(e){} },
+  _accountKey(){ return 'rd_' + (this.account || 'g') + '_'; },
+  _prefix(tenantId){ return this._accountKey() + tenantId + '_'; },
   get(tenantId, key){
     try{ return JSON.parse(localStorage.getItem(this._prefix(tenantId) + key)); }catch(e){ return null; }
   },
@@ -941,10 +935,10 @@ const Store = {
     localStorage.removeItem(this._prefix(tenantId) + key);
   },
   getGlobal(key){
-    try{ return JSON.parse(localStorage.getItem('rd_global_' + key)); }catch(e){ return null; }
+    try{ return JSON.parse(localStorage.getItem(this._accountKey() + 'g_' + key)); }catch(e){ return null; }
   },
   setGlobal(key, val){
-    localStorage.setItem('rd_global_' + key, JSON.stringify(val));
+    localStorage.setItem(this._accountKey() + 'g_' + key, JSON.stringify(val));
   },
   getTenants(){ return this.getGlobal('tenants') || []; },
   setTenants(list){ this.setGlobal('tenants', list); },
@@ -962,14 +956,12 @@ const Store = {
     const list = this.getTenants().filter(t => t.id !== id);
     this.setTenants(list);
     ['templates','receipts','settings'].forEach(k => this.remove(id, k));
-    if(Store.cloudOn && sbReady && supabase){
-      (async () => {
-        await supabase.from('receipts').delete().eq('tenant_id', id);
-        await supabase.from('templates').delete().eq('tenant_id', id);
-        await supabase.from('tenants').delete().eq('id', id);
-      })().catch(e => console.warn('tenant delete sync failed', e));
-    }
   },
+  _accounts(){ return this._readLocal('accts') || []; },
+  _saveAccounts(list){ this._writeLocal('accts', list); },
+  getSession(){ return this._readLocal('sess'); },
+  _saveSession(uid){ this._writeLocal('sess', uid); },
+  _clearSession(){ try{ localStorage.removeItem('rd_sess'); }catch(e){} },
   getTemplates(tenantId){ return this.get(tenantId, 'templates') || []; },
   setTemplates(tenantId, list){ this.set(tenantId, 'templates', list); },
   getReceipts(tenantId){ return this.get(tenantId, 'receipts') || []; },
@@ -1125,192 +1117,6 @@ const Store = {
     const defaults = base[businessType] || base.phone_repair;
     return defaults.map(t => ({...t, id:'tpl_' + Date.now() + Math.random().toString(36).slice(2,6)}));
   }
-};
-
-/* ===================================================================
-   STORE CLOUD – Supabase sync layer
-   -------------------------------------------------------------------
-   Strategy: localStorage remains the fast cache the UI reads from
-   synchronously. On login we backfill the cache from Supabase, then
-   every write also pushes to Supabase in the background (fire-and-forget).
-   =================================================================== */
-Store.userId = null;
-Store.cloudOn = false;
-
-Store.setCloudUser = function(uid){
-  Store.userId = uid || null;
-  Store.cloudOn = !!(Store.userId && sbReady && supabase);
-};
-
-Store.releaseCache = function(){
-  Store.userId = null;
-  Store.cloudOn = false;
-};
-
-Store._db = function(){ return supabase; };
-
-Store.initCloud = async function(){
-  const uid = Store.userId;
-  if(!uid || !sbReady || !supabase) return;
-  try{
-    const { data: dbTenants, error } = await supabase.from('tenants').select('*').eq('user_id', uid);
-    if(error) throw error;
-    const localTenants = Store.getTenants();
-    const dbRows = dbTenants || [];
-
-    /* Migration: local data exists but nothing in DB -> upload all */
-    if(localTenants.length && dbRows.length === 0){
-      await Store.uploadAll();
-      return;
-    }
-
-    /* Downloaded cloud state exists -> backfill local cache + merge */
-    const mergedTenants = localTenants.slice();
-    const localIds = new Set(localTenants.map(t => t.id));
-    for(const row of dbRows){
-      /* backfill settings locally */
-      if(row.settings && typeof row.settings === 'object'){
-        Store.setSettings(row.id, Object.assign({ shopName:row.name, logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null }, row.settings));
-      }
-      /* merge tenant record */
-      const loc = Store.getTenant(row.id);
-      const rec = { id:row.id, name:row.name||'', businessType:row.business_type||'phone_repair', createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() };
-      if(loc){ Object.assign(loc, { name:rec.name, businessType:rec.businessType }); if(!loc.updatedAt || (row.updated_at||0) > (loc.updatedAt||0)){} }
-      else { mergedTenants.push(rec); localIds.add(row.id); }
-      /* templates + receipts for this tenant */
-      await Store._mergeChildTable('templates', row.id, uid);
-      await Store._mergeChildTable('receipts', row.id, uid);
-    }
-    Store.setTenants(mergedTenants);
-
-    /* Upload any local tenants (and their children) not present in DB */
-    for(const t of localTenants){
-      if(!dbRows.some(d => d.id === t.id)){ await Store._uploadOneTenant(t); }
-    }
-  }catch(e){
-    /* Keep working offline; data stays in localStorage cache */
-    console.warn('Cloud init failed (offline?):', e);
-  }
-};
-
-Store._mergeChildTable = async function(table, tenantId, uid){
-  const { data: rows, error } = await supabase.from(table).select('*').eq('user_id', uid).eq('tenant_id', tenantId);
-  if(error) throw error;
-  const localRows = table === 'templates' ? Store.getTemplates(tenantId) : Store.getReceipts(tenantId);
-  const merged = localRows.slice();
-  const localIds = new Set(localRows.map(r => r.id));
-  const localById = new Map(localRows.map(r => [r.id, r]));
-  let changed = false;
-  for(const row of (rows||[])){
-    const rec = table === 'templates'
-      ? { id:row.id, name:row.name||'', format:row.format||'receipt_80', isDefault:row.is_default, fieldDefs:row.field_defs||[], elements:row.elements||[], styles:row.styles||{}, createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() }
-      : { id:row.id, templateId:row.template_id, fields:row.fields||{}, format:row.format||'receipt_80', repaired:!!row.repaired, paid:!!row.paid, createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() };
-    const loc = localById.get(row.id);
-    if(!loc){
-      merged.push(rec); localIds.add(row.id); changed = true;
-      continue;
-    }
-    /* last-writer-wins by updatedAt */
-    if((row.updated_at||0) > (loc.updatedAt||0)){
-      merged[merged.indexOf(loc)] = { ...loc, ...rec };
-      changed = true;
-    }
-  }
-  /* upload local-only rows */
-  const dbIds = new Set((rows||[]).map(r => r.id));
-  for(const loc of localRows){
-    if(!dbIds.has(loc.id)){
-      if(table === 'templates'){
-        await supabase.from('templates').upsert({ id:loc.id, tenant_id:tenantId, name:loc.name||'', format:loc.format||'receipt_80', is_default:loc.isDefault, field_defs:loc.fieldDefs||[], elements:loc.elements||[], styles:loc.styles||{}, created_at:loc.createdAt||Date.now(), updated_at:loc.updatedAt||Date.now() }, { onConflict:'id' });
-      } else {
-        await supabase.from('receipts').upsert({ id:loc.id, tenant_id:tenantId, template_id:loc.templateId, fields:loc.fields||{}, format:loc.format||'receipt_80', repaired:!!loc.repaired, paid:!!loc.paid, created_at:loc.createdAt, updated_at:loc.updatedAt }, { onConflict:'id' });
-      }
-    }
-  }
-  if(changed) Store._persistChild(tenantId, table, merged);
-};
-
-Store._persistChild = function(tenantId, table, list){
-  if(table === 'templates'){ Store.set(tenantId, 'templates', list); }
-  else { Store.set(tenantId, 'receipts', list); }
-};
-
-Store._uploadOneTenant = async function(t){
-  if(!Store.cloudOn) return;
-  const settings = Store.getSettings(t.id);
-  await supabase.from('tenants').upsert({ id:t.id, name:t.name||'', business_type:t.businessType||'phone_repair', settings, created_at:t.createdAt||Date.now(), updated_at:t.updatedAt||Date.now() }, { onConflict:'id' });
-  for(const tp of Store.getTemplates(t.id)){
-    await supabase.from('templates').upsert({ id:tp.id, tenant_id:t.id, name:tp.name||'', format:tp.format||'receipt_80', is_default:tp.isDefault, field_defs:tp.fieldDefs||[], elements:tp.elements||[], styles:tp.styles||{}, created_at:tp.createdAt||Date.now(), updated_at:tp.updatedAt||Date.now() }, { onConflict:'id' });
-  }
-  for(const r of Store.getReceipts(t.id)){
-    await supabase.from('receipts').upsert({ id:r.id, tenant_id:t.id, template_id:r.templateId, fields:r.fields||{}, format:r.format||'receipt_80', repaired:!!r.repaired, paid:!!r.paid, created_at:r.createdAt, updated_at:r.updatedAt }, { onConflict:'id' });
-  }
-};
-
-Store.uploadAll = async function(){
-  if(!Store.cloudOn) return;
-  for(const t of Store.getTenants()){ await Store._uploadOneTenant(t); }
-  Store.setGlobal(rdBucketMigrated, true);
-};
-
-/* ---- background write hooks (fire-and-forget) ---- */
-
-Store._pushTenants = function(){
-  if(!Store.cloudOn) return;
-  setTimeout(function(){
-    (async () => {
-      for(const t of Store.getTenants()){ await Store._uploadOneTenant(t); }
-    })().catch(e => console.warn('tenant sync failed', e));
-  }, 0);
-};
-
-Store._pushChild = function(tenantId, table, list){
-  if(!Store.cloudOn) return;
-  setTimeout(function(){
-    (async () => {
-      const rows = list.map(x => table === 'templates'
-        ? { id:x.id, tenant_id:tenantId, name:x.name||'', format:x.format||'receipt_80', is_default:x.isDefault, field_defs:x.fieldDefs||[], elements:x.elements||[], styles:x.styles||{}, created_at:x.createdAt||Date.now(), updated_at:x.updatedAt||Date.now() }
-        : { id:x.id, tenant_id:tenantId, template_id:x.templateId, fields:x.fields||{}, format:x.format||'receipt_80', repaired:!!x.repaired, paid:!!x.paid, created_at:x.createdAt, updated_at:x.updatedAt });
-      if(rows.length){ await supabase.from(table).upsert(rows, { onConflict:'id' }); }
-      /* remove rows that no longer exist locally */
-      const keepIds = new Set(list.map(x => x.id));
-      const { data: dbRows } = await supabase.from(table).select('id').eq('tenant_id', tenantId);
-      const gone = (dbRows||[]).filter(x => !keepIds.has(x.id)).map(x => x.id);
-      if(gone.length){ await supabase.from(table).delete().in('id', gone); }
-    })().catch(e => console.warn(table + ' sync failed', e));
-  }, 0);
-};
-
-Store._pushSettings = function(tenantId, s){
-  if(!Store.cloudOn) return;
-  setTimeout(function(){
-    (async () => {
-      const t = Store.getTenant(tenantId);
-      await supabase.from('tenants').upsert({ id:tenantId, name:(t&&t.name)||'', business_type:(t&&t.businessType)||'phone_repair', settings:s, created_at:(t&&t.createdAt)||Date.now(), updated_at:Date.now() }, { onConflict:'id' });
-    })().catch(e => console.warn('settings sync failed', e));
-  }, 0);
-};
-
-/* ---- wired into existing write methods below ---- */
-Store.origSetReceipts = Store.setReceipts;
-Store.setReceipts = function(tenantId, list){
-  Store.origSetReceipts.call(this, tenantId, list);
-  Store._pushChild(tenantId, 'receipts', list);
-};
-Store.origSetTemplates = Store.setTemplates;
-Store.setTemplates = function(tenantId, list){
-  Store.origSetTemplates.call(this, tenantId, list);
-  Store._pushChild(tenantId, 'templates', list);
-};
-Store.origSetSettings = Store.setSettings;
-Store.setSettings = function(tenantId, s){
-  Store.origSetSettings.call(this, tenantId, s);
-  Store._pushSettings(tenantId, s);
-};
-const _origSetTenants = Store.setTenants;
-Store.setTenants = function(list){
-  _origSetTenants.call(this, list);
-  Store._pushTenants();
 };
 
 /* ===================================================================
@@ -2532,10 +2338,26 @@ function hideLangScreen(){
 }
 
 /* ===================================================================
-   AUTH / SUPABASE
+   AUTH – local accounts (stored in this browser, no backend)
    =================================================================== */
 const authMode = { isSignup:false };
 let authUser = null;
+
+function makeSalt(){
+  try{ return Array.from(crypto.getRandomValues(new Uint8Array(16))).map(b => b.toString(16).padStart(2,'0')).join(''); }
+  catch(e){ return Math.random().toString(36).slice(2) + Date.now().toString(36); }
+}
+async function hashPassword(pw, salt){
+  if(crypto && crypto.subtle){
+    const data = new TextEncoder().encode(salt + '::' + pw);
+    const buf = await crypto.subtle.digest('SHA-256', data);
+    return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  }
+  /* fallback (non-secure contexts) */
+  let h = 5381, str = salt + '::' + pw;
+  for(let i=0;i<str.length;i++){ h = ((h << 5) + h) + str.charCodeAt(i); h = h & 0x7fffffff; }
+  return 'fallback' + h.toString(16);
+}
 
 function showAuthScreen(){
   document.getElementById('authScreen').classList.remove('hidden');
@@ -2562,27 +2384,30 @@ function authMsg(msg, type){
   el.textContent = msg || '';
 }
 
-async function handleSignout(){
-  if(supabase) await supabase.auth.signOut();
+function beginSession(acc){
+  authUser = acc;
+  Store.account = acc.uid;
+  Store._saveSession(acc.uid);
+  hideAuthScreen();
+  gotoTenantScreen();
+  renderTenantScreen();
+}
+
+function handleSignout(){
   authUser = null;
-  Store.releaseCache();
+  Store._clearSession();
+  Store.account = null;
   showAuthScreen();
   try{ localStorage.removeItem('rd_activeTenant'); }catch(e){}
 }
 
-/* Sidebar logout wiring (called after app renders) */
+/* Sidebar logout wiring */
 function wireLogout(){
   const btn = document.getElementById('logoutBtn');
   if(!btn) return;
-  btn.addEventListener('click', async () => {
-    await handleSignout();
-  });
+  btn.addEventListener('click', handleSignout);
 }
 
-/* Toggle between tenant view and sign-in view  */
-function gotoAuthScreen(){
-  showAuthScreen();
-}
 function gotoTenantScreen(){
   document.getElementById('authScreen').classList.add('hidden');
   document.getElementById('langScreen').style.display = 'none';
@@ -2591,47 +2416,33 @@ function gotoTenantScreen(){
 
 async function authSubmit(e){
   e.preventDefault();
-  const email = document.getElementById('authEmail').value.trim();
+  const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
-  if(!supabase || !sbReady){ authMsg(I18N.t('auth_failed')); return; }
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg(I18N.t('auth_email_invalid')); return; }
   if(password.length < 6){ authMsg(I18N.t('auth_password_short')); return; }
+
   if(authMode.isSignup){
     const name = document.getElementById('authName').value.trim();
     const confirmPw = document.getElementById('authConfirm').value;
     if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
-    try{
-      const { data, error } = await supabase.auth.signUp({ email, password, options:{ data:{ full_name: name } } });
-      if(error){ authMsg(I18N.t(error.message && /already/i.test(error.message) ? 'auth_exists' : 'auth_failed')); return; }
-      if(data && data.session && data.session.user){
-        await afterAuth(data.session.user);
-        return;
-      }
-      authMsg('', 'info');
-      setAuthMode(false);
-      document.getElementById('authPassword').value = '';
-      document.getElementById('authConfirm').value = '';
-      document.getElementById('authEmail').value = '';
-      authMsg(I18N.t('auth_check_email'), 'info');
-    }catch(err){ authMsg(I18N.t('auth_failed')); }
+    if(!name){ authMsg(I18N.t('full_name_required')); return; }
+    const accounts = Store._accounts();
+    if(accounts.some(a => a.email === email)){ authMsg(I18N.t('auth_exists')); return; }
+    const salt = makeSalt();
+    const hash = await hashPassword(password, salt);
+    const uid = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    accounts.push({ uid:uid, email:email, name:name, salt:salt, hash:hash, createdAt:Date.now() });
+    Store._saveAccounts(accounts);
+    beginSession(accounts[accounts.length - 1]);
     return;
   }
-  try{
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if(error){ authMsg(I18N.t('auth_invalid')); return; }
-    await afterAuth(data.user);
-  }catch(err){ authMsg(I18N.t('auth_failed')); }
-}
 
-async function afterAuth(user){
-  if(!user) return;
-  authUser = user;
-  hideAuthScreen();
-  await Store.initCloud();
-  gotoTenantScreen();
-  renderTenantScreen();
-  const evt = new Event('authready');
-  document.dispatchEvent(evt);
+  const accounts = Store._accounts();
+  const acc = accounts.find(a => a.email === email);
+  if(!acc){ authMsg(I18N.t('auth_invalid')); return; }
+  const hash = await hashPassword(password, acc.salt);
+  if(hash !== acc.hash){ authMsg(I18N.t('auth_invalid')); return; }
+  beginSession(acc);
 }
 
 document.getElementById('authForm').addEventListener('submit', authSubmit);
@@ -2649,25 +2460,11 @@ document.querySelectorAll('.lang-opt').forEach(opt => {
 });
 document.getElementById('changeLangBtn').addEventListener('click', showLangScreen);
 
-async function bootstrapAfterLang(){
-  if(sbReady && supabase){
-    try{
-      const { data, error } = await supabase.auth.getSession();
-      const session = data && data.session;
-      if(session && session.user){
-        authUser = session.user;
-        Store.setCloudUser(session.user.id);
-        await Store.initCloud();
-        hideAuthScreen();
-        if(currentTenantId){
-          document.getElementById('appMain').classList.add('active');
-        } else {
-          document.getElementById('tenantScreen').style.display = 'flex';
-          renderTenantScreen();
-        }
-        return;
-      }
-    }catch(err){ console.warn('session check failed', err); }
+function bootstrapAfterLang(){
+  const uid = Store.getSession();
+  if(uid){
+    const acc = Store._accounts().find(a => a.uid === uid);
+    if(acc){ beginSession(acc); return; }
   }
   showAuthScreen();
 }
