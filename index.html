@@ -343,8 +343,8 @@ button{cursor:pointer;}
 /* Login welcome splash (plays once per login, auto-dismisses) */
 #welcomeSplash{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(10,12,26,0.55);backdrop-filter:blur(6px);pointer-events:none;}
 #welcomeSplash.hidden{display:none;}
-#welcomeSplash .ws-box{display:flex;align-items:center;justify-content:center;}
-#welcomeSplash .ws-box img{max-width:300px;max-height:60vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.5);}
+#welcomeSplash .ws-box{display:flex;align-items:center;justify-content:center;padding:12px;background:#fff;border-radius:18px;}
+#welcomeSplash .ws-box img{max-width:280px;max-height:52vh;display:block;border-radius:10px;}
 </style>
 </head>
 <body>
@@ -2803,7 +2803,7 @@ function playWelcomeSplash(){
     const img = document.getElementById('wsGif');
     if(img){ img.src = img.src; }
   }catch(e){}
-  setTimeout(() => { el.classList.add('hidden'); }, 3800);
+  setTimeout(() => { el.classList.add('hidden'); }, 2200);
 }
 
 function beginSession(acc){
