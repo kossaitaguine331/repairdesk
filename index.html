@@ -244,6 +244,10 @@ button{cursor:pointer;}
 .receipt-card .rc-actions button{width:28px;height:28px;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-size:14px;}
 .receipt-card .rc-actions button:hover{background:var(--shell);}
 .receipt-card .rc-actions button.del:hover{background:var(--danger-bg);color:var(--danger);}
+.receipt-card .rc-actions button.wa:hover{background:rgba(37,211,102,0.18);color:#128c4b;}
+.field-hint{font-size:11px;color:var(--muted-soft);margin-top:4px;line-height:1.5;}
+.btn.wa-detail{background:rgba(37,211,102,0.16);color:#128c4b;}
+.btn.wa-detail:hover{background:rgba(37,211,102,0.26);}
 .empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
 
 /* ===== RECEIPT HISTORY / DASHBOARD ===== */
@@ -631,6 +635,11 @@ const I18N = {
       location_ph:'City / area',
       phone:'Phone',
       phone_ph:'Contact phone',
+      whatsapp_shop:'Store WhatsApp number',
+      whatsapp_ph:'e.g. 0550123456',
+      whatsapp_hint:'Shown as the shop\u2019s contact in messages sent to customers.',
+      whatsapp_btn:'Send via WhatsApp',
+      whatsapp_no_customer:'Add a customer phone number to this receipt to use WhatsApp.',
       appearance:'Appearance',
       accent_color:'Accent Color',
       currency:'Currency',
@@ -833,6 +842,11 @@ const I18N = {
       location_ph:'Ville / zone',
       phone:'Téléphone',
       phone_ph:'Téléphone de contact',
+      whatsapp_shop:'Numéro WhatsApp de la boutique',
+      whatsapp_ph:'ex. 0550123456',
+      whatsapp_hint:'Affiché comme contact de la boutique dans les messages envoy\u00e9s aux clients.',
+      whatsapp_btn:'Envoyer via WhatsApp',
+      whatsapp_no_customer:'Ajoutez un num\u00e9ro de t\u00e9l\u00e9phone client \u00e0 ce re\u00e7u pour utiliser WhatsApp.',
       appearance:'Apparence',
       accent_color:'Couleur d\'accent',
       currency:'Devise',
@@ -1330,6 +1344,7 @@ function renderReceiptsView(el){
       html += '<div class="status-toggle amber'+(paidOn?' on':'')+'" data-status="paid" data-id="'+r.id+'"><span class="dot"></span>'+(paidOn?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
       html += '</div>';
       html += '<div class="rc-actions">';
+      html += '<button class="wa" title="'+esc(I18N.t('whatsapp_btn'))+'" data-id="'+r.id+'">&#128172;</button>';
       html += '<button class="print" title="'+esc(I18N.t('print'))+'" data-id="'+r.id+'">&#128424;</button>';
       html += '<button class="edit" title="'+esc(I18N.t('edit'))+'" data-id="'+r.id+'">&#9998;</button>';
       html += '<button class="del" title="'+esc(I18N.t('delete'))+'" data-id="'+r.id+'">&#10005;</button>';
@@ -1359,6 +1374,7 @@ function renderReceiptsView(el){
   el.querySelectorAll('.rc-actions .edit').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openReceiptEditor(b.dataset.id); }));
   el.querySelectorAll('.rc-actions .del').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); deleteReceipt(b.dataset.id); }));
   el.querySelectorAll('.rc-actions .print').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); printReceipt(b.dataset.id); }));
+  el.querySelectorAll('.rc-actions .wa').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); whatsappReceipt(b.dataset.id); }));
   el.querySelectorAll('.status-toggle').forEach(tgl => {
     tgl.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -1408,12 +1424,14 @@ function renderReceiptDetails(id){
   html += '</div>';
   html += '<div class="rd-actions">';
   html += '<button class="btn primary" id="rdEdit">' + I18N.t('edit') + '</button>';
+  html += '<button class="btn wa-detail" id="rdWhatsapp">' + I18N.t('whatsapp_btn') + '</button>';
   html += '<button class="btn" id="rdPrint">' + I18N.t('print') + '</button>';
   html += '<button class="btn danger" id="rdDelete">' + I18N.t('delete') + '</button>';
   html += '</div></div>';
   content.innerHTML = html;
 
   document.getElementById('rdBack').addEventListener('click', () => switchView('receipts'));
+  document.getElementById('rdWhatsapp').addEventListener('click', () => whatsappReceipt(id));
   document.getElementById('rdEdit').addEventListener('click', () => openReceiptEditor(id));
   document.getElementById('rdPrint').addEventListener('click', () => printReceipt(id));
   document.getElementById('rdDelete').addEventListener('click', () => deleteReceipt(id));
@@ -1619,6 +1637,37 @@ function printReceipt(id){
   const vals = {...receipt.fields};
   vals._receiptNumber = receipt.id.slice(-6).toUpperCase();
   printPreview(tpl, vals, receipt.format || 'receipt_80');
+}
+
+function whatsappReceipt(id){
+  const receipt = Store.getReceipts(currentTenantId).find(r => r.id === id);
+  if(!receipt) return;
+  const settings = Store.getSettings(currentTenantId);
+  const customerPhone = (receipt.fields.customer_phone || '').replace(/[\s\-\(\)\+\.]/g, '');
+  if(!customerPhone){
+    alert(I18N.t('whatsapp_no_customer'));
+    return;
+  }
+  const cur = settings.currency || 'DZD';
+  const device = receipt.fields.device_model || receipt.fields.laptop_brand || receipt.fields.laptop_model || '';
+  const name = receipt.fields.customer_name || '';
+  const total = receipt.fields.total || '';
+  const lines = [];
+  lines.push('*' + (settings.shopName || '') + '*');
+  lines.push('Bonjour' + (name ? ' ' + name : '') + (device ? ', nous vous informons que votre ' + device : ''));
+  const statusBits = [];
+  if(receipt.repaired) statusBits.push('dispositif r\u00e9par\u00e9');
+  if(receipt.paid) statusBits.push('pay\u00e9');
+  if(statusBits.length) lines.push('Statut : ' + statusBits.join(' + '));
+  if(device) lines.push('Appareil : ' + device);
+  if(total) lines.push('Montant : ' + total + ' ' + cur);
+  lines.push('N\u00ba de re\u00e7u : ' + id.slice(-6).toUpperCase());
+  const storeWa = (settings.whatsapp || '').replace(/[\s\-\(\)\+\.]/g, '');
+  if(storeWa) lines.push(settings.shopName + ' (WhatsApp : ' + settings.whatsapp.trim() + ')');
+  lines.push('Merci !');
+  const message = lines.join('\n');
+  const url = 'https://wa.me/' + customerPhone + '?text=' + encodeURIComponent(message);
+  window.open(url, '_blank');
 }
 
 function printPreview(template, fieldValues, format){
@@ -2162,6 +2211,8 @@ function renderSettingsView(el){
   html += '<div class="field"><label>' + I18N.t('address') + '</label><textarea id="setAddress" rows="2" placeholder="'+esc(I18N.t('address'))+'">'+esc(s.address)+'</textarea></div>';
   html += '<div class="field" style="margin-top:8px;"><label>' + I18N.t('location') + '</label><input id="setLocation" value="'+esc(s.location||'')+'" placeholder="'+esc(I18N.t('location_ph'))+'"></div>';
   html += '<div class="field" style="margin-top:8px;"><label>' + I18N.t('phone') + '</label><input id="setPhone" value="'+esc(s.phone)+'" placeholder="'+esc(I18N.t('phone'))+'"></div>';
+  html += '<div class="field" style="margin-top:8px;"><label>' + I18N.t('whatsapp_shop') + '</label><input id="setWhatsapp" value="'+esc(s.whatsapp||'')+'" placeholder="'+esc(I18N.t('whatsapp_ph'))+'">';
+  html += '<div class="field-hint">' + I18N.t('whatsapp_hint') + '</div></div>';
   html += '</div>';
 
   html += '<div class="settings-section"><h3>' + I18N.t('appearance') + '</h3>';
@@ -2196,6 +2247,7 @@ function renderSettingsView(el){
       address: document.getElementById('setAddress').value,
       location: document.getElementById('setLocation').value,
       phone: document.getElementById('setPhone').value,
+      whatsapp: document.getElementById('setWhatsapp').value,
       accentColor: document.getElementById('setAccentColor').value,
       fontFamily: 'IBM Plex Sans',
       defaultTemplateId: document.getElementById('setDefaultTpl').value,
@@ -2203,7 +2255,7 @@ function renderSettingsView(el){
     });
   };
 
-  ['setShopName','setAddress','setLocation','setPhone'].forEach(id => {
+  ['setShopName','setAddress','setLocation','setPhone','setWhatsapp'].forEach(id => {
     document.getElementById(id).addEventListener('input', saveSettings);
   });
   document.getElementById('setAccentColor').addEventListener('input', (e) => {
