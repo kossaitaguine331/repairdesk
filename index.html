@@ -633,6 +633,7 @@ const I18N = {
       phone_ph:'Contact phone',
       appearance:'Appearance',
       accent_color:'Accent Color',
+      currency:'Currency',
       default_template:'Default Template',
       none:'None',
       data:'Data',
@@ -834,6 +835,7 @@ const I18N = {
       phone_ph:'Téléphone de contact',
       appearance:'Apparence',
       accent_color:'Couleur d\'accent',
+      currency:'Devise',
       default_template:'Modèle par défaut',
       none:'Aucun',
       data:'Données',
@@ -949,7 +951,7 @@ const Store = {
     list.push(t); this.setTenants(list);
     this.set(t.id, 'templates', this.getDefaultTemplates(data.businessType));
     this.set(t.id, 'receipts', []);
-    this.set(t.id, 'settings', { shopName:data.name, logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null });
+    this.set(t.id, 'settings', { shopName:data.name, logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null, currency:'DZD' });
     return t;
   },
   deleteTenant(id){
@@ -966,7 +968,7 @@ const Store = {
   setTemplates(tenantId, list){ this.set(tenantId, 'templates', list); },
   getReceipts(tenantId){ return this.get(tenantId, 'receipts') || []; },
   setReceipts(tenantId, list){ this.set(tenantId, 'receipts', list); },
-  getSettings(tenantId){ return this.get(tenantId, 'settings') || { shopName:'', logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null }; },
+  getSettings(tenantId){ return this.get(tenantId, 'settings') || { shopName:'', logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null, currency:'DZD' }; },
   setSettings(tenantId, s){ this.set(tenantId, 'settings', s); },
 
   getDefaultTemplates(businessType){
@@ -1139,6 +1141,13 @@ function formatDate(ts){
   const d = new Date(ts);
   return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) + '  ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
 }
+function fmtMoney(val, s){
+  if(val === '' || val == null){ return ''; }
+  const cur = (s && s.currency) ? s.currency : 'DZD';
+  const n = parseFloat(val);
+  if(isNaN(n)){ return String(val) + ' ' + cur; }
+  return n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ' + cur;
+}
 function renderTemplateVars(text, data){
   return text.replace(/\{\{(\w+)\}\}/g, (m, key) => data[key] != null ? data[key] : '');
 }
@@ -1150,11 +1159,14 @@ function renderPreview(template, fieldValues, format){
   const settings = Store.getSettings(currentTenantId);
   const _loc = ((settings.location && settings.location.trim()) || settings.address || '').trim();
   const _ph = (settings.phone || '').trim();
+  const shopParts = [];
+  if(_loc) shopParts.push('\u{1F4CD} ' + _loc);
+  if(_ph) shopParts.push('\u{1F4DE} ' + _ph);
   const data = {
     shop_name: settings.shopName || '',
     shop_phone: _ph,
     shop_location: _loc,
-    shop_address: (_loc && _ph) ? _loc + '  •  ' + _ph : (_loc || _ph),
+    shop_address: shopParts.join('  \u2022  '),
     receipt_number: fieldValues._receiptNumber || '---',
     current_date: formatDate(Date.now()),
     ...fieldValues
@@ -1184,7 +1196,7 @@ function renderPreview(template, fieldValues, format){
         const fd = (template.fieldDefs||[]).find(f => f.key === c.fieldKey);
         if(!fd) break;
         let val = fieldValues[fd.key] || '';
-        const displayVal = fd.type === 'currency' && val ? parseFloat(val).toFixed(2) : val;
+        const displayVal = fd.type === 'currency' && val ? fmtMoney(val, settings) : val;
         const label = I18N.fieldLabel(fd.label) + ':';
         if(c.layout === 'block'){
           html += '<div style="padding:4px 0;"><div style="font-size:10px;color:#9497a9;font-weight:500;">'+esc(label)+'</div><div style="font-size:12px;'+(c.bold?'font-weight:700;':'')+'">'+esc(displayVal)+'</div></div>';
@@ -1312,7 +1324,7 @@ function renderReceiptsView(el){
       if(issue) html += '<span class="rc-issue">'+esc(issue.length>40?issue.substring(0,40)+'…':issue)+'</span>';
       html += '<span class="rc-date">'+formatDate(r.createdAt)+'</span>';
       html += '</div></div>';
-      if(price) html += '<div class="rc-price">$'+esc(price)+'</div>';
+      if(price) html += '<div class="rc-price">'+esc(fmtMoney(price, Store.getSettings(currentTenantId)))+'</div>';
       html += '<div class="rc-status">';
       html += '<div class="status-toggle'+(repOn?' on':'')+'" data-status="repaired" data-id="'+r.id+'"><span class="dot"></span>'+(repOn?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
       html += '<div class="status-toggle amber'+(paidOn?' on':'')+'" data-status="paid" data-id="'+r.id+'"><span class="dot"></span>'+(paidOn?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
@@ -1386,7 +1398,9 @@ function renderReceiptDetails(id){
   fieldDefs.forEach(f => {
     const v = receipt.fields[f.key] || '';
     if(v === '') return;
-    html += '<div class="rd-item"><span class="rd-k">'+esc(I18N.fieldLabel(f.label))+'</span><span class="rd-v">'+esc(v)+'</span></div>';
+    let disV = v;
+    if(f.type === 'currency' && v){ disV = fmtMoney(v, Store.getSettings(currentTenantId)); }
+    html += '<div class="rd-item"><span class="rd-k">'+esc(I18N.fieldLabel(f.label))+'</span><span class="rd-v">'+esc(disV)+'</span></div>';
   });
   if(!fieldDefs.length || Object.keys(receipt.fields||{}).length === 0){
     html += '<div class="rd-item" style="grid-column:1/-1;"><span class="rd-k">'+I18N.t('status')+'</span><span class="rd-v">#'+esc(id.slice(-6).toUpperCase())+'</span></div>';
@@ -2152,6 +2166,14 @@ function renderSettingsView(el){
 
   html += '<div class="settings-section"><h3>' + I18N.t('appearance') + '</h3>';
   html += '<div class="field"><label>' + I18N.t('accent_color') + '</label><div class="color-input"><input type="color" id="setAccentColor" value="'+(s.accentColor||'#7132f5')+'"><input type="text" id="setAccentColorText" value="'+esc(s.accentColor||'#7132f5')+'" style="flex:1;"></div></div>';
+  html += '<div class="field" style="margin-top:12px;"><label>' + I18N.t('currency') + '</label><select id="setCurrency">'
+    + '<option value="DZD"'+(s.currency==='DZD'?' selected':'')+'>Alg\u00e9rie - Dinar alg\u00e9rien (DZD)</option>'
+    + '<option value="DH"'+(s.currency==='DH'?' selected':'')+'>Dirham (DH)</option>'
+    + '<option value="EUR"'+(s.currency==='EUR'?' selected':'')+'>Euro (\u20ac)</option>'
+    + '<option value="USD"'+(s.currency==='USD'?' selected':'')+'>US Dollar (\$)</option>'
+    + '<option value="GBP"'+(s.currency==='GBP'?' selected':'')+'>British Pound (\u00a3)</option>'
+    + '<option value="TND"'+(s.currency==='TND'?' selected':'')+'>Dinar tunisien (TND)</option>'
+    + '</select></div>';
   html += '<div class="field" style="margin-top:12px;"><label>' + I18N.t('default_template') + '</label><select id="setDefaultTpl"><option value="">' + I18N.t('none') + '</option>';
   Store.getTemplates(currentTenantId).forEach(t => {
     html += '<option value="'+t.id+'"'+(s.defaultTemplateId===t.id?' selected':'')+'>'+esc(t.name)+'</option>';
@@ -2176,7 +2198,8 @@ function renderSettingsView(el){
       phone: document.getElementById('setPhone').value,
       accentColor: document.getElementById('setAccentColor').value,
       fontFamily: 'IBM Plex Sans',
-      defaultTemplateId: document.getElementById('setDefaultTpl').value
+      defaultTemplateId: document.getElementById('setDefaultTpl').value,
+      currency: document.getElementById('setCurrency').value
     });
   };
 
@@ -2196,6 +2219,7 @@ function renderSettingsView(el){
     }
   });
   document.getElementById('setDefaultTpl').addEventListener('change', saveSettings);
+  document.getElementById('setCurrency').addEventListener('change', saveSettings);
 
   /* Logo */
   const logoUpload = document.getElementById('logoUpload');
@@ -2289,7 +2313,8 @@ document.getElementById('createShopBtn').addEventListener('click', () => {
     phone: phone,
     accentColor: '#7132f5',
     fontFamily: 'IBM Plex Sans',
-    defaultTemplateId: null
+    defaultTemplateId: null,
+    currency: 'DZD'
   });
   enterTenant(t.id);
 });
