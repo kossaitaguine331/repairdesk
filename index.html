@@ -1033,7 +1033,21 @@ const Store = {
   getSession(){ return this._readLocal('sess'); },
   _saveSession(uid){ this._writeLocal('sess', uid); },
   _clearSession(){ try{ localStorage.removeItem('rd_sess'); }catch(e){} },
-  getTemplates(tenantId){ return this.get(tenantId, 'templates') || []; },
+  getTemplates(tenantId){
+    const list = this.get(tenantId, 'templates') || [];
+    const removedKeys = ['subtotal','tax','payment_method','technician'];
+    let changed = false;
+    const cleaned = list.map(tpl => {
+      if(!tpl || typeof tpl !== 'object') return tpl;
+      const fd = (tpl.fieldDefs || []).filter(f => !removedKeys.includes(f && f.key));
+      if(fd.length !== (tpl.fieldDefs || []).length) changed = true;
+      const els = (tpl.elements || []).filter(el => !(el && el.type === 'field' && removedKeys.includes(el.config && el.config.fieldKey)));
+      if(els.length !== (tpl.elements || []).length) changed = true;
+      return { ...tpl, fieldDefs:fd, elements:els };
+    });
+    if(changed){ this.set(tenantId, 'templates', cleaned); }
+    return cleaned;
+  },
   setTemplates(tenantId, list){ this.set(tenantId, 'templates', list); },
   getReceipts(tenantId){ return this.get(tenantId, 'receipts') || []; },
   setReceipts(tenantId, list){ this.set(tenantId, 'receipts', list); },
