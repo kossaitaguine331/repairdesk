@@ -551,7 +551,8 @@ const I18N = {
       delete_shop_confirm:'Delete shop "{name}"? This will remove all templates and receipts.',
       receipts:'Receipts',
       new_receipt:'+ New Receipt',
-      export_all:'Export All',
+      export_all:'Export CSV',
+      export_csv:'Export CSV',
       receipts_empty:'No receipts yet. Click <strong>+ New Receipt</strong> to create your first one.',
       unnamed:'Unnamed Receipt',
       receipt_history:'Receipt History',
@@ -682,6 +683,11 @@ const I18N = {
       none:'None',
       data:'Data',
       export_shop_data:'Export Shop Data (JSON)',
+      backup_all:'Backup All Shops',
+      restore_shop_data:'Restore Backup',
+      restore_confirm:'This will overwrite the current data for matching shops. Continue?',
+      restore_invalid:'This is not a valid RepairDesk backup file.',
+      restore_done:'Backup restored successfully.',
       clear_receipts:'Clear All Receipts',
       back_to_list:'Back',
       shop_data:'shop data',
@@ -766,7 +772,8 @@ const I18N = {
       delete_shop_confirm:'Supprimer la boutique « {name} » ? Cela supprimera tous les modèles et reçus.',
       receipts:'Reçus',
       new_receipt:'+ Nouveau reçu',
-      export_all:'Tout exporter',
+      export_all:'Exporter CSV',
+      export_csv:'Exporter CSV',
       receipts_empty:'Aucun reçu. Cliquez sur <strong>+ Nouveau reçu</strong> pour en créer un.',
       unnamed:'Reçu sans nom',
       receipt_history:'Historique des reçus',
@@ -897,6 +904,11 @@ const I18N = {
       none:'Aucun',
       data:'Données',
       export_shop_data:'Exporter les données (JSON)',
+      backup_all:'Sauvegarder toutes les boutiques',
+      restore_shop_data:'Restaurer la sauvegarde',
+      restore_confirm:'Cela va remplacer les données actuelles des boutiques correspondantes. Continuer ?',
+      restore_invalid:'Ce n\'est pas un fichier de sauvegarde RepairDesk valide.',
+      restore_done:'Sauvegarde restaurée avec succès.',
       clear_receipts:'Effacer tous les reçus',
       back_to_list:'Retour',
       shop_data:'données boutique',
@@ -1025,7 +1037,7 @@ const Store = {
   setTemplates(tenantId, list){ this.set(tenantId, 'templates', list); },
   getReceipts(tenantId){ return this.get(tenantId, 'receipts') || []; },
   setReceipts(tenantId, list){ this.set(tenantId, 'receipts', list); },
-  getSettings(tenantId){ return this.get(tenantId, 'settings') || { shopName:'', logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null, currency:'DZD' }; },
+  getSettings(tenantId){ return this.get(tenantId, 'settings') || { shopName:'', logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null, currency:'DZD', nextInvoice:1 }; },
   setSettings(tenantId, s){ this.set(tenantId, 'settings', s); },
 
   getDefaultTemplates(businessType){
@@ -1215,6 +1227,13 @@ function monthLabel(){
     return new Date().toLocaleString(I18N.lang === 'fr' ? 'fr' : undefined, { month:'long', year:'numeric' });
   }catch(e){ return new Date().toLocaleDateString(undefined, { month:'long', year:'numeric' }); }
 }
+function receiptNumber(r){
+  const n = r && r.invoiceNum ? String(r.invoiceNum) : (r ? String(r.id || '').slice(-6) : '');
+  const digits = n.replace(/\D/g, '') || n;
+  const num = parseInt(digits, 10);
+  if(isNaN(num)){ return n.toUpperCase(); }
+  return String(num).padStart(4, '0');
+}
 function renderTemplateVars(text, data){
   return text.replace(/\{\{(\w+)\}\}/g, (m, key) => data[key] != null ? data[key] : '');
 }
@@ -1357,7 +1376,7 @@ function renderReceiptsView(el){
     if(!q) return true;
     const name = (r.fields.customer_name || '').toLowerCase();
     const phone = (r.fields.customer_phone || '').toLowerCase();
-    const num = r.id.slice(-6).toLowerCase();
+    const num = ((r.invoiceNum ? String(r.invoiceNum) : '') + ' ' + r.id.slice(-6)).toLowerCase();
     const dev = ((r.fields.device_model||'') + ' ' + (r.fields.laptop_brand||'') + ' ' + (r.fields.laptop_model||'')).toLowerCase();
     return name.includes(q) || phone.includes(q) || num.includes(q) || dev.includes(q);
   });
@@ -1408,7 +1427,7 @@ function renderReceiptsView(el){
       const paidOn = !!r.paid;
       html += '<div class="receipt-card" data-id="'+r.id+'">';
       html += '<div class="rc-main">';
-      html += '<div class="rc-name">'+esc(name)+' <span class="rh-id">#'+esc(r.id.slice(-6).toUpperCase())+'</span></div>';
+      html += '<div class="rc-name">'+esc(name)+' <span class="rh-id">#'+esc(receiptNumber(r))+'</span></div>';
       html += '<div class="rc-meta">';
       if(phone) html += '<span class="rc-phone">&#128222; '+esc(phone)+'</span>';
       if(device) html += '<span class="rc-device">'+esc(device)+'</span>';
@@ -1482,7 +1501,7 @@ function renderReceiptDetails(id){
   const tpl = templates.find(t => t.id === receipt.templateId);
   const content = document.getElementById('appContent');
   const fieldDefs = (tpl ? tpl.fieldDefs : []) || [];
-  let html = '<div class="content-header"><h2>' + I18N.t('receipt_details') + ' <span class="rh-id">#'+esc(id.slice(-6).toUpperCase())+'</span></h2><div class="actions">';
+  let html = '<div class="content-header"><h2>' + I18N.t('receipt_details') + ' <span class="rh-id">#'+esc(receiptNumber(receipt))+'</span></h2><div class="actions">';
   html += '<button class="btn" id="rdBack">' + I18N.t('back') + '</button>';
   html += '</div></div>';
   html += '<div class="rh-detail">';
@@ -1499,7 +1518,7 @@ function renderReceiptDetails(id){
     html += '<div class="rd-item"><span class="rd-k">'+esc(I18N.fieldLabel(f.label))+'</span><span class="rd-v">'+esc(disV)+'</span></div>';
   });
   if(!fieldDefs.length || Object.keys(receipt.fields||{}).length === 0){
-    html += '<div class="rd-item" style="grid-column:1/-1;"><span class="rd-k">'+I18N.t('status')+'</span><span class="rd-v">#'+esc(id.slice(-6).toUpperCase())+'</span></div>';
+    html += '<div class="rd-item" style="grid-column:1/-1;"><span class="rd-k">'+I18N.t('status')+'</span><span class="rd-v">#'+esc(receiptNumber(receipt))+'</span></div>';
   }
   html += '</div>';
   html += '<div class="rd-actions">';
@@ -1544,7 +1563,7 @@ function openReceiptEditor(receiptId){
   html += '</select></div>';
   html += '<div class="receipt-split"><div class="editor-form" id="editorForm">';
   html += '<div class="ef-header"><h3>' + I18N.t('receipt_details') + '</h3>';
-  if(receipt) html += '<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No. '+receipt.id.slice(-6).toUpperCase()+'</span>';
+  if(receipt) html += '<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No. '+esc(receiptNumber(receipt))+'</span>';
   html += '</div>';
 
   const groups = {};
@@ -1598,7 +1617,7 @@ function openReceiptEditor(receiptId){
   function updatePreview(){
     const tplNow = templates.find(t => t.id === document.getElementById('tplSelect').value) || tpl;
     const vals = getFormValues();
-    vals._receiptNumber = receiptId ? receipt.id.slice(-6).toUpperCase() : '---';
+    vals._receiptNumber = receiptId ? receiptNumber(receipt) : '---';
     const pvEl = document.getElementById('receiptPreview');
     const isA4 = receiptPreviewFormat === 'a4';
     pvEl.innerHTML = '<div class="preview-receipt '+(isA4?'a4':'receipt-80')+'">' + renderPreview(tplNow, vals, receiptPreviewFormat) + '</div>';
@@ -1676,7 +1695,11 @@ function openReceiptEditor(receiptId){
       if(idx > -1) list[idx] = {...list[idx], fields:vals, templateId:selectedTpl.id, format:selectedTpl.format, updatedAt:now};
     } else {
       const id = 'r' + now + Math.random().toString(36).slice(2,7);
-      list.push({id, fields:vals, templateId:selectedTpl.id, format:selectedTpl.format, createdAt:now, updatedAt:now, repaired:false, paid:false});
+      const settings = Store.getSettings(currentTenantId);
+      const invoice = settings.nextInvoice || 1;
+      settings.nextInvoice = invoice + 1;
+      Store.setSettings(currentTenantId, settings);
+      list.push({id, invoiceNum:invoice, fields:vals, templateId:selectedTpl.id, format:selectedTpl.format, createdAt:now, updatedAt:now, repaired:false, paid:false});
       currentReceiptId = id;
     }
     Store.setReceipts(currentTenantId, list);
@@ -1686,7 +1709,7 @@ function openReceiptEditor(receiptId){
     const tplSel = document.getElementById('tplSelect');
     const selectedTpl = templates.find(t => t.id === tplSel.value) || tpl;
     const vals = getFormValues();
-    vals._receiptNumber = receiptId ? receipt.id.slice(-6).toUpperCase() : '---';
+    vals._receiptNumber = receiptId ? receiptNumber(receipt) : '---';
     printPreview(selectedTpl, vals, receiptPreviewFormat);
   });
   document.getElementById('deleteReceiptBtn')?.addEventListener('click', () => {
@@ -1715,7 +1738,7 @@ function printReceipt(id){
   const tpl = templates.find(t => t.id === receipt.templateId);
   if(!tpl) return;
   const vals = {...receipt.fields};
-  vals._receiptNumber = receipt.id.slice(-6).toUpperCase();
+  vals._receiptNumber = receiptNumber(receipt);
   printPreview(tpl, vals, receipt.format || 'receipt_80');
 }
 
@@ -1741,7 +1764,7 @@ function whatsappReceipt(id){
   if(statusBits.length) lines.push('Statut : ' + statusBits.join(' + '));
   if(device) lines.push('Appareil : ' + device);
   if(total) lines.push('Montant : ' + total + ' ' + cur);
-  lines.push('N\u00ba de re\u00e7u : ' + id.slice(-6).toUpperCase());
+  lines.push('N\u00ba de re\u00e7u : ' + receiptNumber(receipt));
   const storeWa = (settings.whatsapp || '').replace(/[\s\-\(\)\+\.]/g, '');
   if(storeWa) lines.push(settings.shopName + ' (WhatsApp : ' + settings.whatsapp.trim() + ')');
   lines.push('Merci !');
@@ -1762,11 +1785,39 @@ function printPreview(template, fieldValues, format){
 function exportAllReceipts(){
   const receipts = Store.getReceipts(currentTenantId);
   const tenant = Store.getTenant(currentTenantId);
-  const data = { shop: tenant?.name, exportDate: new Date().toISOString(), receipts };
-  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const settings = Store.getSettings(currentTenantId);
+  const cur = settings.currency || 'DZD';
+  const escCsv = v => {
+    const s = String(v == null ? '' : v);
+    if(/[",\n\r]/.test(s)){ return '"' + s.replace(/"/g,'""') + '"'; }
+    return s;
+  };
+  const headers = ['Invoice','Customer','Phone','Device','Issue','Total ('+cur+')','Status','Repaired','Paid','Date Paid','Created'];
+  const rows = [headers.join(',')];
+  receipts.forEach(r => {
+    const f = r.fields || {};
+    const device = f.device_model || f.laptop_brand || f.laptop_model || '';
+    const issues = f.issue || '';
+    const total = parseFloat(f.total);
+    const status = r.repaired ? (r.paid ? 'Repaired & Paid' : 'Repaired / Unpaid') : (r.paid ? 'Paid' : 'Pending');
+    rows.push([
+      escCsv(receiptNumber(r)),
+      escCsv(f.customer_name),
+      escCsv(f.customer_phone),
+      escCsv(device),
+      escCsv(issues),
+      isNaN(total) ? '' : total.toFixed(2),
+      escCsv(status),
+      r.repaired ? 'Yes' : 'No',
+      r.paid ? 'Yes' : 'No',
+      r.paidAt ? new Date(r.paidAt).toLocaleString() : '',
+      r.createdAt ? new Date(r.createdAt).toLocaleString() : ''
+    ].join(','));
+  });
+  const blob = new Blob(['\ufeff' + rows.join('\r\n')], {type:'text/csv;charset=utf-8;'});
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = (tenant?.name || 'shop') + '_receipts_' + new Date().toISOString().slice(0,10) + '.json';
+  a.download = (tenant?.name || 'shop') + '_receipts_' + new Date().toISOString().slice(0,10) + '.csv';
   a.click();
   URL.revokeObjectURL(a.href);
 }
@@ -1814,7 +1865,7 @@ function renderEarningsView(el){
     return r;
   });
 
-  let html = '<div class="content-header"><h2>' + I18N.t('nav_earnings') + '</h2></div>';
+  let html = '<div class="content-header"><h2>' + I18N.t('nav_earnings') + '</h2><div class="actions"><button class="btn" id="exportEarningsCsv">' + I18N.t('export_csv') + '</button></div></div>';
 
   /* Period tabs */
   html += '<div class="earn-tabs">';
@@ -1858,7 +1909,7 @@ function renderEarningsView(el){
       const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || '';
       const v = parseFloat(r.fields.total); const vv = isNaN(v) ? 0 : v;
       html += '<div class="earn-row" data-id="' + r.id + '">';
-      html += '<div class="er-main"><div class="er-name">' + esc(name) + ' <span class="rh-id">#' + esc(r.id.slice(-6).toUpperCase()) + '</span></div>';
+      html += '<div class="er-main"><div class="er-name">' + esc(name) + ' <span class="rh-id">#' + esc(receiptNumber(r)) + '</span></div>';
       html += '<div class="er-meta">';
       if(phone) html += '<span class="rc-phone">&#128222; ' + esc(phone) + '</span>';
       if(device) html += '<span class="rc-device">' + esc(device) + '</span>';
@@ -1876,6 +1927,27 @@ function renderEarningsView(el){
   el.querySelectorAll('.earn-tab').forEach(t => t.addEventListener('click', () => { window.earnState.period = t.dataset.period; renderEarningsView(el); }));
   /* Row clicks -> open receipt detail */
   el.querySelectorAll('.earn-row').forEach(row => row.addEventListener('click', () => renderReceiptDetails(row.dataset.id)));
+
+  /* Export earnings CSV */
+  document.getElementById('exportEarningsCsv')?.addEventListener('click', () => {
+    const escCsv = v => {
+      const s = String(v == null ? '' : v);
+      return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+    };
+    const rows = [['Invoice','Customer','Phone','Device','Total ('+cur+')','Date Paid'].join(',')];
+    listRows.slice().sort((a,b) => (b.paidAt||0)-(a.paidAt||0)).forEach(r => {
+      const f = r.fields || {};
+      const device = f.device_model || f.laptop_brand || f.laptop_model || '';
+      const v = parseFloat(f.total); const vv = isNaN(v) ? '' : v.toFixed(2);
+      rows.push([escCsv(receiptNumber(r)), escCsv(f.customer_name), escCsv(f.customer_phone), escCsv(device), vv, r.paidAt ? new Date(r.paidAt).toLocaleString() : ''].join(','));
+    });
+    const blob = new Blob(['\ufeff' + rows.join('\r\n')], {type:'text/csv;charset=utf-8;'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'earnings_' + period + '_' + new Date().toISOString().slice(0,10) + '.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
 }
 
 /* ----- TEMPLATES VIEW ----- */
@@ -2421,6 +2493,8 @@ function renderSettingsView(el){
 
   html += '<div class="settings-section"><h3>' + I18N.t('data') + '</h3>';
   html += '<button class="btn" id="exportShopData">' + I18N.t('export_shop_data') + '</button>';
+  html += '<button class="btn" id="backupAllData" style="margin-left:8px;">' + I18N.t('backup_all') + '</button>';
+  html += '<button class="btn" id="restoreShopData" style="margin-left:8px;">' + I18N.t('restore_shop_data') + '</button>';
   html += '<button class="btn danger" id="clearShopReceipts" style="margin-left:8px;">' + I18N.t('clear_receipts') + '</button>';
   html += '</div></div>';
 
@@ -2494,6 +2568,73 @@ function renderSettingsView(el){
     a.download = (s.shopName || 'shop') + '_data_' + new Date().toISOString().slice(0,10) + '.json';
     a.click();
     URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('backupAllData').addEventListener('click', () => {
+    const tenants = Store.getTenants();
+    const shops = tenants.map(t => ({
+      id: t.id,
+      name: t.name,
+      businessType: t.businessType,
+      settings: Store.getSettings(t.id),
+      templates: Store.getTemplates(t.id),
+      receipts: Store.getReceipts(t.id)
+    }));
+    const data = { app:'RepairDesk', version:1, exportedAt:Date.now(), shops };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'repairdesk_backup_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+  document.getElementById('restoreShopData').addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        let data = null;
+        try{ data = JSON.parse(e.target.result); }catch(err){ alert(I18N.t('restore_invalid')); return; }
+        if(data && typeof data === 'object'){
+          if(!confirm(I18N.t('restore_confirm'))) return;
+          try{
+            if(data.shops && Array.isArray(data.shops)){
+              /* Account-level backup: restore all shops */
+              const existing = Store.getTenants();
+              const ids = existing.map(t => t.id);
+              data.shops.forEach(sh => {
+                if(!sh.id || !sh.name) return;
+                if(!ids.includes(sh.id)){
+                  existing.push({ id:sh.id, name:sh.name, businessType:sh.businessType || 'repair_shop', createdAt:Date.now() });
+                }
+                if(sh.settings) Store.setSettings(sh.id, sh.settings);
+                if(sh.templates) Store.setTemplates(sh.id, sh.templates);
+                if(sh.receipts) Store.setReceipts(sh.id, sh.receipts);
+              });
+              Store.setTenants(existing);
+            } else if(data.settings !== undefined || data.templates !== undefined || data.receipts !== undefined){
+              /* Single-shop backup */
+              if(data.settings) Store.setSettings(currentTenantId, data.settings);
+              if(data.templates) Store.setTemplates(currentTenantId, data.templates);
+              if(data.receipts) Store.setReceipts(currentTenantId, data.receipts);
+            } else {
+              alert(I18N.t('restore_invalid'));
+              return;
+            }
+            renderSettingsView(el);
+            alert(I18N.t('restore_done'));
+          }catch(err){ alert(I18N.t('restore_invalid')); }
+        } else {
+          alert(I18N.t('restore_invalid'));
+        }
+      };
+      reader.readAsText(file);
+    });
+    input.click();
   });
 
   document.getElementById('clearShopReceipts').addEventListener('click', () => {
