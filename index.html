@@ -2852,12 +2852,12 @@ function gotoTenantScreen(){
 
 async function authSubmit(e){
   e.preventDefault();
-  playAkumaFx();
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
 
   /* Admin testing login: user "akuma" / password "gouki" */
   if(email === 'akuma' && password === 'gouki'){
+    playAkumaFx();
     let admin = Store._accounts().find(a => a.uid === 'u_admin');
     if(!admin){
       admin = { uid:'u_admin', email:'akuma', name:'Admin', salt:'admin-salt', hash:await hashPassword('permanent', 'admin-salt'), role:'admin', createdAt:Date.now() };
