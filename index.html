@@ -244,7 +244,9 @@ button{cursor:pointer;}
 .receipt-card .rc-actions button{width:28px;height:28px;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-size:14px;}
 .receipt-card .rc-actions button:hover{background:var(--shell);}
 .receipt-card .rc-actions button.del:hover{background:var(--danger-bg);color:var(--danger);}
-.receipt-card .rc-actions button.wa:hover{background:rgba(37,211,102,0.18);color:#128c4b;}
+.receipt-card .rc-wa{display:inline-flex;align-items:center;gap:5px;border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:4px 10px;font-size:12px;font-weight:500;color:#128c4b;cursor:pointer;transition:all .15s;}
+.receipt-card .rc-wa:hover{border-color:#25d366;background:rgba(37,211,102,0.14);}
+.receipt-card .rc-wa-icon{font-size:13px;line-height:1;}
 .field-hint{font-size:11px;color:var(--muted-soft);margin-top:4px;line-height:1.5;}
 .btn.wa-detail{background:rgba(37,211,102,0.16);color:#128c4b;}
 .btn.wa-detail:hover{background:rgba(37,211,102,0.26);}
@@ -1342,9 +1344,9 @@ function renderReceiptsView(el){
       html += '<div class="rc-status">';
       html += '<div class="status-toggle'+(repOn?' on':'')+'" data-status="repaired" data-id="'+r.id+'"><span class="dot"></span>'+(repOn?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
       html += '<div class="status-toggle amber'+(paidOn?' on':'')+'" data-status="paid" data-id="'+r.id+'"><span class="dot"></span>'+(paidOn?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
+      html += '<button class="rc-wa" title="'+esc(I18N.t('whatsapp_btn'))+'" data-id="'+r.id+'"><span class="rc-wa-icon">&#128172;</span><span class="rc-wa-label">WhatsApp</span></button>';
       html += '</div>';
       html += '<div class="rc-actions">';
-      html += '<button class="wa" title="'+esc(I18N.t('whatsapp_btn'))+'" data-id="'+r.id+'">&#128172;</button>';
       html += '<button class="print" title="'+esc(I18N.t('print'))+'" data-id="'+r.id+'">&#128424;</button>';
       html += '<button class="edit" title="'+esc(I18N.t('edit'))+'" data-id="'+r.id+'">&#9998;</button>';
       html += '<button class="del" title="'+esc(I18N.t('delete'))+'" data-id="'+r.id+'">&#10005;</button>';
@@ -1367,14 +1369,14 @@ function renderReceiptsView(el){
 
   el.querySelectorAll('.receipt-card').forEach(card => {
     card.addEventListener('click', (e) => {
-      if(e.target.closest('.rc-actions') || e.target.closest('.status-toggle')) return;
+      if(e.target.closest('.rc-actions') || e.target.closest('.status-toggle') || e.target.closest('.rc-wa')) return;
       renderReceiptDetails(card.dataset.id);
     });
   });
   el.querySelectorAll('.rc-actions .edit').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openReceiptEditor(b.dataset.id); }));
   el.querySelectorAll('.rc-actions .del').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); deleteReceipt(b.dataset.id); }));
   el.querySelectorAll('.rc-actions .print').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); printReceipt(b.dataset.id); }));
-  el.querySelectorAll('.rc-actions .wa').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); whatsappReceipt(b.dataset.id); }));
+  el.querySelectorAll('.rc-wa').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); whatsappReceipt(b.dataset.id); }));
   el.querySelectorAll('.status-toggle').forEach(tgl => {
     tgl.addEventListener('click', (e) => {
       e.stopPropagation();
