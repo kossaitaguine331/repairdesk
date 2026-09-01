@@ -1,0 +1,2791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RepairDesk SaaS</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --purple:#7132f5;--purple-dark:#5741d8;--purple-deep:#5b1ecf;
+  --purple-subtle:rgba(133,91,251,0.16);--purple-subtle-hover:rgba(133,91,251,0.24);
+  --ink:#101114;--muted:#686b82;--muted-soft:#9497a9;
+  --line:#dedee5;--line-soft:rgba(104,107,130,0.16);
+  --panel:#ffffff;--shell:#f6f6f8;
+  --green:#149e61;--green-bg:rgba(20,158,97,0.16);--green-ink:#026b3f;
+  --danger:#c0392b;--danger-bg:rgba(192,57,43,0.08);
+  --amber:#d97706;--amber-bg:rgba(217,119,6,0.12);
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace;
+  --sans:"IBM Plex Sans","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --shadow-subtle:rgba(0,0,0,0.03) 0px 4px 24px;
+  --shadow-micro:rgba(16,24,40,0.04) 0px 1px 4px;
+  --radius:12px;--radius-sm:8px;--radius-lg:16px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--shell);color:var(--ink);font-family:var(--sans);min-height:100vh;}
+#flowCanvas{position:fixed;inset:0;width:100%;height:100%;z-index:-1;pointer-events:none;}
+#langScreen,#tenantScreen{background:transparent !important;}
+.tenant-bg .bg-floor{background:transparent !important;}
+input,select,textarea,button{font-family:var(--sans);font-size:14px;}
+button{cursor:pointer;}
+.hidden{display:none!important;}
+
+/* ===== TENANT SELECTOR ===== */
+#tenantScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;background:linear-gradient(to bottom right, transparent, transparent);}
+.tenant-bg{position:absolute;inset:0;pointer-events:none;z-index:0;}
+.tenant-bg .bg-glow{position:absolute;inset:0;background:radial-gradient(circle at 20% 10%, rgba(99,102,241,0.06), transparent 45%), radial-gradient(circle at 80% 90%, rgba(244,63,94,0.06), transparent 45%);mix-blend-mode:multiply;}
+.tenant-bg .shape{position:absolute;background:linear-gradient(to right, rgba(99,102,241,0.22), transparent 70%);-webkit-backdrop-filter:blur(1px);backdrop-filter:blur(1px);box-shadow:0 2px 16px -2px rgba(255,255,255,0.04);animation:shapeFloat 12s ease-in-out infinite;transform-origin:center;}
+.tenant-bg .shape::after{content:'';position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at 50% 50%, rgba(255,255,255,0.12), transparent 70%);}
+@keyframes shapeFloat{0%,100%{transform:translateY(0);}50%{transform:translateY(15px);}}
+@keyframes shapeEnter{from{opacity:0;transform:translateY(-40px);}to{opacity:1;transform:translateY(0);}}
+.tenant-bg .shape.s1{top:-10%;left:-15%;width:300px;height:500px;border-radius:24px;animation-delay:0s;}
+.tenant-bg .shape.s2{right:-20%;bottom:-5%;width:600px;height:200px;border-radius:20px;animation-delay:1.2s;}
+.tenant-bg .shape.s3{top:40%;left:-5%;width:300px;height:300px;border-radius:32px;animation-delay:0.6s;}
+.tenant-bg .shape.s4{top:5%;right:10%;width:250px;height:100px;border-radius:12px;animation-delay:1.8s;}
+.tenant-bg .shape.s5{top:45%;right:-10%;width:400px;height:150px;border-radius:16px;animation-delay:2.2s;}
+.tenant-bg .shape.s6{bottom:10%;left:20%;width:200px;height:200px;border-radius:28px;animation-delay:0.4s;}
+.tenant-bg .shape.s7{top:15%;left:40%;width:150px;height:80px;border-radius:10px;animation-delay:2.6s;}
+.tenant-bg .shape.s8{top:60%;left:25%;width:450px;height:120px;border-radius:18px;animation-delay:3s;}
+.tenant-bg .bg-floor{position:absolute;inset:0;background:linear-gradient(to top, rgba(255,255,255,0.9), rgba(255,255,255,0));}
+.tenant-panel{width:100%;max-width:560px;background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow-subtle);padding:40px;position:relative;z-index:1;animation:shapeEnter 0.9s cubic-bezier(0.23,0.86,0.39,0.96) both;}
+.tenant-panel h1{font-size:26px;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px;}
+.tenant-panel .sub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+.tenant-list{display:flex;flex-direction:column;gap:8px;margin-bottom:24px;max-height:320px;overflow-y:auto;}
+.tenant-card{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;transition:all .15s;}
+.tenant-card:hover{border-color:var(--purple);background:var(--purple-subtle);}
+.tenant-card .tc-logo{width:42px;height:42px;border-radius:var(--radius-sm);background:var(--shell);display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0;font-size:18px;font-weight:700;color:var(--purple);}
+.tenant-card .tc-logo img{width:100%;height:100%;object-fit:contain;}
+.tenant-card .tc-info{flex:1;min-width:0;}
+.tenant-card .tc-name{font-weight:600;font-size:15px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.tenant-card .tc-type{font-size:12px;color:var(--muted);}
+.tenant-card .tc-del{width:28px;height:28px;border-radius:50%;border:none;background:transparent;color:var(--muted-soft);font-size:16px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.tenant-card .tc-del:hover{background:var(--danger-bg);color:var(--danger);}
+.tenant-empty{padding:24px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
+.tenant-divider{display:flex;align-items:center;gap:12px;margin-bottom:20px;color:var(--muted-soft);font-size:12px;}
+.tenant-divider::before,.tenant-divider::after{content:'';flex:1;height:1px;background:var(--line);}
+.tenant-form{display:flex;flex-direction:column;gap:12px;}
+.field{display:flex;flex-direction:column;gap:4px;}
+.field label{font-size:12px;font-weight:500;color:var(--muted);}
+.field input,.field select,.field textarea{padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:14px;color:var(--ink);background:var(--panel);outline:none;transition:border .15s;}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--purple);}
+.field textarea{resize:vertical;min-height:60px;}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+/* ===== AUTH SCREEN ===== */
+#authScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;}
+.auth-panel{width:100%;max-width:440px;background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow-subtle);padding:40px;position:relative;z-index:1;animation:shapeEnter 0.9s cubic-bezier(0.23,0.86,0.39,0.96) both;}
+.auth-panel h1{font-size:26px;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px;}
+.auth-panel .sub{color:var(--muted);font-size:13px;margin-bottom:24px;}
+.auth-form{display:flex;flex-direction:column;gap:12px;}
+.auth-msg{font-size:12.5px;padding:8px 12px;border-radius:var(--radius-sm);display:none;line-height:1.5;}
+.auth-msg.error{display:block;background:var(--danger-bg);color:var(--danger);}
+.auth-msg.info{display:block;background:var(--green-bg);color:var(--green-ink);}
+.auth-toggle{display:flex;align-items:center;justify-content:center;gap:6px;margin-top:16px;color:var(--muted);font-size:13px;}
+.auth-toggle a{color:var(--purple);font-weight:500;cursor:pointer;text-decoration:none;}
+.auth-toggle a:hover{text-decoration:underline;}
+.btn{padding:10px 18px;border-radius:var(--radius);font-size:14px;font-weight:500;border:none;background:rgba(148,151,169,0.08);color:var(--ink);box-shadow:var(--shadow-micro);transition:all .15s;}
+.btn:hover{background:rgba(148,151,169,0.16);}
+.btn.primary{background:var(--purple);color:#fff;box-shadow:none;}
+.btn.primary:hover{background:var(--purple-dark);}
+.btn.sm{padding:7px 12px;font-size:12px;border-radius:var(--radius-sm);}
+.btn.danger{background:var(--danger-bg);color:var(--danger);}
+.btn.danger:hover{background:rgba(192,57,43,0.16);}
+.btn.success{background:var(--green-bg);color:var(--green-ink);}
+.btn.full{width:100%;}
+
+/* ===== APP LAYOUT ===== */
+#appMain{display:none;min-height:100vh;}
+#appMain.active{display:flex;}
+.app-sidebar{width:240px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:10;}
+.app-logo{padding:20px 18px 16px;border-bottom:1px solid var(--line-soft);}
+.app-logo .al-name{font-weight:700;font-size:17px;letter-spacing:-0.3px;}
+.app-logo .al-tenant{font-size:11.5px;color:var(--muted);margin-top:2px;display:flex;align-items:center;gap:6px;}
+.app-logo .al-tenant span{background:var(--purple-subtle);color:var(--purple-dark);padding:2px 7px;border-radius:5px;font-weight:500;cursor:pointer;}
+.app-logo .al-tenant span:hover{background:var(--purple-subtle-hover);}
+.app-nav{flex:1;padding:12px 10px;display:flex;flex-direction:column;gap:2px;}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-sm);border:none;background:none;color:var(--muted);font-size:13.5px;font-weight:500;width:100%;text-align:left;transition:all .12s;}
+.nav-item:hover{background:var(--shell);color:var(--ink);}
+.nav-item.active{background:var(--purple-subtle);color:var(--purple-dark);box-shadow:inset 3px 0 0 var(--purple);}
+.nav-item .ni-icon{width:18px;text-align:center;font-size:15px;flex-shrink:0;}
+.nav-section{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted-soft);padding:16px 12px 6px;font-weight:600;}
+.app-content{margin-left:240px;flex:1;padding:28px 32px 80px;}
+.app-content.max-w{max-width:1100px;}
+.content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
+.content-header h2{font-size:20px;font-weight:700;letter-spacing:-0.3px;}
+.content-header .actions{display:flex;gap:8px;}
+
+/* ===== RECEIPT EDITOR ===== */
+.receipt-split{display:grid;grid-template-columns:1fr 400px;gap:24px;align-items:start;}
+@media(max-width:1000px){.receipt-split{grid-template-columns:1fr;}.app-sidebar{width:56px;}.app-sidebar .nav-item span:not(.ni-icon){display:none;}.app-sidebar .app-logo .al-name,.app-sidebar .app-logo .al-tenant,.app-sidebar .nav-section{display:none;}.app-content{margin-left:56px;}.app-logo{padding:12px 8px;}.app-logo .al-name{font-size:0;}.app-logo::after{content:'RD';font-weight:700;font-size:14px;color:var(--purple);}}
+.editor-form{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:24px;display:flex;flex-direction:column;gap:16px;box-shadow:var(--shadow-subtle);}
+.editor-form .ef-header{display:flex;justify-content:space-between;align-items:center;padding-bottom:14px;border-bottom:1px solid var(--line-soft);}
+.editor-form .ef-header h3{font-size:16px;font-weight:600;}
+.editor-field{display:flex;flex-direction:column;gap:4px;}
+.editor-field label{font-size:12px;font-weight:500;color:var(--muted);}
+.editor-field input,.editor-field select,.editor-field textarea{padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:14px;color:var(--ink);background:#fff;outline:none;transition:border .15s;width:100%;}
+.editor-field input:focus,.editor-field select:focus,.editor-field textarea:focus{border-color:var(--purple);}
+.editor-field .ac-wrap{position:relative;}
+.editor-field .ac-list{position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:200px;overflow-y:auto;background:#fff;border:1px solid var(--line);border-radius:var(--radius-sm);box-shadow:var(--shadow-subtle);z-index:20;padding:3px;display:none;}
+.editor-field .ac-list.open{display:block;}
+.editor-field .ac-item{padding:7px 10px;font-size:13px;border-radius:6px;cursor:pointer;}
+.editor-field .ac-item:hover,.editor-field .ac-item.active{background:var(--purple-subtle);}
+.editor-field .ac-item mark{background:none;color:var(--purple-dark);font-weight:600;}
+.editor-actions{display:flex;gap:8px;padding-top:8px;}
+
+/* ===== PREVIEW ===== */
+.preview-panel{position:sticky;top:28px;}
+.preview-toggle{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:4px;margin-bottom:12px;}
+.preview-toggle button{flex:1;padding:8px;border:none;border-radius:var(--radius-sm);background:none;font-size:12px;font-weight:500;color:var(--muted);transition:all .12s;}
+.preview-toggle button.active{background:var(--purple);color:#fff;}
+.preview-paper{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-subtle);overflow:hidden;}
+.preview-receipt{margin:0 auto;font-family:var(--sans);padding:24px;}
+.preview-receipt.receipt-80{width:80mm;max-width:100%;padding:16px;font-size:12px;}
+.preview-receipt.a4{width:210mm;min-height:297mm;padding:20mm;font-size:13px;}
+.pr-logo{margin-bottom:12px;text-align:center;}
+.pr-logo img{max-width:100px;max-height:70px;object-fit:contain;}
+.pr-shop-name{font-size:16px;font-weight:700;text-align:center;margin-bottom:2px;}
+.pr-shop-info{font-size:11px;color:var(--muted);text-align:center;white-space:pre-line;margin-bottom:12px;}
+.pr-title{font-size:18px;font-weight:700;text-align:center;margin:12px 0 4px;letter-spacing:1px;}
+.pr-subtitle{font-size:11px;color:var(--muted);text-align:center;font-family:var(--mono);margin-bottom:12px;}
+.pr-divider{border:none;border-top:1px solid var(--line);margin:10px 0;}
+.pr-divider.dashed{border-top-style:dashed;}
+.pr-field{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid var(--line-soft);}
+.pr-field:last-child{border-bottom:none;}
+.pr-field .prfl{color:var(--muted);font-weight:500;}
+.pr-field .prfv{color:var(--ink);font-weight:500;}
+.pr-field-row{padding:5px 0;font-size:12px;border-bottom:1px solid var(--line-soft);}
+.pr-field-row .pfrl{color:var(--muted);font-size:11px;}
+.pr-field-row .pfrv{color:var(--ink);font-weight:500;}
+.pr-text{padding:4px 0;font-size:12px;white-space:pre-line;}
+.pr-text.bold{font-weight:700;}
+.pr-text.center{text-align:center;}
+.pr-text.right{text-align:right;}
+.pr-text.large{font-size:18px;}
+.pr-text.small{font-size:10px;color:var(--muted);}
+.pr-footer{margin-top:14px;padding-top:10px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:11px;color:var(--muted);}
+.pr-spacer{height:8px;}
+.pr-table{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0;}
+.pr-table th{text-align:left;padding:4px 6px;border-bottom:2px solid var(--line);font-weight:600;font-size:10px;color:var(--muted);text-transform:uppercase;}
+.pr-table td{padding:4px 6px;border-bottom:1px solid var(--line-soft);}
+.pr-table .right{text-align:right;}
+
+/* ===== TEMPLATE BUILDER ===== */
+.builder-layout{display:grid;grid-template-columns:200px 1fr 260px;gap:16px;align-items:start;min-height:calc(100vh - 140px);}
+@media(max-width:1100px){.builder-layout{grid-template-columns:1fr;}}
+.builder-palette{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px;box-shadow:var(--shadow-subtle);position:sticky;top:28px;}
+.builder-palette h4{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:8px;font-weight:600;}
+.bp-item{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:var(--radius-sm);margin-bottom:4px;cursor:grab;font-size:12.5px;color:var(--ink);background:var(--panel);transition:all .12s;user-select:none;}
+.bp-item:hover{border-color:var(--purple);background:var(--purple-subtle);}
+.bp-item:active{cursor:grabbing;}
+.bp-item .bpi-icon{width:20px;text-align:center;font-size:14px;flex-shrink:0;}
+.builder-canvas{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-subtle);min-height:400px;}
+.builder-canvas h4{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:12px;font-weight:600;}
+.bc-drop-zone{min-height:300px;border:2px dashed var(--line);border-radius:var(--radius);padding:8px;transition:all .15s;}
+.bc-drop-zone.dragover{border-color:var(--purple);background:var(--purple-subtle);}
+.bc-drop-zone.empty{display:flex;align-items:center;justify-content:center;}
+.bc-drop-hint{color:var(--muted-soft);font-size:13px;}
+.bc-el{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line-soft);border-radius:var(--radius-sm);margin-bottom:4px;cursor:grab;background:var(--panel);transition:all .1s;position:relative;}
+.bc-el:hover{border-color:var(--purple);}
+.bc-el.selected{border-color:var(--purple);background:var(--purple-subtle);box-shadow:0 0 0 1px var(--purple);}
+.bc-el:active{cursor:grabbing;}
+.bc-el .bce-icon{width:20px;text-align:center;font-size:13px;flex-shrink:0;color:var(--muted);}
+.bc-el .bce-label{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.bc-el .bce-type{font-size:10px;color:var(--muted-soft);background:var(--shell);padding:2px 6px;border-radius:4px;}
+.bc-el .bce-del{width:22px;height:22px;border:none;border-radius:50%;background:transparent;color:var(--muted-soft);font-size:14px;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .1s;}
+.bc-el:hover .bce-del{opacity:1;}
+.bc-el .bce-del:hover{background:var(--danger-bg);color:var(--danger);}
+.bc-el .drag-handle{color:var(--muted-soft);font-size:12px;cursor:grab;padding:0 2px;}
+.builder-props{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow-subtle);position:sticky;top:28px;}
+.builder-props h4{font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted);margin-bottom:10px;font-weight:600;}
+.bp-empty{padding:20px 10px;text-align:center;color:var(--muted-soft);font-size:12px;line-height:1.6;}
+.bp-prop{margin-bottom:10px;}
+.bp-prop label{display:block;font-size:11px;color:var(--muted);margin-bottom:3px;font-weight:500;}
+.bp-prop input,.bp-prop select,.bp-prop textarea{width:100%;padding:7px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:12.5px;color:var(--ink);background:#fff;outline:none;}
+.bp-prop input:focus,.bp-prop select:focus,.bp-prop textarea:focus{border-color:var(--purple);}
+.bp-prop textarea{resize:vertical;min-height:50px;}
+
+/* ===== TEMPLATE LIBRARY ===== */
+.tpl-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px;}
+.tpl-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-subtle);cursor:pointer;transition:all .15s;position:relative;}
+.tpl-card:hover{border-color:var(--purple);box-shadow:var(--shadow-subtle),0 0 0 1px var(--purple);}
+.tpl-card .tc-badge{position:absolute;top:12px;right:12px;font-size:10px;padding:3px 8px;border-radius:6px;font-weight:500;}
+.tpl-card .tc-badge.default{background:var(--green-bg);color:var(--green-ink);}
+.tpl-card .tc-badge.custom{background:var(--amber-bg);color:var(--amber);}
+.tpl-card h3{font-size:15px;font-weight:600;margin-bottom:4px;padding-right:60px;}
+.tpl-card .tc-type{font-size:12px;color:var(--muted);margin-bottom:12px;}
+.tpl-card .tc-preview{background:var(--shell);border-radius:var(--radius-sm);padding:12px;margin-bottom:12px;font-size:11px;color:var(--muted);line-height:1.5;max-height:100px;overflow:hidden;}
+.tpl-card .tc-actions{display:flex;gap:6px;}
+
+/* ===== SETTINGS ===== */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+@media(max-width:800px){.settings-grid{grid-template-columns:1fr;}}
+.settings-section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-subtle);}
+.settings-section h3{font-size:15px;font-weight:600;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--line-soft);}
+.logo-upload{width:120px;height:100px;border:2px dashed var(--line);border-radius:var(--radius);display:flex;align-items:center;justify-content:center;text-align:center;cursor:pointer;color:var(--muted-soft);font-size:11px;line-height:1.4;overflow:hidden;position:relative;background:var(--shell);transition:all .15s;}
+.logo-upload:hover{border-color:var(--purple);color:var(--purple);}
+.logo-upload.has-logo{border-style:solid;padding:0;}
+.logo-upload img{width:100%;height:100%;object-fit:contain;}
+.logo-upload .clear-logo{position:absolute;top:3px;right:3px;width:20px;height:20px;background:rgba(16,17,20,0.72);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;}
+.color-input{display:flex;align-items:center;gap:8px;}
+.color-input input[type="color"]{width:36px;height:36px;border:1px solid var(--line);border-radius:var(--radius-sm);padding:2px;cursor:pointer;}
+.color-input input[type="text"]{flex:1;}
+
+/* ===== RECEIPT LIST ===== */
+.receipt-list{display:flex;flex-direction:column;gap:6px;}
+.receipt-card{display:flex;align-items:center;gap:14px;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;transition:all .12s;}
+.receipt-card:hover{border-color:var(--purple);background:var(--purple-subtle);}
+.receipt-card .rc-info{flex:1;min-width:0;}
+.receipt-card .rc-name{font-weight:500;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.receipt-card .rc-meta{font-size:11.5px;color:var(--muted);display:flex;gap:10px;margin-top:2px;}
+.receipt-card .rc-price{font-weight:600;color:var(--purple-dark);font-size:14px;}
+.receipt-card .rc-actions{display:flex;gap:4px;opacity:0;transition:opacity .1s;}
+.receipt-card:hover .rc-actions{opacity:1;}
+.receipt-card .rc-actions button{width:28px;height:28px;border:none;border-radius:var(--radius-sm);background:transparent;color:var(--muted);font-size:14px;}
+.receipt-card .rc-actions button:hover{background:var(--shell);}
+.receipt-card .rc-actions button.del:hover{background:var(--danger-bg);color:var(--danger);}
+.empty-state{padding:40px 20px;text-align:center;color:var(--muted);font-size:13px;line-height:1.6;}
+
+/* ===== RECEIPT HISTORY / DASHBOARD ===== */
+.rh-dash{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:20px;}
+.rh-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-micro);}
+.rh-stat .rh-num{font-size:24px;font-weight:700;letter-spacing:-0.5px;}
+.rh-stat .rh-lab{font-size:11.5px;color:var(--muted);margin-top:2px;font-weight:500;}
+.rh-stat.total .rh-num{color:var(--ink);}
+.rh-stat.waiting .rh-num{color:var(--amber);}
+.rh-stat.repaired .rh-num{color:var(--green);}
+.rh-stat.unpaid .rh-num{color:var(--danger);}
+.rh-stat.paid .rh-num{color:var(--green);}
+.rh-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.rh-toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;}
+.rh-toolbar input[type=text]:focus{border-color:var(--purple);}
+.rh-toolbar select{padding:9px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;cursor:pointer;}
+.rh-id{font-size:11px;color:var(--muted-soft);font-weight:600;letter-spacing:0.3px;font-family:var(--mono);}
+.rc-phone,.rc-issue,.rc-date{font-size:12px;color:var(--muted);}
+.rc-line{font-size:12px;color:var(--muted);}
+.rc-line b{color:var(--ink);font-weight:600;margin-right:4px;}
+.rc-status{display:flex;gap:8px;align-items:center;flex-shrink:0;}
+.status-toggle{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:11.5px;font-weight:600;cursor:pointer;background:#fff;color:var(--muted);user-select:none;transition:all .12s;white-space:nowrap;}
+.status-toggle .dot{width:8px;height:8px;border-radius:50%;background:var(--muted-soft);flex-shrink:0;}
+.status-toggle.on{background:var(--green-bg);border-color:rgba(20,158,97,0.4);color:var(--green-ink);}
+.status-toggle.on .dot{background:var(--green);}
+.status-toggle.amber.on{background:var(--amber-bg);border-color:rgba(217,119,6,0.4);color:var(--danger);}
+.status-toggle.amber.on .dot{background:var(--amber);}
+.receipt-card .rc-main{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px;}
+.rh-detail{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:24px;margin-top:4px;box-shadow:var(--shadow-subtle);}
+.rh-detail .rd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;flex-wrap:wrap;gap:10px;}
+.rh-detail .rd-title{font-size:16px;font-weight:700;}
+.rh-detail .rd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 24px;}
+.rh-detail .rd-item{display:flex;flex-direction:column;gap:2px;padding:10px 12px;background:var(--shell);border-radius:var(--radius-sm);}
+.rh-detail .rd-item .rd-k{font-size:10.5px;text-transform:uppercase;letter-spacing:0.6px;color:var(--muted-soft);font-weight:600;}
+.rh-detail .rd-item .rd-v{font-size:13.5px;color:var(--ink);overflow-wrap:anywhere;}
+.rh-detail .rd-actions{display:flex;gap:8px;margin-top:18px;flex-wrap:wrap;}
+.rd-statusline{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:16px;}
+
+/* ===== LANGUAGE SELECTOR ===== */
+#langScreen{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px;position:relative;overflow:hidden;}
+.lang-panel{width:100%;max-width:480px;background:var(--panel);border-radius:var(--radius-lg);box-shadow:var(--shadow-subtle);padding:40px;position:relative;z-index:1;animation:shapeEnter 0.9s cubic-bezier(0.23,0.86,0.39,0.96) both;}
+.lang-panel h1{font-size:26px;font-weight:700;margin-bottom:4px;letter-spacing:-0.5px;}
+.lang-panel .lang-sub{color:var(--muted);font-size:13px;margin-bottom:28px;}
+.lang-options{display:flex;flex-direction:column;gap:12px;}
+.lang-opt{display:flex;align-items:center;gap:14px;padding:18px 20px;border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;transition:all .15s;text-align:left;}
+.lang-opt:hover{border-color:var(--purple);background:var(--purple-subtle);}
+.lang-opt .lo-flag{font-size:28px;line-height:1;}
+.lang-opt .lo-name{font-size:16px;font-weight:600;}
+.lang-opt .lo-native{font-size:12px;color:var(--muted);}
+.lang-change-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);background:var(--panel);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;}
+.lang-change-btn:hover{border-color:var(--purple);color:var(--purple-dark);}
+
+/* ===== MODAL ===== */
+.modal-overlay{position:fixed;inset:0;background:rgba(16,17,20,0.4);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px;}
+.modal{background:var(--panel);border-radius:var(--radius-lg);box-shadow:0 16px 48px rgba(0,0,0,0.16);width:100%;max-width:480px;padding:28px;}
+.modal h3{font-size:18px;font-weight:600;margin-bottom:16px;}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px;}
+
+/* ===== PRINT ===== */
+@media print{
+  body *{visibility:hidden;}
+  .print-area,.print-area *{visibility:visible;}
+  .print-area{position:absolute;top:0;left:0;right:0;}
+  .print-area.a4{width:210mm;padding:15mm;}
+  .print-area.receipt-80{width:80mm;padding:5mm;font-size:11px;}
+}
+</style>
+</head>
+<body>
+
+<canvas id="flowCanvas" aria-hidden="true"></canvas>
+
+<!-- ===== AUTH SCREEN ===== -->
+<div id="authScreen" class="hidden">
+  <div class="tenant-bg">
+    <div class="bg-glow"></div>
+    <div class="shape s1" style="background:linear-gradient(to right, rgba(99,102,241,0.30), transparent 70%);"></div>
+    <div class="shape s2" style="background:linear-gradient(to right, rgba(244,63,94,0.30), transparent 70%);"></div>
+    <div class="shape s3" style="background:linear-gradient(to right, rgba(139,92,246,0.30), transparent 70%);"></div>
+    <div class="shape s5" style="background:linear-gradient(to right, rgba(16,185,129,0.30), transparent 70%);"></div>
+    <div class="shape s8" style="background:linear-gradient(to right, rgba(20,184,166,0.30), transparent 70%);"></div>
+    <div class="bg-floor"></div>
+  </div>
+  <div class="auth-panel">
+    <h1>RepairDesk</h1>
+    <p class="sub auth-sub" data-i18n="auth_sub">Sign in or create an account to sync your data securely</p>
+    <div id="authMsg" class="auth-msg"></div>
+    <form class="auth-form" id="authForm" novalidate>
+      <div class="field" id="authNameField" style="display:none;">
+        <label data-i18n="full_name">Full name</label>
+        <input id="authName" data-i18n-ph="full_name_ph" placeholder="e.g. Alice Smith">
+      </div>
+      <div class="field">
+        <label data-i18n="email">Email</label>
+        <input type="email" id="authEmail" autocomplete="email">
+      </div>
+      <div class="field">
+        <label data-i18n="password">Password</label>
+        <input type="password" id="authPassword" autocomplete="current-password">
+      </div>
+      <div class="field" id="authConfirmField" style="display:none;">
+        <label data-i18n="confirm_password">Confirm password</label>
+        <input type="password" id="authConfirm" autocomplete="new-password">
+      </div>
+      <button type="submit" class="btn primary full" id="authSubmitBtn" data-i18n="login">Log in</button>
+    </form>
+    <div class="auth-toggle">
+      <span id="authToggleText" data-i18n="no_account">No account yet?</span>
+      <a id="authToggleLink" data-i18n="create_account">Create account</a>
+    </div>
+  </div>
+</div>
+
+<!-- ===== LANGUAGE SELECTOR ===== -->
+<div id="langScreen">
+  <div class="tenant-bg">
+    <div class="bg-glow"></div>
+    <div class="shape s1" style="background:linear-gradient(to right, rgba(99,102,241,0.30), transparent 70%);"></div>
+    <div class="shape s2" style="background:linear-gradient(to right, rgba(244,63,94,0.30), transparent 70%);"></div>
+    <div class="shape s5" style="background:linear-gradient(to right, rgba(16,185,129,0.30), transparent 70%);"></div>
+    <div class="shape s7" style="background:linear-gradient(to right, rgba(168,85,247,0.30), transparent 70%);"></div>
+    <div class="shape s8" style="background:linear-gradient(to right, rgba(20,184,166,0.30), transparent 70%);"></div>
+    <div class="bg-floor"></div>
+  </div>
+  <div class="lang-panel">
+    <h1>RepairDesk</h1>
+    <p class="lang-sub" data-i18n="lang_choose">Choose your language / Choisissez votre langue</p>
+    <div class="lang-options">
+      <div class="lang-opt" data-lang="en">
+        <span class="lo-flag">&#127482;&#127480;</span>
+        <div><div class="lo-name">English</div><div class="lo-native">English</div></div>
+      </div>
+      <div class="lang-opt" data-lang="fr">
+        <span class="lo-flag">&#127467;&#127479;</span>
+        <div><div class="lo-name">French</div><div class="lo-native">Français</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TENANT SELECTOR ===== -->
+<div id="tenantScreen">
+  <div class="tenant-bg">
+    <div class="bg-glow"></div>
+    <div class="shape s1" style="background:linear-gradient(to right, rgba(99,102,241,0.30), transparent 70%);"></div>
+    <div class="shape s2" style="background:linear-gradient(to right, rgba(244,63,94,0.30), transparent 70%);"></div>
+    <div class="shape s3" style="background:linear-gradient(to right, rgba(139,92,246,0.30), transparent 70%);"></div>
+    <div class="shape s4" style="background:linear-gradient(to right, rgba(245,158,11,0.30), transparent 70%);"></div>
+    <div class="shape s5" style="background:linear-gradient(to right, rgba(16,185,129,0.30), transparent 70%);"></div>
+    <div class="shape s6" style="background:linear-gradient(to right, rgba(59,130,246,0.30), transparent 70%);"></div>
+    <div class="shape s7" style="background:linear-gradient(to right, rgba(168,85,247,0.30), transparent 70%);"></div>
+    <div class="shape s8" style="background:linear-gradient(to right, rgba(20,184,166,0.30), transparent 70%);"></div>
+    <div class="bg-floor"></div>
+  </div>
+  <div class="tenant-panel">
+    <h1>RepairDesk</h1>
+    <p class="sub" data-i18n="tenant_sub">Multi-tenant receipt &amp; template management</p>
+    <div class="tenant-list" id="tenantList"></div>
+    <div class="tenant-divider" data-i18n="tenant_or">or create a new shop</div>
+    <div class="tenant-form" id="tenantForm">
+      <div class="field-row">
+        <div class="field"><label data-i18n="shop_name">Shop name</label><input id="newShopName" data-i18n-ph="shop_name_ph" placeholder="e.g. Quick Fix Repairs"></div>
+        <div class="field"><label data-i18n="business_type">Business type</label>
+          <select id="newShopType">
+            <option value="phone_repair" data-i18n="type_phone_repair">Phone Repair</option>
+            <option value="laptop_repair" data-i18n="type_laptop_repair">Laptop Repair</option>
+            <option value="computer_repair" data-i18n="type_computer_repair">Computer Repair</option>
+            <option value="electronics" data-i18n="type_electronics">General Electronics</option>
+            <option value="auto_repair" data-i18n="type_auto_repair">Auto Repair</option>
+            <option value="appliance_repair" data-i18n="type_appliance_repair">Appliance Repair</option>
+            <option value="jewelry_repair" data-i18n="type_jewelry_repair">Jewelry Repair</option>
+            <option value="shoe_repair" data-i18n="type_shoe_repair">Shoe Repair</option>
+            <option value="custom" data-i18n="type_custom">Custom</option>
+          </select>
+        </div>
+      </div>
+      <div class="field-row" style="margin-top:4px;">
+        <div class="field"><label data-i18n="location">Location</label><input id="newShopLocation" data-i18n-ph="location_ph" placeholder="City / area"></div>
+        <div class="field"><label data-i18n="phone">Phone</label><input id="newShopPhone" placeholder="Contact phone"></div>
+      </div>
+      <button class="btn primary full" id="createShopBtn" data-i18n="create_shop">Create Shop</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="appMain">
+  <nav class="app-sidebar">
+    <div class="app-logo">
+      <div class="al-name">RepairDesk</div>
+      <div class="al-tenant"><span id="switchTenant" data-i18n="switch_shop" data-i18n-title="switch_shop_title" title="Switch shop">switch shop</span></div>
+    </div>
+    <div class="nav-section" data-i18n="nav_workspace">Workspace</div>
+    <button class="nav-item active" data-view="receipts"><span class="ni-icon">&#9776;</span><span data-i18n="nav_receipts">Receipts</span></button>
+    <button class="nav-item" data-view="templates"><span class="ni-icon">&#9635;</span><span data-i18n="nav_templates">Templates</span></button>
+    <button class="nav-item" data-view="builder"><span class="ni-icon">&#9998;</span><span data-i18n="nav_builder">Template Builder</span></button>
+    <div class="nav-section" data-i18n="nav_manage">Manage</div>
+    <button class="nav-item" data-view="settings"><span class="ni-icon">&#9881;</span><span data-i18n="nav_settings">Settings</span></button>
+    <button class="nav-item" id="changeLangBtn"><span class="ni-icon">&#127760;</span><span data-i18n="nav_language">Language</span></button>
+    <button class="nav-item nav-logout" id="logoutBtn"><span class="ni-icon">&#8614;</span><span data-i18n="logout">Log out</span></button>
+  </nav>
+
+  <main class="app-content max-w" id="appContent"></main>
+</div>
+
+<!-- ===== MODAL CONTAINER ===== -->
+<div id="modalRoot"></div>
+
+<!-- ===== PRINT AREA ===== -->
+<div id="printArea" class="print-area hidden"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+(function(){
+"use strict";
+
+/* ===================================================================
+   SUPABASE CONFIG
+   =================================================================== */
+const SUPABASE_URL = 'https://kjfiljoxpmrypzclmdyx.supabase.co';
+const SUPABASE_ANON = 'sb_publishable_QAxLtU2w6e9tBmAUHWeZgA_9a_O9SyI';
+const rdBucketMigrated = 'rd_sb_migrated';
+const supabase = (typeof window.supabase !== 'undefined') ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON) : null;
+const sbReady = !!supabase;
+
+/* ===================================================================
+   I18N – English / French
+   =================================================================== */
+const I18N = {
+  dict: {
+    en: {
+      lang_choose:'Choose your language',
+      nav_language:'Language',
+      nav_workspace:'Workspace',
+      nav_receipts:'Receipts',
+      nav_templates:'Templates',
+      nav_builder:'Template Builder',
+      nav_manage:'Manage',
+      nav_settings:'Settings',
+      login:'Log in',
+      sign_up:'Sign up',
+      logout:'Log out',
+      email:'Email',
+      password:'Password',
+      confirm_password:'Confirm password',
+      no_account:'No account yet?',
+      have_account:'Already have an account?',
+      create_account:'Create account',
+      login_title:'Welcome back',
+      signup_title:'Create your account',
+      auth_welcome:'Sign in to manage your shops',
+      auth_sub:'Sign in or create an account to sync your data securely',
+      auth_invalid:'Invalid email or password.',
+      auth_exists:'An account with this email already exists. Try logging in.',
+      auth_failed:'Something went wrong. Please try again.',
+      auth_password_short:'Password must be at least 6 characters.',
+      auth_email_invalid:'Please enter a valid email address.',
+      auth_password_mismatch:'Passwords do not match.',
+      auth_signed_out:'You have been signed out.',
+      full_name:'Full name',
+      full_name_ph:'e.g. Alice Smith',
+      auth_check_email:'Check your email to confirm your account, then log in.',
+      switch_shop:'switch shop',
+      switch_shop_title:'Switch shop',
+      tenant_sub:'Multi-tenant receipt & template management',
+      tenant_or:'or create a new shop',
+      shop_name:'Shop name',
+      shop_name_ph:'e.g. Quick Fix Repairs',
+      business_type:'Business type',
+      type_phone_repair:'Phone Repair',
+      type_laptop_repair:'Laptop Repair',
+      type_computer_repair:'Computer Repair',
+      type_electronics:'General Electronics',
+      type_auto_repair:'Auto Repair',
+      type_appliance_repair:'Appliance Repair',
+      type_jewelry_repair:'Jewelry Repair',
+      type_shoe_repair:'Shoe Repair',
+      type_custom:'Custom',
+      create_shop:'Create Shop',
+      shop_empty:'No shops yet. Create your first shop below to get started.',
+      shop_name_required:'Please enter a shop name.',
+      delete_shop:'Delete shop',
+      delete_shop_confirm:'Delete shop "{name}"? This will remove all templates and receipts.',
+      receipts:'Receipts',
+      new_receipt:'+ New Receipt',
+      export_all:'Export All',
+      receipts_empty:'No receipts yet. Click <strong>+ New Receipt</strong> to create your first one.',
+      unnamed:'Unnamed Receipt',
+      receipt_history:'Receipt History',
+      total_receipts:'Total Receipts',
+      waiting_for_repair:'Waiting for Repair',
+      repaired:'Repaired',
+      not_repaired:'Not Repaired',
+      unpaid:'Unpaid',
+      paid:'Paid',
+      search_receipts:'Search by name, phone, number or device...',
+      all_statuses:'All Statuses',
+      all:'All',
+      sort_newest:'Newest first',
+      sort_oldest:'Oldest first',
+      filter:'Filter',
+      sort_by:'Sort by',
+      customer:'Customer',
+      device:'Device',
+      description:'Description',
+      price:'Price',
+      date:'Date',
+      status:'Status',
+      mark_repaired:'Repaired',
+      mark_paid:'Paid',
+      receipt_details:'Receipt Details',
+      open_receipt:'Open receipt',
+      no_results:'No receipts match your search.',
+      receipt_80:'Receipt',
+      a4:'A4',
+      print:'Print',
+      edit:'Edit',
+      delete:'Delete',
+      back:'&#8592; Back',
+      edit_receipt:'Edit Receipt',
+      new_receipt_title:'New Receipt',
+      receipt_details:'Receipt Details',
+      save:'Save',
+      update:'Update',
+      field_required:'Please fill in: ',
+      confirm_delete_receipt:'Delete this receipt?',
+      confirm_delete_receipt_all:'Delete ALL receipts for this shop? This cannot be undone.',
+      receipts_cleared:'All receipts cleared.',
+      templates:'Templates',
+      import_json:'Import JSON',
+      new_template:'+ New Template',
+      templates_empty:'No templates. Create one or it will be auto-generated based on your business type.',
+      default:'Default',
+      custom:'Custom',
+      elements:'elements',
+      fields:'fields',
+      edit_in_builder:'Edit in Builder',
+      export_json:'Export JSON',
+      duplicate:'Duplicate',
+      delete_template:'Delete',
+      template_name:'Template name:',
+      a4_question:'Use A4 format?\n\nOK = A4\nCancel = 80mm Receipt',
+      confirm_delete_template:'Delete template "{name}"?',
+      invalid_template_json:'Invalid template JSON: ',
+      builder:'Template Builder',
+      add_field:'+ Add Field',
+      save_template:'Save Template',
+      palette_elements:'Elements',
+      logo:'Logo',
+      text:'Text',
+      field:'Field',
+      divider:'Divider',
+      spacer:'Spacer',
+      table:'Table',
+      fields_palette:'Fields',
+      layout:'Layout',
+      drag_hint:'Drag elements here to build your template',
+      properties:'Properties',
+      select_element:'Select an element to edit its properties',
+      field_definitions:'Field Definitions',
+      no_properties:'No properties for this element',
+      unbound_field:'Unbound Field',
+      save_template_ok:'Template saved!',
+      add_field_def:'Add Field Definition',
+      edit_field_def:'Edit Field Definition',
+      field_key:'Field Key (unique identifier)',
+      field_label:'Display Label',
+      field_type:'Field Type',
+      field_group:'Group',
+      placeholder:'Placeholder',
+      options:'Options / Suggestions (one per line)',
+      required_field:'Required field',
+      cancel:'Cancel',
+      add_field_btn:'Add Field',
+      save_field:'Save',
+      field_key_required:'Field key is required',
+      label_required:'Label is required',
+      field_key_exists:'Field key already exists',
+      delete_field_confirm:'Delete field "{label}"?',
+      group_customer:'Customer',
+      group_device:'Device',
+      group_repair:'Repair',
+      group_payment:'Payment',
+      group_meta:'Details',
+      group_general:'General',
+      settings:'Settings',
+      shop_settings:'Shop Settings',
+      branding:'Branding',
+      shop_name_setting:'Shop Name',
+      logo:'Logo',
+      logo_hint:'Click or drop<br>logo image',
+      contact_info:'Contact Info',
+      address:'Address',
+      location:'Location',
+      location_ph:'City / area',
+      phone:'Phone',
+      phone_ph:'Contact phone',
+      appearance:'Appearance',
+      accent_color:'Accent Color',
+      default_template:'Default Template',
+      none:'None',
+      data:'Data',
+      export_shop_data:'Export Shop Data (JSON)',
+      clear_receipts:'Clear All Receipts',
+      back_to_list:'Back',
+      shop_data:'shop data',
+      export_all_tpl:'Import JSON',
+      print_title:'Print',
+      thank_you:'Thank you',
+      close:'Close',
+      confirm:'Confirm',
+      create_shop_btn:'Create Shop',
+      prop_max_width:'Max Width (px)',
+      prop_max_height:'Max Height (px)',
+      prop_align:'Alignment',
+      prop_content:'Content',
+      prop_content_hint:'Use {{variable}} for dynamic content',
+      prop_font_size:'Font Size',
+      prop_font_weight:'Font Weight',
+      prop_color:'Color',
+      prop_font_family:'Font Family',
+      prop_bind:'Bind to Field',
+      prop_layout:'Layout',
+      prop_bold:'Bold Value',
+      prop_style:'Style',
+      prop_height:'Height (px)',
+      left:'Left', center:'Center', right:'Right',
+      normal:'Normal', bold:'Bold', semibold:'Semi-bold',
+      layout_inline:'Inline (label: value)', layout_block:'Block (label above)',
+      solid:'Solid', dashed:'Dashed', dotted:'Dotted'
+    },
+    fr: {
+      lang_choose:'Choisissez votre langue',
+      nav_language:'Langue',
+      nav_workspace:'Espace de travail',
+      nav_receipts:'Reçus',
+      nav_templates:'Modèles',
+      nav_builder:'Éditeur de modèle',
+      nav_manage:'Gérer',
+      nav_settings:'Paramètres',
+      login:'Se connecter',
+      sign_up:'S\'inscrire',
+      logout:'Se déconnecter',
+      email:'Email',
+      password:'Mot de passe',
+      confirm_password:'Confirmer le mot de passe',
+      no_account:'Pas encore de compte ?',
+      have_account:'Déjà un compte ?',
+      create_account:'Créer un compte',
+      login_title:'Bon retour',
+      signup_title:'Créez votre compte',
+      auth_welcome:'Connectez-vous pour gérer vos boutiques',
+      auth_sub:'Connectez-vous ou créez un compte pour synchroniser vos données en toute sécurité',
+      auth_invalid:'Email ou mot de passe invalide.',
+      auth_exists:'Un compte existe déjà avec cet email. Essayez de vous connecter.',
+      auth_failed:'Une erreur est survenue. Veuillez réessayer.',
+      auth_password_short:'Le mot de passe doit contenir au moins 6 caractères.',
+      auth_email_invalid:'Veuillez saisir une adresse email valide.',
+      auth_password_mismatch:'Les mots de passe ne correspondent pas.',
+      auth_signed_out:'Vous avez été déconnecté.',
+      full_name:'Nom complet',
+      full_name_ph:'ex. Alice Martin',
+      auth_check_email:'Vérifiez votre email pour confirmer votre compte, puis connectez-vous.',
+      switch_shop:'changer de boutique',
+      switch_shop_title:'Changer de boutique',
+      tenant_sub:'Gestion multi-tenant de reçus & de modèles',
+      tenant_or:'ou créez une nouvelle boutique',
+      shop_name:'Nom de la boutique',
+      shop_name_ph:'ex. Réparations Rapides',
+      business_type:'Type d\'activité',
+      type_phone_repair:'Réparation de téléphone',
+      type_laptop_repair:'Réparation d\'ordinateur portable',
+      type_computer_repair:'Réparation d\'ordinateur',
+      type_electronics:'Électronique générale',
+      type_auto_repair:'Réparation automobile',
+      type_appliance_repair:'Réparation d\'électroménager',
+      type_jewelry_repair:'Réparation de bijoux',
+      type_shoe_repair:'Réparation de chaussures',
+      type_custom:'Personnalisé',
+      create_shop:'Créer la boutique',
+      shop_empty:'Aucune boutique. Créez votre première boutique ci-dessous pour commencer.',
+      shop_name_required:'Veuillez saisir un nom de boutique.',
+      delete_shop:'Supprimer la boutique',
+      delete_shop_confirm:'Supprimer la boutique « {name} » ? Cela supprimera tous les modèles et reçus.',
+      receipts:'Reçus',
+      new_receipt:'+ Nouveau reçu',
+      export_all:'Tout exporter',
+      receipts_empty:'Aucun reçu. Cliquez sur <strong>+ Nouveau reçu</strong> pour en créer un.',
+      unnamed:'Reçu sans nom',
+      receipt_history:'Historique des reçus',
+      total_receipts:'Total des reçus',
+      waiting_for_repair:'En attente de réparation',
+      repaired:'Réparé',
+      not_repaired:'Non réparé',
+      unpaid:'Non payé',
+      paid:'Payé',
+      search_receipts:'Rechercher par nom, téléphone, numéro ou appareil...',
+      all_statuses:'Tous les statuts',
+      all:'Tous',
+      sort_newest:'Plus récents d\'abord',
+      sort_oldest:'Plus anciens d\'abord',
+      filter:'Filtre',
+      sort_by:'Trier par',
+      customer:'Client',
+      device:'Appareil',
+      description:'Description',
+      price:'Prix',
+      date:'Date',
+      status:'Statut',
+      mark_repaired:'Réparé',
+      mark_paid:'Payé',
+      receipt_details:'Détails du reçu',
+      open_receipt:'Ouvrir le reçu',
+      no_results:'Aucun reçu ne correspond à votre recherche.',
+      receipt_80:'Reçu',
+      a4:'A4',
+      print:'Imprimer',
+      edit:'Modifier',
+      delete:'Supprimer',
+      back:'&#8592; Retour',
+      edit_receipt:'Modifier le reçu',
+      new_receipt_title:'Nouveau reçu',
+      receipt_details:'Détails du reçu',
+      save:'Enregistrer',
+      update:'Mettre à jour',
+      field_required:'Veuillez remplir : ',
+      confirm_delete_receipt:'Supprimer ce reçu ?',
+      confirm_delete_receipt_all:'Supprimer TOUS les reçus de cette boutique ? Cette action est irréversible.',
+      receipts_cleared:'Tous les reçus ont été supprimés.',
+      templates:'Modèles',
+      import_json:'Importer JSON',
+      new_template:'+ Nouveau modèle',
+      templates_empty:'Aucun modèle. Créez-en un ou il sera généré automatiquement selon votre type d\'activité.',
+      default:'Par défaut',
+      custom:'Personnalisé',
+      elements:'éléments',
+      fields:'champs',
+      edit_in_builder:'Modifier dans l\'éditeur',
+      export_json:'Exporter JSON',
+      duplicate:'Dupliquer',
+      delete_template:'Supprimer',
+      template_name:'Nom du modèle :',
+      a4_question:'Utiliser le format A4 ?\n\nOK = A4\nAnnuler = Reçu 80mm',
+      confirm_delete_template:'Supprimer le modèle « {name} » ?',
+      invalid_template_json:'JSON de modèle invalide : ',
+      builder:'Éditeur de modèle',
+      add_field:'+ Ajouter un champ',
+      save_template:'Enregistrer le modèle',
+      palette_elements:'Éléments',
+      logo:'Logo',
+      text:'Texte',
+      field:'Champ',
+      divider:'Séparateur',
+      spacer:'Espacement',
+      table:'Tableau',
+      fields_palette:'Champs',
+      layout:'Disposition',
+      drag_hint:'Faites glisser des éléments ici pour créer votre modèle',
+      properties:'Propriétés',
+      select_element:'Sélectionnez un élément pour modifier ses propriétés',
+      field_definitions:'Définitions des champs',
+      no_properties:'Aucune propriété pour cet élément',
+      unbound_field:'Champ non lié',
+      save_template_ok:'Modèle enregistré !',
+      add_field_def:'Ajouter une définition de champ',
+      edit_field_def:'Modifier la définition de champ',
+      field_key:'Clé du champ (identifiant unique)',
+      field_label:'Libellé affiché',
+      field_type:'Type de champ',
+      field_group:'Groupe',
+      placeholder:'Espace réservé',
+      options:'Options / Suggestions (une par ligne)',
+      required_field:'Champ obligatoire',
+      cancel:'Annuler',
+      add_field_btn:'Ajouter un champ',
+      save_field:'Enregistrer',
+      field_key_required:'La clé du champ est requise',
+      label_required:'Le libellé est requis',
+      field_key_exists:'Cette clé de champ existe déjà',
+      delete_field_confirm:'Supprimer le champ « {label} » ?',
+      group_customer:'Client',
+      group_device:'Appareil',
+      group_repair:'Réparation',
+      group_payment:'Paiement',
+      group_meta:'Détails',
+      group_general:'Général',
+      settings:'Paramètres',
+      shop_settings:'Paramètres de la boutique',
+      branding:'Identité visuelle',
+      shop_name_setting:'Nom de la boutique',
+      logo:'Logo',
+      logo_hint:'Cliquez ou déposez<br>votre image de logo',
+      contact_info:'Coordonnées',
+      address:'Adresse',
+      location:'Localisation',
+      location_ph:'Ville / zone',
+      phone:'Téléphone',
+      phone_ph:'Téléphone de contact',
+      appearance:'Apparence',
+      accent_color:'Couleur d\'accent',
+      default_template:'Modèle par défaut',
+      none:'Aucun',
+      data:'Données',
+      export_shop_data:'Exporter les données (JSON)',
+      clear_receipts:'Effacer tous les reçus',
+      back_to_list:'Retour',
+      shop_data:'données boutique',
+      export_all_tpl:'Importer JSON',
+      print_title:'Imprimer',
+      thank_you:'Merci',
+      close:'Fermer',
+      confirm:'Confirmer',
+      create_shop_btn:'Créer la boutique',
+      prop_max_width:'Largeur max (px)',
+      prop_max_height:'Hauteur max (px)',
+      prop_align:'Alignement',
+      prop_content:'Contenu',
+      prop_content_hint:'Utilisez {{variable}} pour du contenu dynamique',
+      prop_font_size:'Taille de police',
+      prop_font_weight:'Gras de police',
+      prop_color:'Couleur',
+      prop_font_family:'Famille de police',
+      prop_bind:'Lier au champ',
+      prop_layout:'Disposition',
+      prop_bold:'Valeur en gras',
+      prop_style:'Style',
+      prop_height:'Hauteur (px)',
+      left:'Gauche', center:'Centre', right:'Droite',
+      normal:'Normal', bold:'Gras', semibold:'Semi-gras',
+      layout_inline:'En ligne (libellé : valeur)', layout_block:'Bloc (libellé au-dessus)',
+      solid:'Plein', dashed:'Tirets', dotted:'Pointillés'
+    }
+  },
+  lang:'en'
+};
+
+I18N.t = function(key, params){
+  let s = (I18N.dict[I18N.lang] && I18N.dict[I18N.lang][key]) || I18N.dict.en[key] || key;
+  if(params){ Object.keys(params).forEach(k => { s = s.replace(new RegExp('\\{'+k+'\\}','g'), params[k]); }); }
+  return s;
+};
+I18N.getDict = function(){ return I18N.dict[I18N.lang]; };
+
+/* Optional translation for stored field labels (default template field names) */
+I18N.fieldLabels = {
+  en: {
+    'Customer Name':'Customer Name','Customer Phone':'Customer Phone','Customer Email':'Customer Email',
+    'Device Model':'Device Model','Device Color':'Device Color','IMEI / Serial':'IMEI / Serial',
+    'Issue Description':'Issue Description','Technician':'Technician','Status':'Status',
+    'Brand':'Brand','Model':'Model','Serial Number':'Serial Number',
+    'Subtotal':'Subtotal','Tax':'Tax','Total':'Total','Payment Method':'Payment Method',
+    'Warranty':'Warranty','Notes':'Notes','Invoice Number':'Invoice Number','Date':'Date'
+  },
+  fr: {
+    'Customer Name':'Nom du client','Customer Phone':'Téléphone du client','Customer Email':'Email du client',
+    'Device Model':'Modèle de l\'appareil','Device Color':'Couleur de l\'appareil','IMEI / Serial':'IMEI / N° de série',
+    'Issue Description':'Description du problème','Technician':'Technicien','Status':'Statut',
+    'Brand':'Marque','Model':'Modèle','Serial Number':'N° de série',
+    'Subtotal':'Sous-total','Tax':'Taxe','Total':'Total','Payment Method':'Mode de paiement',
+    'Warranty':'Garantie','Notes':'Notes','Invoice Number':'N° de facture','Date':'Date'
+  }
+};
+I18N.fieldLabel = function(orig){
+  if(!orig) return orig;
+  const map = (I18N.dict[I18N.lang] && I18N.fieldLabels[I18N.lang]) || I18N.fieldLabels.en;
+  return map[orig] || orig;
+};
+I18N.applyStatic = function(){
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    el.innerHTML = I18N.t(k);
+  });
+  document.querySelectorAll('[data-i18n-ph]').forEach(el => {
+    const k = el.getAttribute('data-i18n-ph');
+    el.setAttribute('placeholder', I18N.t(k));
+  });
+  document.querySelectorAll('[data-i18n-title]').forEach(el => {
+    const k = el.getAttribute('data-i18n-title');
+    el.setAttribute('title', I18N.t(k));
+  });
+};
+
+/* ===================================================================
+   STORE – tenant-isolated localStorage
+   =================================================================== */
+const Store = {
+  _prefix(tenantId){ return 'rd_' + tenantId + '_'; },
+  get(tenantId, key){
+    try{ return JSON.parse(localStorage.getItem(this._prefix(tenantId) + key)); }catch(e){ return null; }
+  },
+  set(tenantId, key, val){
+    localStorage.setItem(this._prefix(tenantId) + key, JSON.stringify(val));
+  },
+  remove(tenantId, key){
+    localStorage.removeItem(this._prefix(tenantId) + key);
+  },
+  getGlobal(key){
+    try{ return JSON.parse(localStorage.getItem('rd_global_' + key)); }catch(e){ return null; }
+  },
+  setGlobal(key, val){
+    localStorage.setItem('rd_global_' + key, JSON.stringify(val));
+  },
+  getTenants(){ return this.getGlobal('tenants') || []; },
+  setTenants(list){ this.setGlobal('tenants', list); },
+  getTenant(id){ return this.getTenants().find(t => t.id === id); },
+  createTenant(data){
+    const list = this.getTenants();
+    const t = { id:'t' + Date.now() + Math.random().toString(36).slice(2,6), ...data, createdAt:Date.now() };
+    list.push(t); this.setTenants(list);
+    this.set(t.id, 'templates', this.getDefaultTemplates(data.businessType));
+    this.set(t.id, 'receipts', []);
+    this.set(t.id, 'settings', { shopName:data.name, logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null });
+    return t;
+  },
+  deleteTenant(id){
+    const list = this.getTenants().filter(t => t.id !== id);
+    this.setTenants(list);
+    ['templates','receipts','settings'].forEach(k => this.remove(id, k));
+    if(Store.cloudOn && sbReady && supabase){
+      (async () => {
+        await supabase.from('receipts').delete().eq('tenant_id', id);
+        await supabase.from('templates').delete().eq('tenant_id', id);
+        await supabase.from('tenants').delete().eq('id', id);
+      })().catch(e => console.warn('tenant delete sync failed', e));
+    }
+  },
+  getTemplates(tenantId){ return this.get(tenantId, 'templates') || []; },
+  setTemplates(tenantId, list){ this.set(tenantId, 'templates', list); },
+  getReceipts(tenantId){ return this.get(tenantId, 'receipts') || []; },
+  setReceipts(tenantId, list){ this.set(tenantId, 'receipts', list); },
+  getSettings(tenantId){ return this.get(tenantId, 'settings') || { shopName:'', logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null }; },
+  setSettings(tenantId, s){ this.set(tenantId, 'settings', s); },
+
+  getDefaultTemplates(businessType){
+    const base = {
+      phone_repair: [
+        {
+          id:'tpl_phone_80', name:'Phone Repair (Receipt)', format:'receipt_80', isDefault:true,
+          fieldDefs:[
+            {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
+            {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
+            {key:'device_model',label:'Device Model',type:'autocomplete',placeholder:'e.g. iPhone 15 Pro',group:'device',suggestions:['iPhone 16 Pro Max','iPhone 16 Pro','iPhone 16','iPhone 15 Pro Max','iPhone 15 Pro','iPhone 15','iPhone 14 Pro Max','iPhone 14 Pro','iPhone 14','iPhone 13 Pro','iPhone 13','iPhone 12','iPhone 11','Samsung Galaxy S25 Ultra','Samsung Galaxy S25','Samsung Galaxy S24 Ultra','Samsung Galaxy S24','Samsung Galaxy S23','Samsung Galaxy S22','Samsung Galaxy A55','Samsung Galaxy A54','Samsung Galaxy A34','Samsung Galaxy A15','Google Pixel 9 Pro','Google Pixel 9','Google Pixel 8 Pro','Google Pixel 8','Xiaomi 14','Redmi Note 13 Pro','OnePlus 12','Huawei P60 Pro']},
+            {key:'device_color',label:'Device Color',type:'text',placeholder:'e.g. Space Black',group:'device'},
+            {key:'imei',label:'IMEI / Serial',type:'text',placeholder:'IMEI number',group:'device'},
+            {key:'issue',label:'Issue Description',type:'textarea',placeholder:'e.g. Cracked screen, battery drain',required:true,group:'repair'},
+            {key:'technician',label:'Technician',type:'text',placeholder:'Assigned tech',group:'repair'},
+            {key:'repair_status',label:'Status',type:'select',options:['Received','Diagnosed','In Progress','Waiting for Parts','Completed','Ready for Pickup'],group:'repair',defaultVal:'Received'},
+            {key:'subtotal',label:'Subtotal',type:'currency',placeholder:'0.00',group:'payment'},
+            {key:'tax',label:'Tax',type:'currency',placeholder:'0.00',group:'payment'},
+            {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true},
+            {key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Bank Transfer','Mobile Pay','Other'],group:'payment'},
+            {key:'warranty',label:'Warranty',type:'text',placeholder:'e.g. 30 days',group:'meta'},
+            {key:'notes',label:'Notes',type:'textarea',placeholder:'Additional notes',group:'meta'}
+          ],
+          elements:[
+            {id:'e1',type:'logo',config:{maxWidth:80,maxHeight:50,align:'center'}},
+            {id:'e2',type:'text',config:{content:'{{shop_name}}',align:'center',fontSize:16,fontWeight:'bold'}},
+            {id:'e3',type:'text',config:{content:'{{shop_address}}',align:'center',fontSize:10,color:'#686b82'}},
+            {id:'e4',type:'divider',config:{style:'solid'}},
+            {id:'e5',type:'text',config:{content:'REPAIR RECEIPT',align:'center',fontSize:16,fontWeight:'bold'}},
+            {id:'e6',type:'text',config:{content:'No. {{receipt_number}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}},
+            {id:'e7',type:'divider',config:{style:'solid'}},
+            {id:'e8',type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
+            {id:'e9',type:'field',config:{fieldKey:'customer_phone',layout:'inline'}},
+            {id:'e10',type:'field',config:{fieldKey:'device_model',layout:'inline'}},
+            {id:'e11',type:'field',config:{fieldKey:'imei',layout:'inline'}},
+            {id:'e12',type:'field',config:{fieldKey:'issue',layout:'inline'}},
+            {id:'e13',type:'field',config:{fieldKey:'technician',layout:'inline'}},
+            {id:'e14',type:'field',config:{fieldKey:'repair_status',layout:'inline'}},
+            {id:'e15',type:'divider',config:{style:'solid'}},
+            {id:'e16',type:'field',config:{fieldKey:'subtotal',layout:'inline'}},
+            {id:'e17',type:'field',config:{fieldKey:'tax',layout:'inline'}},
+            {id:'e18',type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
+            {id:'e19',type:'field',config:{fieldKey:'payment_method',layout:'inline'}},
+            {id:'e20',type:'field',config:{fieldKey:'warranty',layout:'inline'}},
+            {id:'e21',type:'divider',config:{style:'solid'}},
+            {id:'e22',type:'text',config:{content:'Thank you for your business!',align:'center',fontSize:11,color:'#686b82'}},
+            {id:'e23',type:'text',config:{content:'{{current_date}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}}
+          ],
+          styles:{accentColor:'#7132f5',fontFamily:'IBM Plex Sans'}
+        },
+        {
+          id:'tpl_phone_a4', name:'Phone Repair (A4 Invoice)', format:'a4', isDefault:true,
+          fieldDefs:[
+            {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
+            {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
+            {key:'customer_email',label:'Customer Email',type:'email',placeholder:'Email address',group:'customer'},
+            {key:'device_model',label:'Device Model',type:'autocomplete',placeholder:'e.g. iPhone 15 Pro',group:'device',suggestions:['iPhone 16 Pro Max','iPhone 16 Pro','iPhone 16','iPhone 15 Pro Max','iPhone 15 Pro','iPhone 15','Samsung Galaxy S25 Ultra','Samsung Galaxy S24 Ultra','Google Pixel 9 Pro']},
+            {key:'device_color',label:'Device Color',type:'text',placeholder:'Space Black',group:'device'},
+            {key:'imei',label:'IMEI / Serial',type:'text',placeholder:'IMEI number',group:'device'},
+            {key:'issue',label:'Issue Description',type:'textarea',placeholder:'Describe the issue',required:true,group:'repair'},
+            {key:'technician',label:'Technician',type:'text',placeholder:'Assigned tech',group:'repair'},
+            {key:'repair_status',label:'Status',type:'select',options:['Received','Diagnosed','In Progress','Waiting for Parts','Completed','Ready for Pickup'],group:'repair',defaultVal:'Received'},
+            {key:'subtotal',label:'Subtotal',type:'currency',placeholder:'0.00',group:'payment'},
+            {key:'tax',label:'Tax',type:'currency',placeholder:'0.00',group:'payment'},
+            {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true},
+            {key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Bank Transfer','Mobile Pay','Other'],group:'payment'},
+            {key:'warranty',label:'Warranty',type:'text',placeholder:'e.g. 30 days',group:'meta'},
+            {key:'notes',label:'Notes',type:'textarea',placeholder:'Additional notes',group:'meta'}
+          ],
+          elements:[
+            {id:'a1',type:'logo',config:{maxWidth:120,maxHeight:80,align:'left'}},
+            {id:'a2',type:'text',config:{content:'{{shop_name}}',align:'left',fontSize:20,fontWeight:'bold'}},
+            {id:'a3',type:'text',config:{content:'{{shop_address}}',align:'left',fontSize:11,color:'#686b82'}},
+            {id:'a4',type:'text',config:{content:'INVOICE',align:'right',fontSize:24,fontWeight:'bold',color:'#7132f5'}},
+            {id:'a5',type:'text',config:{content:'No. {{receipt_number}}',align:'right',fontSize:11,color:'#9497a9',fontFamily:'monospace'}},
+            {id:'a6',type:'text',config:{content:'Date: {{current_date}}',align:'right',fontSize:11,color:'#686b82'}},
+            {id:'a7',type:'divider',config:{style:'solid'}},
+            {id:'a8',type:'text',config:{content:'BILL TO',align:'left',fontSize:10,fontWeight:'bold',color:'#9497a9'}},
+            {id:'a9',type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
+            {id:'a10',type:'field',config:{fieldKey:'customer_phone',layout:'inline'}},
+            {id:'a11',type:'field',config:{fieldKey:'customer_email',layout:'inline'}},
+            {id:'a12',type:'divider',config:{style:'solid'}},
+            {id:'a13',type:'text',config:{content:'DEVICE DETAILS',align:'left',fontSize:10,fontWeight:'bold',color:'#9497a9'}},
+            {id:'a14',type:'field',config:{fieldKey:'device_model',layout:'inline'}},
+            {id:'a15',type:'field',config:{fieldKey:'device_color',layout:'inline'}},
+            {id:'a16',type:'field',config:{fieldKey:'imei',layout:'inline'}},
+            {id:'a17',type:'field',config:{fieldKey:'issue',layout:'inline'}},
+            {id:'a18',type:'divider',config:{style:'solid'}},
+            {id:'a19',type:'field',config:{fieldKey:'repair_status',layout:'inline'}},
+            {id:'a20',type:'field',config:{fieldKey:'technician',layout:'inline'}},
+            {id:'a21',type:'field',config:{fieldKey:'warranty',layout:'inline'}},
+            {id:'a22',type:'divider',config:{style:'solid'}},
+            {id:'a23',type:'field',config:{fieldKey:'subtotal',layout:'inline'}},
+            {id:'a24',type:'field',config:{fieldKey:'tax',layout:'inline'}},
+            {id:'a25',type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
+            {id:'a26',type:'field',config:{fieldKey:'payment_method',layout:'inline'}},
+            {id:'a27',type:'divider',config:{style:'solid'}},
+            {id:'a28',type:'field',config:{fieldKey:'notes',layout:'block'}},
+            {id:'a29',type:'text',config:{content:'Thank you for choosing {{shop_name}}!',align:'center',fontSize:12,color:'#686b82'}}
+          ],
+          styles:{accentColor:'#7132f5',fontFamily:'IBM Plex Sans'}
+        }
+      ],
+      laptop_repair: [
+        {
+          id:'tpl_laptop_80', name:'Laptop Repair (Receipt)', format:'receipt_80', isDefault:true,
+          fieldDefs:[
+            {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
+            {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
+            {key:'laptop_brand',label:'Brand',type:'autocomplete',placeholder:'e.g. Dell, HP, Lenovo',group:'device',suggestions:['Apple MacBook','Dell','HP','Lenovo','ASUS','Acer','MSI','Samsung','Microsoft Surface','Razer']},
+            {key:'laptop_model',label:'Model',type:'text',placeholder:'e.g. MacBook Pro 14"',group:'device'},
+            {key:'serial_number',label:'Serial Number',type:'text',placeholder:'Serial number',group:'device'},
+            {key:'issue',label:'Issue Description',type:'textarea',placeholder:'Describe the problem',required:true,group:'repair'},
+            {key:'technician',label:'Technician',type:'text',placeholder:'Assigned tech',group:'repair'},
+            {key:'repair_status',label:'Status',type:'select',options:['Received','Diagnosed','In Progress','Waiting for Parts','Completed','Ready for Pickup'],group:'repair',defaultVal:'Received'},
+            {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true},
+            {key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Bank Transfer'],group:'payment'},
+            {key:'warranty',label:'Warranty',type:'text',placeholder:'e.g. 30 days',group:'meta'},
+            {key:'notes',label:'Notes',type:'textarea',placeholder:'Additional notes',group:'meta'}
+          ],
+          elements:[
+            {id:'l1',type:'logo',config:{maxWidth:80,maxHeight:50,align:'center'}},
+            {id:'l2',type:'text',config:{content:'{{shop_name}}',align:'center',fontSize:16,fontWeight:'bold'}},
+            {id:'l3',type:'text',config:{content:'{{shop_address}}',align:'center',fontSize:10,color:'#686b82'}},
+            {id:'l4',type:'divider',config:{style:'solid'}},
+            {id:'l5',type:'text',config:{content:'LAPTOP REPAIR RECEIPT',align:'center',fontSize:14,fontWeight:'bold'}},
+            {id:'l6',type:'text',config:{content:'No. {{receipt_number}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}},
+            {id:'l7',type:'divider',config:{style:'solid'}},
+            {id:'l8',type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
+            {id:'l9',type:'field',config:{fieldKey:'customer_phone',layout:'inline'}},
+            {id:'l10',type:'field',config:{fieldKey:'laptop_brand',layout:'inline'}},
+            {id:'l11',type:'field',config:{fieldKey:'laptop_model',layout:'inline'}},
+            {id:'l12',type:'field',config:{fieldKey:'serial_number',layout:'inline'}},
+            {id:'l13',type:'field',config:{fieldKey:'issue',layout:'inline'}},
+            {id:'l14',type:'field',config:{fieldKey:'technician',layout:'inline'}},
+            {id:'l15',type:'divider',config:{style:'solid'}},
+            {id:'l16',type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
+            {id:'l17',type:'field',config:{fieldKey:'payment_method',layout:'inline'}},
+            {id:'l18',type:'field',config:{fieldKey:'warranty',layout:'inline'}},
+            {id:'l19',type:'divider',config:{style:'solid'}},
+            {id:'l20',type:'text',config:{content:'Thank you!',align:'center',fontSize:11,color:'#686b82'}},
+            {id:'l21',type:'text',config:{content:'{{current_date}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}}
+          ],
+          styles:{accentColor:'#7132f5',fontFamily:'IBM Plex Sans'}
+        }
+      ]
+    };
+    const defaults = base[businessType] || base.phone_repair;
+    return defaults.map(t => ({...t, id:'tpl_' + Date.now() + Math.random().toString(36).slice(2,6)}));
+  }
+};
+
+/* ===================================================================
+   STORE CLOUD – Supabase sync layer
+   -------------------------------------------------------------------
+   Strategy: localStorage remains the fast cache the UI reads from
+   synchronously. On login we backfill the cache from Supabase, then
+   every write also pushes to Supabase in the background (fire-and-forget).
+   =================================================================== */
+Store.userId = null;
+Store.cloudOn = false;
+
+Store.setCloudUser = function(uid){
+  Store.userId = uid || null;
+  Store.cloudOn = !!(Store.userId && sbReady && supabase);
+};
+
+Store.releaseCache = function(){
+  Store.userId = null;
+  Store.cloudOn = false;
+};
+
+Store._db = function(){ return supabase; };
+
+Store.initCloud = async function(){
+  const uid = Store.userId;
+  if(!uid || !sbReady || !supabase) return;
+  try{
+    const { data: dbTenants, error } = await supabase.from('tenants').select('*').eq('user_id', uid);
+    if(error) throw error;
+    const localTenants = Store.getTenants();
+    const dbRows = dbTenants || [];
+
+    /* Migration: local data exists but nothing in DB -> upload all */
+    if(localTenants.length && dbRows.length === 0){
+      await Store.uploadAll();
+      return;
+    }
+
+    /* Downloaded cloud state exists -> backfill local cache + merge */
+    const mergedTenants = localTenants.slice();
+    const localIds = new Set(localTenants.map(t => t.id));
+    for(const row of dbRows){
+      /* backfill settings locally */
+      if(row.settings && typeof row.settings === 'object'){
+        Store.setSettings(row.id, Object.assign({ shopName:row.name, logo:null, address:'', location:'', phone:'', accentColor:'#7132f5', fontFamily:'IBM Plex Sans', defaultTemplateId:null }, row.settings));
+      }
+      /* merge tenant record */
+      const loc = Store.getTenant(row.id);
+      const rec = { id:row.id, name:row.name||'', businessType:row.business_type||'phone_repair', createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() };
+      if(loc){ Object.assign(loc, { name:rec.name, businessType:rec.businessType }); if(!loc.updatedAt || (row.updated_at||0) > (loc.updatedAt||0)){} }
+      else { mergedTenants.push(rec); localIds.add(row.id); }
+      /* templates + receipts for this tenant */
+      await Store._mergeChildTable('templates', row.id, uid);
+      await Store._mergeChildTable('receipts', row.id, uid);
+    }
+    Store.setTenants(mergedTenants);
+
+    /* Upload any local tenants (and their children) not present in DB */
+    for(const t of localTenants){
+      if(!dbRows.some(d => d.id === t.id)){ await Store._uploadOneTenant(t); }
+    }
+  }catch(e){
+    /* Keep working offline; data stays in localStorage cache */
+    console.warn('Cloud init failed (offline?):', e);
+  }
+};
+
+Store._mergeChildTable = async function(table, tenantId, uid){
+  const { data: rows, error } = await supabase.from(table).select('*').eq('user_id', uid).eq('tenant_id', tenantId);
+  if(error) throw error;
+  const localRows = table === 'templates' ? Store.getTemplates(tenantId) : Store.getReceipts(tenantId);
+  const merged = localRows.slice();
+  const localIds = new Set(localRows.map(r => r.id));
+  const localById = new Map(localRows.map(r => [r.id, r]));
+  let changed = false;
+  for(const row of (rows||[])){
+    const rec = table === 'templates'
+      ? { id:row.id, name:row.name||'', format:row.format||'receipt_80', isDefault:row.is_default, fieldDefs:row.field_defs||[], elements:row.elements||[], styles:row.styles||{}, createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() }
+      : { id:row.id, templateId:row.template_id, fields:row.fields||{}, format:row.format||'receipt_80', repaired:!!row.repaired, paid:!!row.paid, createdAt:row.created_at||Date.now(), updatedAt:row.updated_at||Date.now() };
+    const loc = localById.get(row.id);
+    if(!loc){
+      merged.push(rec); localIds.add(row.id); changed = true;
+      continue;
+    }
+    /* last-writer-wins by updatedAt */
+    if((row.updated_at||0) > (loc.updatedAt||0)){
+      merged[merged.indexOf(loc)] = { ...loc, ...rec };
+      changed = true;
+    }
+  }
+  /* upload local-only rows */
+  const dbIds = new Set((rows||[]).map(r => r.id));
+  for(const loc of localRows){
+    if(!dbIds.has(loc.id)){
+      if(table === 'templates'){
+        await supabase.from('templates').upsert({ id:loc.id, tenant_id:tenantId, name:loc.name||'', format:loc.format||'receipt_80', is_default:loc.isDefault, field_defs:loc.fieldDefs||[], elements:loc.elements||[], styles:loc.styles||{}, created_at:loc.createdAt||Date.now(), updated_at:loc.updatedAt||Date.now() }, { onConflict:'id' });
+      } else {
+        await supabase.from('receipts').upsert({ id:loc.id, tenant_id:tenantId, template_id:loc.templateId, fields:loc.fields||{}, format:loc.format||'receipt_80', repaired:!!loc.repaired, paid:!!loc.paid, created_at:loc.createdAt, updated_at:loc.updatedAt }, { onConflict:'id' });
+      }
+    }
+  }
+  if(changed) Store._persistChild(tenantId, table, merged);
+};
+
+Store._persistChild = function(tenantId, table, list){
+  if(table === 'templates'){ Store.set(tenantId, 'templates', list); }
+  else { Store.set(tenantId, 'receipts', list); }
+};
+
+Store._uploadOneTenant = async function(t){
+  if(!Store.cloudOn) return;
+  const settings = Store.getSettings(t.id);
+  await supabase.from('tenants').upsert({ id:t.id, name:t.name||'', business_type:t.businessType||'phone_repair', settings, created_at:t.createdAt||Date.now(), updated_at:t.updatedAt||Date.now() }, { onConflict:'id' });
+  for(const tp of Store.getTemplates(t.id)){
+    await supabase.from('templates').upsert({ id:tp.id, tenant_id:t.id, name:tp.name||'', format:tp.format||'receipt_80', is_default:tp.isDefault, field_defs:tp.fieldDefs||[], elements:tp.elements||[], styles:tp.styles||{}, created_at:tp.createdAt||Date.now(), updated_at:tp.updatedAt||Date.now() }, { onConflict:'id' });
+  }
+  for(const r of Store.getReceipts(t.id)){
+    await supabase.from('receipts').upsert({ id:r.id, tenant_id:t.id, template_id:r.templateId, fields:r.fields||{}, format:r.format||'receipt_80', repaired:!!r.repaired, paid:!!r.paid, created_at:r.createdAt, updated_at:r.updatedAt }, { onConflict:'id' });
+  }
+};
+
+Store.uploadAll = async function(){
+  if(!Store.cloudOn) return;
+  for(const t of Store.getTenants()){ await Store._uploadOneTenant(t); }
+  Store.setGlobal(rdBucketMigrated, true);
+};
+
+/* ---- background write hooks (fire-and-forget) ---- */
+
+Store._pushTenants = function(){
+  if(!Store.cloudOn) return;
+  setTimeout(function(){
+    (async () => {
+      for(const t of Store.getTenants()){ await Store._uploadOneTenant(t); }
+    })().catch(e => console.warn('tenant sync failed', e));
+  }, 0);
+};
+
+Store._pushChild = function(tenantId, table, list){
+  if(!Store.cloudOn) return;
+  setTimeout(function(){
+    (async () => {
+      const rows = list.map(x => table === 'templates'
+        ? { id:x.id, tenant_id:tenantId, name:x.name||'', format:x.format||'receipt_80', is_default:x.isDefault, field_defs:x.fieldDefs||[], elements:x.elements||[], styles:x.styles||{}, created_at:x.createdAt||Date.now(), updated_at:x.updatedAt||Date.now() }
+        : { id:x.id, tenant_id:tenantId, template_id:x.templateId, fields:x.fields||{}, format:x.format||'receipt_80', repaired:!!x.repaired, paid:!!x.paid, created_at:x.createdAt, updated_at:x.updatedAt });
+      if(rows.length){ await supabase.from(table).upsert(rows, { onConflict:'id' }); }
+      /* remove rows that no longer exist locally */
+      const keepIds = new Set(list.map(x => x.id));
+      const { data: dbRows } = await supabase.from(table).select('id').eq('tenant_id', tenantId);
+      const gone = (dbRows||[]).filter(x => !keepIds.has(x.id)).map(x => x.id);
+      if(gone.length){ await supabase.from(table).delete().in('id', gone); }
+    })().catch(e => console.warn(table + ' sync failed', e));
+  }, 0);
+};
+
+Store._pushSettings = function(tenantId, s){
+  if(!Store.cloudOn) return;
+  setTimeout(function(){
+    (async () => {
+      const t = Store.getTenant(tenantId);
+      await supabase.from('tenants').upsert({ id:tenantId, name:(t&&t.name)||'', business_type:(t&&t.businessType)||'phone_repair', settings:s, created_at:(t&&t.createdAt)||Date.now(), updated_at:Date.now() }, { onConflict:'id' });
+    })().catch(e => console.warn('settings sync failed', e));
+  }, 0);
+};
+
+/* ---- wired into existing write methods below ---- */
+Store.origSetReceipts = Store.setReceipts;
+Store.setReceipts = function(tenantId, list){
+  Store.origSetReceipts.call(this, tenantId, list);
+  Store._pushChild(tenantId, 'receipts', list);
+};
+Store.origSetTemplates = Store.setTemplates;
+Store.setTemplates = function(tenantId, list){
+  Store.origSetTemplates.call(this, tenantId, list);
+  Store._pushChild(tenantId, 'templates', list);
+};
+Store.origSetSettings = Store.setSettings;
+Store.setSettings = function(tenantId, s){
+  Store.origSetSettings.call(this, tenantId, s);
+  Store._pushSettings(tenantId, s);
+};
+const _origSetTenants = Store.setTenants;
+Store.setTenants = function(list){
+  _origSetTenants.call(this, list);
+  Store._pushTenants();
+};
+
+/* ===================================================================
+   APP STATE
+   =================================================================== */
+let currentTenantId = null;
+let currentView = 'receipts';
+let currentReceiptId = null;
+let currentTemplateId = null;
+let builderState = { templateId:null, elements:[], selectedElId:null, fieldDefs:[] };
+let previewFormat = 'receipt_80';
+let receiptPreviewFormat = 'receipt_80';
+
+/* ===================================================================
+   UTILS
+   =================================================================== */
+function uid(){ return 'id_' + Date.now() + Math.random().toString(36).slice(2,8); }
+function esc(s){ if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function formatDate(ts){
+  const d = new Date(ts);
+  return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) + '  ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
+}
+function renderTemplateVars(text, data){
+  return text.replace(/\{\{(\w+)\}\}/g, (m, key) => data[key] != null ? data[key] : '');
+}
+
+/* ===================================================================
+   RENDER ENGINE
+   =================================================================== */
+function renderPreview(template, fieldValues, format){
+  const settings = Store.getSettings(currentTenantId);
+  const _loc = ((settings.location && settings.location.trim()) || settings.address || '').trim();
+  const _ph = (settings.phone || '').trim();
+  const data = {
+    shop_name: settings.shopName || '',
+    shop_phone: _ph,
+    shop_location: _loc,
+    shop_address: (_loc && _ph) ? _loc + '  •  ' + _ph : (_loc || _ph),
+    receipt_number: fieldValues._receiptNumber || '---',
+    current_date: formatDate(Date.now()),
+    ...fieldValues
+  };
+  let html = '';
+  const els = template.elements || [];
+  els.forEach(el => {
+    const c = el.config || {};
+    switch(el.type){
+      case 'logo':
+        if(settings.logo){
+          const align = c.align || 'center';
+          html += '<div style="text-align:'+align+';margin:8px 0;"><img src="'+esc(settings.logo)+'" style="max-width:'+(c.maxWidth||80)+'px;max-height:'+(c.maxHeight||50)+'px;object-fit:contain;"></div>';
+        }
+        break;
+      case 'text': {
+        const content = renderTemplateVars(c.content||'', data);
+        let style = 'font-size:'+(c.fontSize||12)+'px;';
+        if(c.fontWeight) style += 'font-weight:'+c.fontWeight+';';
+        if(c.color) style += 'color:'+c.color+';';
+        if(c.fontFamily) style += 'font-family:'+c.fontFamily+';';
+        const align = c.align || 'left';
+        html += '<div style="padding:3px 0;text-align:'+align+';'+style+'">'+esc(content).replace(/\n/g,'<br>')+'</div>';
+        break;
+      }
+      case 'field': {
+        const fd = (template.fieldDefs||[]).find(f => f.key === c.fieldKey);
+        if(!fd) break;
+        let val = fieldValues[fd.key] || '';
+        const displayVal = fd.type === 'currency' && val ? parseFloat(val).toFixed(2) : val;
+        const label = I18N.fieldLabel(fd.label) + ':';
+        if(c.layout === 'block'){
+          html += '<div style="padding:4px 0;"><div style="font-size:10px;color:#9497a9;font-weight:500;">'+esc(label)+'</div><div style="font-size:12px;'+(c.bold?'font-weight:700;':'')+'">'+esc(displayVal)+'</div></div>';
+        } else {
+          html += '<div style="display:flex;justify-content:space-between;padding:4px 0;font-size:12px;border-bottom:1px solid rgba(104,107,130,0.16);"><span style="color:#686b82;font-weight:500;">'+esc(label)+'</span><span style="'+(c.bold?'font-weight:700;':'')+'">'+esc(displayVal)+'</span></div>';
+        }
+        break;
+      }
+      case 'divider': {
+        const style = c.style || 'solid';
+        html += '<hr style="border:none;border-top:1px '+style+' #dedee5;margin:8px 0;">';
+        break;
+      }
+      case 'spacer':
+        html += '<div style="height:'+(c.height||8)+'px;"></div>';
+        break;
+      case 'table':
+        html += '<div style="font-size:11px;color:#686b82;padding:4px 0;text-align:center;font-style:italic;">[Line items table]</div>';
+        break;
+    }
+  });
+  return html;
+}
+
+/* ===================================================================
+   VIEWS
+   =================================================================== */
+function switchView(view){
+  currentView = view;
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
+  renderView();
+}
+
+function renderView(){
+  const content = document.getElementById('appContent');
+  switch(currentView){
+    case 'receipts': renderReceiptsView(content); break;
+    case 'templates': renderTemplatesView(content); break;
+    case 'builder': renderBuilderView(content); break;
+    case 'settings': renderSettingsView(content); break;
+  }
+}
+
+/* ----- RECEIPTS VIEW ----- */
+function renderReceiptsView(el){
+  if(typeof rhState === 'undefined'){ window.rhState = {q:'', filter:'all', sort:'newest'}; }
+  const st = rhState;
+  let receipts = Store.getReceipts(currentTenantId);
+  const templates = Store.getTemplates(currentTenantId);
+
+  /* Dashboard counts */
+  const total = receipts.length;
+  let waiting = 0, repCount = 0, unpaidC = 0, paidC = 0;
+  receipts.forEach(r => {
+    if(r.repaired){ repCount++; } else { waiting++; }
+    if(r.paid){ paidC++; } else { unpaidC++; }
+  });
+
+  /* Search + filter */
+  const q = (st.q || '').toLowerCase();
+  let filtered = receipts.filter(r => {
+    if(st.filter !== 'all'){
+      if(st.filter === 'repaired' && !r.repaired) return false;
+      if(st.filter === 'not_repaired' && r.repaired) return false;
+      if(st.filter === 'paid' && !r.paid) return false;
+      if(st.filter === 'unpaid' && r.paid) return false;
+    }
+    if(!q) return true;
+    const name = (r.fields.customer_name || '').toLowerCase();
+    const phone = (r.fields.customer_phone || '').toLowerCase();
+    const num = r.id.slice(-6).toLowerCase();
+    const dev = ((r.fields.device_model||'') + ' ' + (r.fields.laptop_brand||'') + ' ' + (r.fields.laptop_model||'')).toLowerCase();
+    return name.includes(q) || phone.includes(q) || num.includes(q) || dev.includes(q);
+  });
+  filtered.sort((a,b) => st.sort === 'oldest' ? a.createdAt - b.createdAt : b.updatedAt - a.updatedAt);
+
+  /* Header */
+  let html = '<div class="content-header"><h2>' + I18N.t('receipt_history') + '</h2><div class="actions">';
+  html += '<button class="btn" id="exportAllReceipts">' + I18N.t('export_all') + '</button>';
+  html += '</div></div>';
+
+  /* Dashboard */
+  html += '<div class="rh-dash">';
+  html += '<div class="rh-stat total"><div class="rh-num">'+total+'</div><div class="rh-lab">'+I18N.t('total_receipts')+'</div></div>';
+  html += '<div class="rh-stat waiting"><div class="rh-num">'+waiting+'</div><div class="rh-lab">'+I18N.t('waiting_for_repair')+'</div></div>';
+  html += '<div class="rh-stat repaired"><div class="rh-num">'+repCount+'</div><div class="rh-lab">'+I18N.t('repaired')+'</div></div>';
+  html += '<div class="rh-stat unpaid"><div class="rh-num">'+unpaidC+'</div><div class="rh-lab">'+I18N.t('unpaid')+'</div></div>';
+  html += '<div class="rh-stat paid"><div class="rh-num">'+paidC+'</div><div class="rh-lab">'+I18N.t('paid')+'</div></div>';
+  html += '</div>';
+
+  /* Toolbar */
+  html += '<div class="rh-toolbar">';
+  html += '<input type="text" id="rhSearch" value="'+esc(st.q)+'" placeholder="'+esc(I18N.t('search_receipts'))+'">';
+  html += '<select id="rhFilter"><option value="all"'+(st.filter==='all'?' selected':'')+'>'+I18N.t('all_statuses')+'</option>';
+  html += '<option value="not_repaired"'+(st.filter==='not_repaired'?' selected':'')+'>'+I18N.t('not_repaired')+'</option>';
+  html += '<option value="repaired"'+(st.filter==='repaired'?' selected':'')+'>'+I18N.t('repaired')+'</option>';
+  html += '<option value="unpaid"'+(st.filter==='unpaid'?' selected':'')+'>'+I18N.t('unpaid')+'</option>';
+  html += '<option value="paid"'+(st.filter==='paid'?' selected':'')+'>'+I18N.t('paid')+'</option>';
+  html += '</select>';
+  html += '<select id="rhSort"><option value="newest"'+(st.sort==='newest'?' selected':'')+'>'+I18N.t('sort_newest')+'</option>';
+  html += '<option value="oldest"'+(st.sort==='oldest'?' selected':'')+'>'+I18N.t('sort_oldest')+'</option>';
+  html += '</select>';
+  html += '</div>';
+
+  /* List */
+  if(filtered.length === 0){
+    html += (total === 0 ? ('<div class="empty-state">' + I18N.t('receipts_empty') + '</div>') : ('<div class="empty-state">' + I18N.t('no_results') + '</div>'));
+  } else {
+    html += '<div class="receipt-list">';
+    filtered.forEach(r => {
+      const tpl = templates.find(t => t.id === r.templateId);
+      const name = r.fields.customer_name || I18N.t('unnamed');
+      const phone = r.fields.customer_phone || '';
+      const price = r.fields.total || '';
+      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || '';
+      const issue = r.fields.issue || '';
+      const repOn = !!r.repaired;
+      const paidOn = !!r.paid;
+      html += '<div class="receipt-card" data-id="'+r.id+'">';
+      html += '<div class="rc-main">';
+      html += '<div class="rc-name">'+esc(name)+' <span class="rh-id">#'+esc(r.id.slice(-6).toUpperCase())+'</span></div>';
+      html += '<div class="rc-meta">';
+      if(phone) html += '<span class="rc-phone">&#128222; '+esc(phone)+'</span>';
+      if(device) html += '<span class="rc-device">'+esc(device)+'</span>';
+      if(issue) html += '<span class="rc-issue">'+esc(issue.length>40?issue.substring(0,40)+'…':issue)+'</span>';
+      html += '<span class="rc-date">'+formatDate(r.createdAt)+'</span>';
+      html += '</div></div>';
+      if(price) html += '<div class="rc-price">$'+esc(price)+'</div>';
+      html += '<div class="rc-status">';
+      html += '<div class="status-toggle'+(repOn?' on':'')+'" data-status="repaired" data-id="'+r.id+'"><span class="dot"></span>'+(repOn?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
+      html += '<div class="status-toggle amber'+(paidOn?' on':'')+'" data-status="paid" data-id="'+r.id+'"><span class="dot"></span>'+(paidOn?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
+      html += '</div>';
+      html += '<div class="rc-actions">';
+      html += '<button class="print" title="'+esc(I18N.t('print'))+'" data-id="'+r.id+'">&#128424;</button>';
+      html += '<button class="edit" title="'+esc(I18N.t('edit'))+'" data-id="'+r.id+'">&#9998;</button>';
+      html += '<button class="del" title="'+esc(I18N.t('delete'))+'" data-id="'+r.id+'">&#10005;</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+  html += '<div style="position:fixed;bottom:24px;right:24px;display:flex;gap:8px;z-index:50;">';
+  html += '<button class="btn primary" id="newReceiptBtn" style="padding:14px 24px;font-size:15px;border-radius:14px;box-shadow:0 4px 16px rgba(113,50,245,0.3);">' + I18N.t('new_receipt') + '</button>';
+  html += '</div>';
+  el.innerHTML = html;
+
+  /* Toolbar events */
+  el.querySelector('#rhSearch')?.addEventListener('input', (e) => { st.q = e.target.value; renderReceiptsView(el); });
+  el.querySelector('#rhFilter')?.addEventListener('change', (e) => { st.filter = e.target.value; renderReceiptsView(el); });
+  el.querySelector('#rhSort')?.addEventListener('change', (e) => { st.sort = e.target.value; renderReceiptsView(el); });
+
+  el.querySelector('#newReceiptBtn')?.addEventListener('click', () => openReceiptEditor(null));
+  el.querySelector('#exportAllReceipts')?.addEventListener('click', () => exportAllReceipts());
+
+  el.querySelectorAll('.receipt-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('.rc-actions') || e.target.closest('.status-toggle')) return;
+      renderReceiptDetails(card.dataset.id);
+    });
+  });
+  el.querySelectorAll('.rc-actions .edit').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); openReceiptEditor(b.dataset.id); }));
+  el.querySelectorAll('.rc-actions .del').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); deleteReceipt(b.dataset.id); }));
+  el.querySelectorAll('.rc-actions .print').forEach(b => b.addEventListener('click', (e) => { e.stopPropagation(); printReceipt(b.dataset.id); }));
+  el.querySelectorAll('.status-toggle').forEach(tgl => {
+    tgl.addEventListener('click', (e) => {
+      e.stopPropagation();
+      setReceiptStatus(tgl.dataset.id, tgl.dataset.status);
+    });
+  });
+}
+
+function setReceiptStatus(id, status){
+  const list = Store.getReceipts(currentTenantId);
+  const idx = list.findIndex(r => r.id === id);
+  if(idx === -1) return;
+  const r = list[idx];
+  if(status === 'repaired'){ r.repaired = !r.repaired; }
+  if(status === 'paid'){ r.paid = !r.paid; }
+  r.updatedAt = Date.now();
+  Store.setReceipts(currentTenantId, list);
+  renderView();
+}
+
+function renderReceiptDetails(id){
+  const receipt = Store.getReceipts(currentTenantId).find(r => r.id === id);
+  if(!receipt) return;
+  const templates = Store.getTemplates(currentTenantId);
+  const tpl = templates.find(t => t.id === receipt.templateId);
+  const content = document.getElementById('appContent');
+  const fieldDefs = (tpl ? tpl.fieldDefs : []) || [];
+  let html = '<div class="content-header"><h2>' + I18N.t('receipt_details') + ' <span class="rh-id">#'+esc(id.slice(-6).toUpperCase())+'</span></h2><div class="actions">';
+  html += '<button class="btn" id="rdBack">' + I18N.t('back') + '</button>';
+  html += '</div></div>';
+  html += '<div class="rh-detail">';
+  html += '<div class="rd-statusline">';
+  html += '<div class="status-toggle'+(receipt.repaired?' on':'')+'" data-status="repaired" data-id="'+id+'"><span class="dot"></span>'+(receipt.repaired?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
+  html += '<div class="status-toggle amber'+(receipt.paid?' on':'')+'" data-status="paid" data-id="'+id+'"><span class="dot"></span>'+(receipt.paid?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
+  html += '</div>';
+  html += '<div class="rd-grid">';
+  fieldDefs.forEach(f => {
+    const v = receipt.fields[f.key] || '';
+    if(v === '') return;
+    html += '<div class="rd-item"><span class="rd-k">'+esc(I18N.fieldLabel(f.label))+'</span><span class="rd-v">'+esc(v)+'</span></div>';
+  });
+  if(!fieldDefs.length || Object.keys(receipt.fields||{}).length === 0){
+    html += '<div class="rd-item" style="grid-column:1/-1;"><span class="rd-k">'+I18N.t('status')+'</span><span class="rd-v">#'+esc(id.slice(-6).toUpperCase())+'</span></div>';
+  }
+  html += '</div>';
+  html += '<div class="rd-actions">';
+  html += '<button class="btn primary" id="rdEdit">' + I18N.t('edit') + '</button>';
+  html += '<button class="btn" id="rdPrint">' + I18N.t('print') + '</button>';
+  html += '<button class="btn danger" id="rdDelete">' + I18N.t('delete') + '</button>';
+  html += '</div></div>';
+  content.innerHTML = html;
+
+  document.getElementById('rdBack').addEventListener('click', () => switchView('receipts'));
+  document.getElementById('rdEdit').addEventListener('click', () => openReceiptEditor(id));
+  document.getElementById('rdPrint').addEventListener('click', () => printReceipt(id));
+  document.getElementById('rdDelete').addEventListener('click', () => deleteReceipt(id));
+  content.querySelectorAll('.status-toggle').forEach(tgl => tgl.addEventListener('click', () => setReceiptStatus(tgl.dataset.id, tgl.dataset.status)));
+}
+
+
+function openReceiptEditor(receiptId){
+  currentReceiptId = receiptId;
+  const templates = Store.getTemplates(currentTenantId);
+  if(templates.length === 0){ alert(I18N.t('templates_empty')); return; }
+  const content = document.getElementById('appContent');
+
+  let receipt = null;
+  if(receiptId){
+    receipt = Store.getReceipts(currentTenantId).find(r => r.id === receiptId);
+  }
+
+  const tplId = receipt ? receipt.templateId : (templates[0]?.id || null);
+  const tpl = templates.find(t => t.id === tplId) || templates[0];
+  const fieldValues = receipt ? {...receipt.fields} : {};
+  tpl.fieldDefs.forEach(f => { if(!(f.key in fieldValues) && f.defaultVal) fieldValues[f.key] = f.defaultVal; });
+  receiptPreviewFormat = tpl.format || 'receipt_80';
+
+  let html = '<div class="content-header"><h2>'+(receipt?I18N.t('edit_receipt'):I18N.t('new_receipt_title'))+'</h2><div class="actions">';
+  html += '<button class="btn" id="backToList">' + I18N.t('back') + '</button>';
+  html += '</div></div>';
+  html += '<div style="margin-bottom:12px;"><select id="tplSelect" style="padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;">';
+  templates.forEach(t => { html += '<option value="'+t.id+'"'+(t.id===tplId?' selected':'')+' data-fmt="'+t.format+'">'+esc(t.name)+' ('+esc(t.format==='a4'?I18N.t('a4'):I18N.t('receipt_80'))+')</option>'; });
+  html += '</select></div>';
+  html += '<div class="receipt-split"><div class="editor-form" id="editorForm">';
+  html += '<div class="ef-header"><h3>' + I18N.t('receipt_details') + '</h3>';
+  if(receipt) html += '<span style="font-size:11px;color:var(--muted);font-family:var(--mono);">No. '+receipt.id.slice(-6).toUpperCase()+'</span>';
+  html += '</div>';
+
+  const groups = {};
+  tpl.fieldDefs.forEach(f => {
+    const g = f.group || 'general';
+    if(!groups[g]) groups[g] = [];
+    groups[g].push(f);
+  });
+  const groupLabels = {customer:'group_customer',device:'group_device',repair:'group_repair',payment:'group_payment',meta:'group_meta',general:'group_general'};
+
+  Object.keys(groups).forEach(g => {
+    html += '<div style="font-size:11px;text-transform:uppercase;letter-spacing:0.8px;color:var(--muted-soft);font-weight:600;margin-top:8px;">'+(I18N.t(groupLabels[g]||g))+'</div>';
+    groups[g].forEach(f => {
+      html += '<div class="editor-field" data-key="'+f.key+'"><label>'+esc(I18N.fieldLabel(f.label))+(f.required?' *':'')+'</label>';
+      const val = fieldValues[f.key] || '';
+      if(f.type === 'select'){
+        html += '<select data-field="'+f.key+'">';
+        (f.options||[]).forEach(o => { html += '<option value="'+esc(o)+'"'+(val===o?' selected':'')+'>'+esc(o)+'</option>'; });
+        html += '</select>';
+      } else if(f.type === 'textarea'){
+        html += '<textarea data-field="'+f.key+'" placeholder="'+esc(f.placeholder||'')+'" rows="2">'+esc(val)+'</textarea>';
+      } else if(f.type === 'autocomplete'){
+        html += '<div class="ac-wrap"><input type="text" data-field="'+f.key+'" value="'+esc(val)+'" placeholder="'+esc(f.placeholder||'')+'" autocomplete="off"><div class="ac-list" data-ac="'+f.key+'"></div></div>';
+      } else {
+        const inputType = f.type === 'currency' ? 'text' : (f.type === 'email' ? 'email' : (f.type === 'phone' ? 'tel' : (f.type === 'number' ? 'number' : 'text')));
+        html += '<input type="'+inputType+'" data-field="'+f.key+'" value="'+esc(val)+'" placeholder="'+esc(f.placeholder||'')+'">';
+      }
+      html += '</div>';
+    });
+  });
+
+  html += '<div class="editor-actions">';
+  html += '<button class="btn primary" id="saveReceiptBtn">'+(receipt?I18N.t('update'):I18N.t('save'))+'</button>';
+  html += '<button class="btn" id="previewPrintBtn">' + I18N.t('print') + '</button>';
+  if(receipt) html += '<button class="btn danger" id="deleteReceiptBtn">' + I18N.t('delete') + '</button>';
+  html += '</div></div>';
+
+  html += '<div class="preview-panel"><div class="preview-toggle">';
+  html += '<button class="'+(receiptPreviewFormat==='receipt_80'?'active':'')+'" data-fmt="receipt_80">' + I18N.t('receipt_80') + '</button>';
+  html += '<button class="'+(receiptPreviewFormat==='a4'?'active':'')+'" data-fmt="a4">' + I18N.t('a4') + '</button>';
+  html += '</div><div class="preview-paper" id="receiptPreview"></div></div></div>';
+
+  content.innerHTML = html;
+
+  const formEl = document.getElementById('editorForm');
+  function getFormValues(){
+    const vals = {};
+    formEl.querySelectorAll('[data-field]').forEach(inp => { vals[inp.dataset.field] = inp.value; });
+    return vals;
+  }
+  function updatePreview(){
+    const tplNow = templates.find(t => t.id === document.getElementById('tplSelect').value) || tpl;
+    const vals = getFormValues();
+    vals._receiptNumber = receiptId ? receipt.id.slice(-6).toUpperCase() : '---';
+    const pvEl = document.getElementById('receiptPreview');
+    const isA4 = receiptPreviewFormat === 'a4';
+    pvEl.innerHTML = '<div class="preview-receipt '+(isA4?'a4':'receipt-80')+'">' + renderPreview(tplNow, vals, receiptPreviewFormat) + '</div>';
+  }
+
+  formEl.querySelectorAll('input[data-field], textarea[data-field], select[data-field]').forEach(inp => {
+    inp.addEventListener('input', updatePreview);
+    inp.addEventListener('change', updatePreview);
+  });
+
+  formEl.querySelectorAll('[data-ac]').forEach(acEl => {
+    const key = acEl.dataset.ac;
+    const input = formEl.querySelector('[data-field="'+key+'"]');
+    const fd = tpl.fieldDefs.find(f => f.key === key);
+    if(!fd || !fd.suggestions) return;
+    let items = [], activeIdx = -1;
+    function filter(q){
+      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+      if(!words.length) return [];
+      return fd.suggestions.filter(s => words.every(w => s.toLowerCase().includes(w))).slice(0,20);
+    }
+    function render(matches, q){
+      acEl.innerHTML = '';
+      items = matches; activeIdx = -1;
+      if(!matches.length){ acEl.innerHTML = '<div style="padding:8px 10px;font-size:12px;color:#9497a9;">No matches</div>'; acEl.classList.add('open'); return; }
+      matches.forEach((m,i) => {
+        const d = document.createElement('div'); d.className='ac-item'; d.textContent=m;
+        d.addEventListener('mousedown', (e) => { e.preventDefault(); input.value=m; close(); updatePreview(); });
+        d.addEventListener('mouseenter', () => { activeIdx=i; highlight(); });
+        acEl.appendChild(d);
+      });
+      acEl.classList.add('open');
+    }
+    function highlight(){ acEl.querySelectorAll('.ac-item').forEach((d,i) => d.classList.toggle('active', i===activeIdx)); }
+    function close(){ acEl.classList.remove('open'); acEl.innerHTML=''; items=[]; activeIdx=-1; }
+    input.addEventListener('input', () => { const q=input.value.trim(); q ? render(filter(q),q) : close(); });
+    input.addEventListener('focus', () => { const q=input.value.trim(); if(q) render(filter(q),q); });
+    input.addEventListener('keydown', (e) => {
+      if(!acEl.classList.contains('open')||!items.length) return;
+      if(e.key==='ArrowDown'){ e.preventDefault(); activeIdx=Math.min(activeIdx+1,items.length-1); highlight(); }
+      else if(e.key==='ArrowUp'){ e.preventDefault(); activeIdx=Math.max(activeIdx-1,0); highlight(); }
+      else if(e.key==='Enter'&&activeIdx>-1){ e.preventDefault(); input.value=items[activeIdx]; close(); updatePreview(); }
+      else if(e.key==='Escape') close();
+    });
+  });
+  document.addEventListener('click', (e) => { if(!e.target.closest('.ac-wrap')) formEl.querySelectorAll('.ac-list.open').forEach(el => el.classList.remove('open')); });
+
+  document.getElementById('tplSelect').addEventListener('change', () => {
+    const opt = document.getElementById('tplSelect').selectedOptions[0];
+    receiptPreviewFormat = (opt.dataset.fmt || (opt.textContent.includes('A4') ? 'a4' : 'receipt_80'));
+    currentView = 'receipts'; openReceiptEditor(receiptId); 
+  });
+  document.querySelectorAll('.preview-toggle button').forEach(b => b.addEventListener('click', () => {
+    receiptPreviewFormat = b.dataset.fmt;
+    document.querySelectorAll('.preview-toggle button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    updatePreview();
+  }));
+  document.getElementById('backToList').addEventListener('click', () => { currentReceiptId = null; switchView('receipts'); });
+  document.getElementById('saveReceiptBtn').addEventListener('click', () => {
+    const vals = getFormValues();
+    const tplSel = document.getElementById('tplSelect');
+    const selectedTpl = templates.find(t => t.id === tplSel.value) || tpl;
+    const required = selectedTpl.fieldDefs.filter(f => f.required);
+    for(const f of required){
+      if(!vals[f.key] || !vals[f.key].trim()){
+        alert(I18N.t('field_required') + I18N.fieldLabel(f.label));
+        return;
+      }
+    }
+    const list = Store.getReceipts(currentTenantId);
+    const now = Date.now();
+    if(receiptId){
+      const idx = list.findIndex(r => r.id === receiptId);
+      if(idx > -1) list[idx] = {...list[idx], fields:vals, templateId:selectedTpl.id, format:selectedTpl.format, updatedAt:now};
+    } else {
+      const id = 'r' + now + Math.random().toString(36).slice(2,7);
+      list.push({id, fields:vals, templateId:selectedTpl.id, format:selectedTpl.format, createdAt:now, updatedAt:now, repaired:false, paid:false});
+      currentReceiptId = id;
+    }
+    Store.setReceipts(currentTenantId, list);
+    switchView('receipts');
+  });
+  document.getElementById('previewPrintBtn')?.addEventListener('click', () => {
+    const tplSel = document.getElementById('tplSelect');
+    const selectedTpl = templates.find(t => t.id === tplSel.value) || tpl;
+    const vals = getFormValues();
+    vals._receiptNumber = receiptId ? receipt.id.slice(-6).toUpperCase() : '---';
+    printPreview(selectedTpl, vals, receiptPreviewFormat);
+  });
+  document.getElementById('deleteReceiptBtn')?.addEventListener('click', () => {
+    if(!confirm(I18N.t('confirm_delete_receipt'))) return;
+    const list = Store.getReceipts(currentTenantId).filter(r => r.id !== receiptId);
+    Store.setReceipts(currentTenantId, list);
+    currentReceiptId = null;
+    switchView('receipts');
+  });
+
+  updatePreview();
+}
+
+function deleteReceipt(id){
+  if(!confirm(I18N.t('confirm_delete_receipt'))) return;
+  const list = Store.getReceipts(currentTenantId).filter(r => r.id !== id);
+  Store.setReceipts(currentTenantId, list);
+  if(currentReceiptId === id) currentReceiptId = null;
+  renderView();
+}
+
+function printReceipt(id){
+  const receipt = Store.getReceipts(currentTenantId).find(r => r.id === id);
+  if(!receipt) return;
+  const templates = Store.getTemplates(currentTenantId);
+  const tpl = templates.find(t => t.id === receipt.templateId);
+  if(!tpl) return;
+  const vals = {...receipt.fields};
+  vals._receiptNumber = receipt.id.slice(-6).toUpperCase();
+  printPreview(tpl, vals, receipt.format || 'receipt_80');
+}
+
+function printPreview(template, fieldValues, format){
+  const html = renderPreview(template, fieldValues, format);
+  const isA4 = format === 'a4';
+  const printWin = window.open('','_blank','width=800,height=600');
+  const pageCss = isA4 ? '.print-page{width:210mm;min-height:297mm;padding:15mm;font-size:13px;}' : '.print-page{width:80mm;padding:5mm;font-size:11px;}';
+  printWin.document.write('<!DOCTYPE html><html><head><title>Print</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"IBM Plex Sans",sans-serif;display:flex;justify-content:center;}@media print{body{margin:0;padding:0;}}' + pageCss + '</style></head><body><div class="print-page">' + html + '</div><script>window.onload=function(){window.print();window.close();}<\/script></body></html>');
+  printWin.document.close();
+}
+
+function exportAllReceipts(){
+  const receipts = Store.getReceipts(currentTenantId);
+  const tenant = Store.getTenant(currentTenantId);
+  const data = { shop: tenant?.name, exportDate: new Date().toISOString(), receipts };
+  const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = (tenant?.name || 'shop') + '_receipts_' + new Date().toISOString().slice(0,10) + '.json';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+/* ----- TEMPLATES VIEW ----- */
+function renderTemplatesView(el){
+  const templates = Store.getTemplates(currentTenantId);
+  let html = '<div class="content-header"><h2>' + I18N.t('templates') + '</h2><div class="actions">';
+  html += '<button class="btn" id="importTplBtn">' + I18N.t('import_json') + '</button>';
+  html += '<button class="btn primary" id="newTplBtn">' + I18N.t('new_template') + '</button>';
+  html += '</div></div>';
+  if(!templates.length){
+    html += '<div class="empty-state">' + I18N.t('templates_empty') + '</div>';
+  } else {
+    html += '<div class="tpl-grid">';
+    templates.forEach(t => {
+      const badge = t.isDefault ? '<span class="tc-badge default">'+I18N.t('default')+'</span>' : '<span class="tc-badge custom">'+I18N.t('custom')+'</span>';
+      const previewFields = (t.fieldDefs||[]).slice(0,5).map(f => I18N.fieldLabel(f.label)).join(', ');
+      html += '<div class="tpl-card" data-id="'+t.id+'">';
+      html += badge;
+      html += '<h3>'+esc(t.name)+'</h3>';
+      html += '<div class="tc-type">'+esc(t.format === 'a4' ? I18N.t('a4') : I18N.t('receipt_80'))+' &middot; '+(t.elements||[]).length+' ' + I18N.t('elements') + ' &middot; '+(t.fieldDefs||[]).length+' ' + I18N.t('fields') + '</div>';
+      html += '<div class="tc-preview">'+esc(previewFields || '')+'</div>';
+      html += '<div class="tc-actions">';
+      html += '<button class="btn sm" data-action="edit" data-id="'+t.id+'">' + I18N.t('edit_in_builder') + '</button>';
+      html += '<button class="btn sm" data-action="export" data-id="'+t.id+'">' + I18N.t('export_json') + '</button>';
+      html += '<button class="btn sm" data-action="duplicate" data-id="'+t.id+'">' + I18N.t('duplicate') + '</button>';
+      html += '<button class="btn sm danger" data-action="delete" data-id="'+t.id+'">' + I18N.t('delete_template') + '</button>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+  el.innerHTML = html;
+
+  el.querySelector('#newTplBtn')?.addEventListener('click', () => {
+    const name = prompt(I18N.t('template_name'));
+    if(!name) return;
+    const fmt = confirm(I18N.t('a4_question')) ? 'a4' : 'receipt_80';
+    const templates = Store.getTemplates(currentTenantId);
+    const newTpl = {
+      id:'tpl_' + Date.now() + Math.random().toString(36).slice(2,6),
+      name, format:fmt, isDefault:false,
+      fieldDefs:[
+        {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
+        {key:'issue',label:'Issue',type:'text',placeholder:'Describe the issue',required:true,group:'repair'},
+        {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true}
+      ],
+      elements:[
+        {id:uid(),type:'logo',config:{maxWidth:80,maxHeight:50,align:'center'}},
+        {id:uid(),type:'text',config:{content:'{{shop_name}}',align:'center',fontSize:16,fontWeight:'bold'}},
+        {id:uid(),type:'divider',config:{style:'solid'}},
+        {id:uid(),type:'text',config:{content:name.toUpperCase(),align:'center',fontSize:14,fontWeight:'bold'}},
+        {id:uid(),type:'text',config:{content:'No. {{receipt_number}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}},
+        {id:uid(),type:'divider',config:{style:'solid'}},
+        {id:uid(),type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
+        {id:uid(),type:'field',config:{fieldKey:'issue',layout:'inline'}},
+        {id:uid(),type:'divider',config:{style:'solid'}},
+        {id:uid(),type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
+        {id:uid(),type:'divider',config:{style:'solid'}},
+        {id:uid(),type:'text',config:{content:'Thank you!',align:'center',fontSize:11,color:'#686b82'}},
+        {id:uid(),type:'text',config:{content:'{{current_date}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}}
+      ],
+      styles:{accentColor:'#7132f5',fontFamily:'IBM Plex Sans'}
+    };
+    templates.push(newTpl);
+    Store.setTemplates(currentTenantId, templates);
+    builderState.templateId = newTpl.id;
+    switchView('builder');
+  });
+
+  el.querySelector('#importTplBtn')?.addEventListener('click', () => {
+    const input = document.createElement('input');
+    input.type = 'file'; input.accept = '.json';
+    input.addEventListener('change', () => {
+      const file = input.files[0];
+      if(!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        try {
+          const data = JSON.parse(e.target.result);
+          const templates = Store.getTemplates(currentTenantId);
+          data.id = 'tpl_' + Date.now() + Math.random().toString(36).slice(2,6);
+          data.isDefault = false;
+          templates.push(data);
+          Store.setTemplates(currentTenantId, templates);
+          renderView();
+        } catch(err){ alert(I18N.t('invalid_template_json') + err.message); }
+      };
+      reader.readAsText(file);
+    });
+    input.click();
+  });
+
+  el.querySelectorAll('[data-action]').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const id = btn.dataset.id;
+      const templates = Store.getTemplates(currentTenantId);
+      const tpl = templates.find(t => t.id === id);
+      if(!tpl) return;
+      switch(btn.dataset.action){
+        case 'edit':
+          builderState.templateId = id;
+          switchView('builder');
+          break;
+        case 'export': {
+          const blob = new Blob([JSON.stringify(tpl, null, 2)], {type:'application/json'});
+          const a = document.createElement('a');
+          a.href = URL.createObjectURL(blob);
+          a.download = tpl.name.replace(/[^a-z0-9]/gi,'_').toLowerCase() + '.json';
+          a.click();
+          URL.revokeObjectURL(a.href);
+          break;
+        }
+        case 'duplicate': {
+          const dup = JSON.parse(JSON.stringify(tpl));
+          dup.id = 'tpl_' + Date.now() + Math.random().toString(36).slice(2,6);
+          dup.name = tpl.name + ' (Copy)';
+          dup.isDefault = false;
+          templates.push(dup);
+          Store.setTemplates(currentTenantId, templates);
+          renderView();
+          break;
+        }
+        case 'delete':
+          if(!confirm(I18N.t('confirm_delete_template',{name:tpl.name}))) return;
+          Store.setTemplates(currentTenantId, templates.filter(t => t.id !== id));
+          renderView();
+          break;
+      }
+    });
+  });
+}
+
+/* ----- TEMPLATE BUILDER ----- */
+function renderBuilderView(el){
+  const templates = Store.getTemplates(currentTenantId);
+  if(!templates.length){ el.innerHTML = '<div class="empty-state">' + I18N.t('templates_empty') + '</div>'; return; }
+
+  const activeTplId = builderState.templateId || templates[0].id;
+  const tpl = templates.find(t => t.id === activeTplId) || templates[0];
+  builderState.templateId = tpl.id;
+  builderState.elements = JSON.parse(JSON.stringify(tpl.elements || []));
+  builderState.fieldDefs = JSON.parse(JSON.stringify(tpl.fieldDefs || []));
+
+  let html = '<div class="content-header"><h2>' + I18N.t('builder') + '</h2><div class="actions">';
+  html += '<select id="builderTplSelect" style="padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;">';
+  templates.forEach(t => { html += '<option value="'+t.id+'"'+(t.id===activeTplId?' selected':'')+'>'+esc(t.name)+'</option>'; });
+  html += '</select>';
+  html += '<button class="btn" id="addFieldDefBtn">' + I18N.t('add_field') + '</button>';
+  html += '<button class="btn primary" id="saveBuilderBtn">' + I18N.t('save_template') + '</button>';
+  html += '</div></div>';
+
+  html += '<div class="builder-layout">';
+
+  /* Palette */
+  html += '<div class="builder-palette"><h4>' + I18N.t('palette_elements') + '</h4>';
+  const palette = [
+    {type:'logo',icon:'&#128247;',label: I18N.t('logo')},
+    {type:'text',icon:'&#128196;',label: I18N.t('text')},
+    {type:'field',icon:'&#128196;',label: I18N.t('field')},
+    {type:'divider',icon:'&#9472;',label: I18N.t('divider')},
+    {type:'spacer',icon:'&#8597;',label: I18N.t('spacer')},
+    {type:'table',icon:'&#9638;',label: I18N.t('table')}
+  ];
+  palette.forEach(p => {
+    html += '<div class="bp-item" draggable="true" data-palette="'+p.type+'"><span class="bpi-icon">'+p.icon+'</span>'+esc(p.label)+'</div>';
+  });
+  html += '<h4 style="margin-top:14px;">' + I18N.t('fields_palette') + '</h4>';
+  builderState.fieldDefs.forEach(f => {
+    html += '<div class="bp-item" draggable="true" data-palette="field" data-palette-key="'+f.key+'"><span class="bpi-icon">&#128196;</span>'+esc(I18N.fieldLabel(f.label))+'</div>';
+  });
+  html += '</div>';
+
+  /* Canvas */
+  html += '<div class="builder-canvas"><h4>' + I18N.t('layout') + '</h4>';
+  html += '<div class="bc-drop-zone' + (builderState.elements.length ? '' : ' empty') + '" id="builderCanvas">';
+  if(!builderState.elements.length) html += '<div class="bc-drop-hint">' + I18N.t('drag_hint') + '</div>';
+  builderState.elements.forEach((el, idx) => {
+    html += renderBuilderElement(el, idx);
+  });
+  html += '</div></div>';
+
+  /* Properties */
+  html += '<div class="builder-props"><h4>' + I18N.t('properties') + '</h4>';
+  html += '<div id="propsPanel"><div class="bp-empty">' + I18N.t('select_element') + '</div></div>';
+  html += '<div style="margin-top:14px;"><h4>' + I18N.t('field_definitions') + '</h4><div id="fieldDefsList">';
+  renderFieldDefsList();
+  html += '</div></div></div>';
+
+  html += '</div>';
+  el.innerHTML = html;
+  bindBuilderEvents();
+}
+
+function renderBuilderElement(el, idx){
+  const icons = {logo:'&#128247;',text:'&#128196;',field:'&#128196;',divider:'&#9472;',spacer:'&#8597;',table:'&#9638;'};
+  const labels = {logo: I18N.t('logo'), text: I18N.t('text'), field: I18N.t('field'), divider: I18N.t('divider'), spacer: I18N.t('spacer'), table: I18N.t('table')};
+  let label = labels[el.type] || el.type;
+  if(el.type === 'text') label = (el.config?.content||I18N.t('text')).substring(0,30);
+  if(el.type === 'field'){
+    const fd = builderState.fieldDefs.find(f => f.key === el.config?.fieldKey);
+    label = fd ? I18N.fieldLabel(fd.label) : el.config?.fieldKey || I18N.t('unbound_field');
+  }
+  const sel = builderState.selectedElId === el.id ? ' selected' : '';
+  return '<div class="bc-el'+sel+'" draggable="true" data-eidx="'+idx+'" data-eid="'+el.id+'">'
+    + '<span class="drag-handle">&#9776;</span>'
+    + '<span class="bce-icon">'+icons[el.type]+'</span>'
+    + '<span class="bce-label">'+esc(label)+'</span>'
+    + '<span class="bce-type">'+esc(labels[el.type]||el.type)+'</span>'
+    + '<button class="bce-del" data-del="'+idx+'">&#10005;</button>'
+    + '</div>';
+}
+
+function renderFieldDefsList(){
+  let html = '';
+  builderState.fieldDefs.forEach((f,i) => {
+    html += '<div style="display:flex;align-items:center;gap:6px;padding:4px 0;font-size:11.5px;border-bottom:1px solid var(--line-soft);">';
+    html += '<span style="flex:1;cursor:pointer;" class="fd-edit" data-fi="'+i+'">'+esc(I18N.fieldLabel(f.label))+' <span style="color:var(--muted-soft);">('+f.type+')</span></span>';
+    html += '<button class="fd-del" data-fi="'+i+'" style="width:18px;height:18px;border:none;background:none;color:var(--muted-soft);cursor:pointer;font-size:12px;border-radius:50%;">&#10005;</button>';
+    html += '</div>';
+  });
+  return html;
+}
+
+function bindBuilderEvents(){
+  const canvas = document.getElementById('builderCanvas');
+  const propsPanel = document.getElementById('propsPanel');
+  const fieldDefsListEl = document.getElementById('fieldDefsList');
+
+  /* Select element */
+  canvas.addEventListener('click', (e) => {
+    const delBtn = e.target.closest('.bce-del');
+    if(delBtn){
+      e.stopPropagation();
+      const idx = parseInt(delBtn.dataset.del);
+      builderState.elements.splice(idx, 1);
+      if(builderState.selectedElId === builderState.elements[idx]?.id) builderState.selectedElId = null;
+      refreshBuilderCanvas();
+      return;
+    }
+    const el = e.target.closest('.bc-el');
+    if(!el) return;
+    builderState.selectedElId = el.dataset.eid;
+    refreshBuilderCanvas();
+    renderPropsPanel();
+  });
+
+  /* Palette drag */
+  document.querySelectorAll('.bp-item[draggable]').forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      const key = item.dataset.paletteKey || null;
+      e.dataTransfer.setData('text/plain', JSON.stringify({type:item.dataset.palette, fieldKey:key}));
+      e.dataTransfer.effectAllowed = 'copy';
+    });
+  });
+
+  /* Canvas drag-drop */
+  canvas.addEventListener('dragover', (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; canvas.classList.add('dragover'); });
+  canvas.addEventListener('dragleave', () => canvas.classList.remove('dragover'));
+  canvas.addEventListener('drop', (e) => {
+    e.preventDefault(); canvas.classList.remove('dragover');
+    try {
+      const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+      if(data.type){
+        const newEl = {id:uid(), type:data.type, config:{}};
+        if(data.type === 'text') newEl.config = {content:'New text',align:'left',fontSize:12};
+        if(data.type === 'field') newEl.config = {fieldKey:data.fieldKey || (builderState.fieldDefs[0]?.key||''),layout:'inline'};
+        if(data.type === 'divider') newEl.config = {style:'solid'};
+        if(data.type === 'spacer') newEl.config = {height:8};
+        if(data.type === 'logo') newEl.config = {maxWidth:80,maxHeight:50,align:'center'};
+        if(data.type === 'table') newEl.config = {};
+        builderState.elements.push(newEl);
+        builderState.selectedElId = newEl.id;
+        refreshBuilderCanvas();
+        renderPropsPanel();
+      }
+    } catch(err){}
+  });
+
+  /* Reorder within canvas */
+  let dragIdx = null;
+  canvas.addEventListener('dragstart', (e) => {
+    const el = e.target.closest('.bc-el');
+    if(!el) return;
+    dragIdx = parseInt(el.dataset.eidx);
+    e.dataTransfer.effectAllowed = 'move';
+  });
+  canvas.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    const afterEl = getDragAfterElement(canvas, e.clientY);
+    const dragging = canvas.querySelector('.bc-el[draggable][data-eidx="'+dragIdx+'"]');
+    if(!dragging) return;
+    if(afterEl == null){
+      canvas.appendChild(dragging);
+    } else {
+      canvas.insertBefore(dragging, afterEl);
+    }
+  });
+  canvas.addEventListener('drop', (e) => {
+    e.preventDefault();
+    if(dragIdx === null) return;
+    const newOrder = [];
+    canvas.querySelectorAll('.bc-el').forEach(el => {
+      const idx = parseInt(el.dataset.eidx);
+      if(builderState.elements[idx]) newOrder.push(builderState.elements[idx]);
+    });
+    if(newOrder.length === builderState.elements.length){
+      builderState.elements = newOrder;
+    }
+    dragIdx = null;
+    refreshBuilderCanvas();
+  });
+
+  /* Save */
+  document.getElementById('saveBuilderBtn').addEventListener('click', () => {
+    const templates = Store.getTemplates(currentTenantId);
+    const idx = templates.findIndex(t => t.id === builderState.templateId);
+    if(idx === -1) return;
+    templates[idx].elements = builderState.elements;
+    templates[idx].fieldDefs = builderState.fieldDefs;
+    Store.setTemplates(currentTenantId, templates);
+    alert(I18N.t('save_template_ok'));
+  });
+
+  /* Switch template */
+  document.getElementById('builderTplSelect').addEventListener('change', (e) => {
+    builderState.templateId = e.target.value;
+    switchView('builder');
+  });
+
+  /* Add field def */
+  document.getElementById('addFieldDefBtn').addEventListener('click', () => openFieldDefEditor(null));
+
+  /* Field def edit/delete */
+  fieldDefsListEl.addEventListener('click', (e) => {
+    const editBtn = e.target.closest('.fd-edit');
+    const delBtn = e.target.closest('.fd-del');
+    if(editBtn) openFieldDefEditor(parseInt(editBtn.dataset.fi));
+    if(delBtn){
+      const fi = parseInt(delBtn.dataset.fi);
+      const fd = builderState.fieldDefs[fi];
+      if(!confirm(I18N.t('delete_field_confirm',{label:I18N.fieldLabel(fd.label)}))) return;
+      builderState.fieldDefs.splice(fi, 1);
+      builderState.elements = builderState.elements.filter(el => !(el.type==='field' && el.config?.fieldKey === fd.key));
+      refreshFieldDefsList();
+      refreshBuilderCanvas();
+    }
+  });
+}
+
+function refreshBuilderCanvas(){
+  const canvas = document.getElementById('builderCanvas');
+  canvas.innerHTML = '';
+  if(!builderState.elements.length){ canvas.classList.add('empty'); canvas.innerHTML = '<div class="bc-drop-hint">' + I18N.t('drag_hint') + '</div>'; return; }
+  canvas.classList.remove('empty');
+  builderState.elements.forEach((el, idx) => { canvas.insertAdjacentHTML('beforeend', renderBuilderElement(el, idx)); });
+}
+
+function refreshFieldDefsList(){
+  const el = document.getElementById('fieldDefsList');
+  el.innerHTML = renderFieldDefsList();
+}
+
+function renderPropsPanel(){
+  const propsPanel = document.getElementById('propsPanel');
+  const el = builderState.elements.find(e => e.id === builderState.selectedElId);
+  if(!el){ propsPanel.innerHTML = '<div class="bp-empty">' + I18N.t('select_element') + '</div>'; return; }
+
+  let html = '';
+  const c = el.config || {};
+
+  switch(el.type){
+    case 'logo':
+      html += propInput(I18N.t('prop_max_width'), c.maxWidth||80, 'maxWidth', 'number');
+      html += propInput(I18N.t('prop_max_height'), c.maxHeight||50, 'maxHeight', 'number');
+      html += propSelect(I18N.t('prop_align'), c.align||'center', 'align', [{v:'left',l:I18N.t('left')},{v:'center',l:I18N.t('center')},{v:'right',l:I18N.t('right')}]);
+      break;
+    case 'text':
+      html += propTextarea(I18N.t('prop_content'), c.content||'', 'content', I18N.t('prop_content_hint'));
+      html += propSelect(I18N.t('prop_align'), c.align||'left', 'align', [{v:'left',l:I18N.t('left')},{v:'center',l:I18N.t('center')},{v:'right',l:I18N.t('right')}]);
+      html += propInput(I18N.t('prop_font_size'), c.fontSize||12, 'fontSize', 'number');
+      html += propSelect(I18N.t('prop_font_weight'), c.fontWeight||'normal', 'fontWeight', [{v:'normal',l:I18N.t('normal')},{v:'bold',l:I18N.t('bold')},{v:'600',l:I18N.t('semibold')}]);
+      html += propInput(I18N.t('prop_color'), c.color||'', 'color', 'text');
+      html += propInput(I18N.t('prop_font_family'), c.fontFamily||'', 'fontFamily', 'text');
+      break;
+    case 'field':
+      const opts = builderState.fieldDefs.map(f => ({v:f.key,l:I18N.fieldLabel(f.label)}));
+      html += propSelect(I18N.t('prop_bind'), c.fieldKey||'', 'fieldKey', opts);
+      html += propSelect(I18N.t('prop_layout'), c.layout||'inline', 'layout', [{v:'inline',l:I18N.t('layout_inline')},{v:'block',l:I18N.t('layout_block')}]);
+      html += propCheckbox(I18N.t('prop_bold'), c.bold||false, 'bold');
+      break;
+    case 'divider':
+      html += propSelect(I18N.t('prop_style'), c.style||'solid', 'style', [{v:'solid',l:I18N.t('solid')},{v:'dashed',l:I18N.t('dashed')},{v:'dotted',l:I18N.t('dotted')}]);
+      break;
+    case 'spacer':
+      html += propInput(I18N.t('prop_height'), c.height||8, 'height', 'number');
+      break;
+  }
+
+  propsPanel.innerHTML = html || '<div class="bp-empty">' + I18N.t('no_properties') + '</div>';
+
+  propsPanel.querySelectorAll('[data-prop]').forEach(inp => {
+    const handler = () => {
+      el.config = el.config || {};
+      const key = inp.dataset.prop;
+      if(inp.type === 'checkbox') el.config[key] = inp.checked;
+      else if(inp.type === 'number') el.config[key] = parseFloat(inp.value) || 0;
+      else el.config[key] = inp.value;
+      refreshBuilderCanvas();
+    };
+    inp.addEventListener('input', handler);
+    inp.addEventListener('change', handler);
+  });
+}
+
+function propInput(label, value, key, type){
+  return '<div class="bp-prop"><label>'+label+'</label><input type="'+type+'" data-prop="'+key+'" value="'+esc(value)+'"></div>';
+}
+function propTextarea(label, value, key, placeholder){
+  return '<div class="bp-prop"><label>'+label+'</label><textarea data-prop="'+key+'" placeholder="'+esc(placeholder||'')+'">'+esc(value)+'</textarea></div>';
+}
+function propSelect(label, value, key, options){
+  let h = '<div class="bp-prop"><label>'+label+'</label><select data-prop="'+key+'">';
+  options.forEach(o => { h += '<option value="'+esc(o.v)+'"'+(value==o.v?' selected':'')+'>'+esc(o.l)+'</option>'; });
+  return h + '</select></div>';
+}
+function propCheckbox(label, checked, key){
+  return '<div class="bp-prop"><label><input type="checkbox" data-prop="'+key+'"'+(checked?' checked':'')+' style="width:auto;margin-right:6px;">'+label+'</label></div>';
+}
+
+function openFieldDefEditor(idx){
+  const isNew = idx === null || idx === undefined;
+  const fd = isNew ? {key:'',label:'',type:'text',placeholder:'',required:false,group:'general',suggestions:[]} : {...builderState.fieldDefs[idx]};
+
+  const fieldTypes = ['text','textarea','number','currency','email','phone','date','select','autocomplete'];
+  const fieldGroups = ['customer','device','repair','payment','meta','general'];
+
+  let formHtml = '<div class="modal-overlay" id="fieldDefModal"><div class="modal">';
+  formHtml += '<h3>'+(isNew?I18N.t('add_field_def'):I18N.t('edit_field_def'))+'</h3>';
+  formHtml += '<div class="field"><label>' + I18N.t('field_key') + '</label><input id="fdKey" value="'+esc(fd.key)+'" placeholder="e.g. customer_name" '+(isNew?'':'readonly style="background:#f6f6f8;"')+'></div>';
+  formHtml += '<div class="field"><label>' + I18N.t('field_label') + '</label><input id="fdLabel" value="'+esc(fd.label)+'" placeholder="e.g. Customer Name"></div>';
+  formHtml += '<div class="field-row">';
+  formHtml += '<div class="field"><label>' + I18N.t('field_type') + '</label><select id="fdType">';
+  fieldTypes.forEach(t => { formHtml += '<option value="'+t+'"'+(fd.type===t?' selected':'')+'>'+t+'</option>'; });
+  formHtml += '</select></div>';
+  formHtml += '<div class="field"><label>' + I18N.t('field_group') + '</label><select id="fdGroup">';
+  fieldGroups.forEach(g => { formHtml += '<option value="'+g+'"'+(fd.group===g?' selected':'')+'>'+(I18N.t('group_'+g)||g)+'</option>'; });
+  formHtml += '</select></div></div>';
+  formHtml += '<div class="field"><label>' + I18N.t('placeholder') + '</label><input id="fdPlaceholder" value="'+esc(fd.placeholder||'')+'" placeholder="'+esc(I18N.t('placeholder'))+' text"></div>';
+  formHtml += '<div class="field" id="fdOptionsWrap" style="'+(fd.type==='select'||fd.type==='autocomplete'?'':'display:none;')+'"><label>' + I18N.t('options') + '</label><textarea id="fdOptions" rows="4" placeholder="Option 1&#10;Option 2&#10;Option 3">'+(fd.options||fd.suggestions||[]).join('\n')+'</textarea></div>';
+  formHtml += '<div class="field"><label><input type="checkbox" id="fdRequired"'+(fd.required?' checked':'')+' style="width:auto;margin-right:6px;">' + I18N.t('required_field') + '</label></div>';
+  formHtml += '<div class="modal-actions"><button class="btn" id="fdCancel">' + I18N.t('cancel') + '</button><button class="btn primary" id="fdSave">'+(isNew?I18N.t('add_field_btn'):I18N.t('save_field'))+'</button></div>';
+  formHtml += '</div></div>';
+
+  document.getElementById('modalRoot').innerHTML = formHtml;
+
+  document.getElementById('fdType').addEventListener('change', (e) => {
+    document.getElementById('fdOptionsWrap').style.display = (e.target.value==='select'||e.target.value==='autocomplete') ? '' : 'none';
+  });
+
+  document.getElementById('fdCancel').addEventListener('click', () => { document.getElementById('modalRoot').innerHTML = ''; });
+  document.getElementById('fdSave').addEventListener('click', () => {
+    const key = document.getElementById('fdKey').value.trim();
+    const label = document.getElementById('fdLabel').value.trim();
+    const type = document.getElementById('fdType').value;
+    const group = document.getElementById('fdGroup').value;
+    const placeholder = document.getElementById('fdPlaceholder').value;
+    const required = document.getElementById('fdRequired').checked;
+    const optionsText = document.getElementById('fdOptions').value;
+
+    if(!key){ alert(I18N.t('field_key_required')); return; }
+    if(!label){ alert(I18N.t('label_required')); return; }
+    if(!isNew){
+      builderState.fieldDefs[idx] = {...fd, key, label, type, group, placeholder, required};
+      if(type === 'select') builderState.fieldDefs[idx].options = optionsText.split('\n').filter(Boolean);
+      if(type === 'autocomplete') builderState.fieldDefs[idx].suggestions = optionsText.split('\n').filter(Boolean);
+    } else {
+      if(builderState.fieldDefs.find(f => f.key === key)){ alert(I18N.t('field_key_exists')); return; }
+      const newFd = {key, label, type, group, placeholder, required};
+      if(type === 'select') newFd.options = optionsText.split('\n').filter(Boolean);
+      if(type === 'autocomplete') newFd.suggestions = optionsText.split('\n').filter(Boolean);
+      builderState.fieldDefs.push(newFd);
+    }
+    document.getElementById('modalRoot').innerHTML = '';
+    refreshFieldDefsList();
+    refreshBuilderCanvas();
+    /* Also refresh the palette field list */
+    const paletteFieldsHtml = builderState.fieldDefs.map(f =>
+      '<div class="bp-item" draggable="true" data-palette="field" data-palette-key="'+f.key+'"><span class="bpi-icon">&#128196;</span>'+esc(f.label)+'</div>'
+    ).join('');
+    document.querySelectorAll('.builder-palette h4')[1].insertAdjacentHTML('afterend', '');
+  });
+}
+
+function getDragAfterElement(container, y){
+  const els = [...container.querySelectorAll('.bc-el:not(.dragging)')];
+  return els.reduce((closest, child) => {
+    const box = child.getBoundingClientRect();
+    const offset = y - box.top - box.height / 2;
+    if(offset < 0 && offset > closest.offset){ return {offset, element:child}; }
+    return closest;
+  }, {offset:Number.NEGATIVE_INFINITY}).element;
+}
+
+/* ----- SETTINGS VIEW ----- */
+function renderSettingsView(el){
+  const s = Store.getSettings(currentTenantId);
+  let html = '<div class="content-header"><h2>' + I18N.t('shop_settings') + '</h2></div>';
+  html += '<div class="settings-grid">';
+
+  html += '<div class="settings-section"><h3>' + I18N.t('branding') + '</h3>';
+  html += '<div class="field"><label>' + I18N.t('shop_name_setting') + '</label><input id="setShopName" value="'+esc(s.shopName)+'" placeholder="'+esc(I18N.t('shop_name_ph'))+'"></div>';
+  html += '<div class="field" style="margin-top:12px;"><label>' + I18N.t('logo') + '</label>';
+  html += '<div class="logo-upload'+(s.logo?' has-logo':'')+'" id="logoUpload">';
+  if(s.logo) html += '<img src="'+esc(s.logo)+'" alt="Logo"><div class="clear-logo" id="clearLogoBtn">&#10005;</div>';
+  else html += '<span>' + I18N.t('logo_hint') + '</span>';
+  html += '<input type="file" id="logoFileInput" accept="image/*" style="display:none;"></div></div>';
+  html += '</div>';
+
+  html += '<div class="settings-section"><h3>' + I18N.t('contact_info') + '</h3>';
+  html += '<div class="field"><label>' + I18N.t('address') + '</label><textarea id="setAddress" rows="2" placeholder="'+esc(I18N.t('address'))+'">'+esc(s.address)+'</textarea></div>';
+  html += '<div class="field" style="margin-top:8px;"><label>' + I18N.t('location') + '</label><input id="setLocation" value="'+esc(s.location||'')+'" placeholder="'+esc(I18N.t('location_ph'))+'"></div>';
+  html += '<div class="field" style="margin-top:8px;"><label>' + I18N.t('phone') + '</label><input id="setPhone" value="'+esc(s.phone)+'" placeholder="'+esc(I18N.t('phone'))+'"></div>';
+  html += '</div>';
+
+  html += '<div class="settings-section"><h3>' + I18N.t('appearance') + '</h3>';
+  html += '<div class="field"><label>' + I18N.t('accent_color') + '</label><div class="color-input"><input type="color" id="setAccentColor" value="'+(s.accentColor||'#7132f5')+'"><input type="text" id="setAccentColorText" value="'+esc(s.accentColor||'#7132f5')+'" style="flex:1;"></div></div>';
+  html += '<div class="field" style="margin-top:12px;"><label>' + I18N.t('default_template') + '</label><select id="setDefaultTpl"><option value="">' + I18N.t('none') + '</option>';
+  Store.getTemplates(currentTenantId).forEach(t => {
+    html += '<option value="'+t.id+'"'+(s.defaultTemplateId===t.id?' selected':'')+'>'+esc(t.name)+'</option>';
+  });
+  html += '</select></div>';
+  html += '</div>';
+
+  html += '<div class="settings-section"><h3>' + I18N.t('data') + '</h3>';
+  html += '<button class="btn" id="exportShopData">' + I18N.t('export_shop_data') + '</button>';
+  html += '<button class="btn danger" id="clearShopReceipts" style="margin-left:8px;">' + I18N.t('clear_receipts') + '</button>';
+  html += '</div></div>';
+
+  el.innerHTML = html;
+
+  /* Event bindings */
+  const saveSettings = () => {
+    Store.setSettings(currentTenantId, {
+      shopName: document.getElementById('setShopName').value,
+      logo: s.logo,
+      address: document.getElementById('setAddress').value,
+      location: document.getElementById('setLocation').value,
+      phone: document.getElementById('setPhone').value,
+      accentColor: document.getElementById('setAccentColor').value,
+      fontFamily: 'IBM Plex Sans',
+      defaultTemplateId: document.getElementById('setDefaultTpl').value
+    });
+  };
+
+  ['setShopName','setAddress','setLocation','setPhone'].forEach(id => {
+    document.getElementById(id).addEventListener('input', saveSettings);
+  });
+  document.getElementById('setAccentColor').addEventListener('input', (e) => {
+    document.getElementById('setAccentColorText').value = e.target.value;
+    s.accentColor = e.target.value;
+    saveSettings();
+  });
+  document.getElementById('setAccentColorText').addEventListener('input', (e) => {
+    if(/^#[0-9a-f]{6}$/i.test(e.target.value)){
+      document.getElementById('setAccentColor').value = e.target.value;
+      s.accentColor = e.target.value;
+      saveSettings();
+    }
+  });
+  document.getElementById('setDefaultTpl').addEventListener('change', saveSettings);
+
+  /* Logo */
+  const logoUpload = document.getElementById('logoUpload');
+  const logoInput = document.getElementById('logoFileInput');
+  logoUpload.addEventListener('click', () => logoInput.click());
+  logoUpload.addEventListener('dragover', (e) => { e.preventDefault(); logoUpload.style.borderColor = 'var(--purple)'; });
+  logoUpload.addEventListener('dragleave', () => { logoUpload.style.borderColor = ''; });
+  logoUpload.addEventListener('drop', (e) => {
+    e.preventDefault(); logoUpload.style.borderColor = '';
+    if(e.dataTransfer.files[0]) readLogo(e.dataTransfer.files[0]);
+  });
+  logoInput.addEventListener('change', () => { if(logoInput.files[0]) readLogo(logoInput.files[0]); });
+  function readLogo(file){
+    if(!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => { s.logo = e.target.result; saveSettings(); renderSettingsView(el); };
+    reader.readAsDataURL(file);
+  }
+  document.getElementById('clearLogoBtn')?.addEventListener('click', (e) => {
+    e.stopPropagation(); s.logo = null; saveSettings(); renderSettingsView(el);
+  });
+
+  /* Export */
+  document.getElementById('exportShopData').addEventListener('click', () => {
+    const data = {
+      settings: Store.getSettings(currentTenantId),
+      templates: Store.getTemplates(currentTenantId),
+      receipts: Store.getReceipts(currentTenantId)
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = (s.shopName || 'shop') + '_data_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+
+  document.getElementById('clearShopReceipts').addEventListener('click', () => {
+    if(!confirm(I18N.t('confirm_delete_receipt_all'))) return;
+    Store.setReceipts(currentTenantId, []);
+    alert(I18N.t('receipts_cleared'));
+  });
+}
+
+/* ===================================================================
+   TENANT SCREEN
+   =================================================================== */
+function renderTenantScreen(){
+  const tenants = Store.getTenants();
+  const listEl = document.getElementById('tenantList');
+  if(!tenants.length){
+    listEl.innerHTML = '<div class="tenant-empty">' + I18N.t('shop_empty') + '</div>';
+    return;
+  }
+  listEl.innerHTML = '';
+  tenants.forEach(t => {
+    const settings = Store.getSettings(t.id);
+    const initials = (t.name||'?').split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    const typeKey = 'type_' + t.businessType;
+    const typeLabel = I18N.dict[I18N.lang] && I18N.dict[I18N.lang][typeKey] ? I18N.t(typeKey) : t.businessType.replace(/_/g,' ');
+    const card = document.createElement('div');
+    card.className = 'tenant-card';
+    card.innerHTML = '<div class="tc-logo">'+(settings.logo ? '<img src="'+esc(settings.logo)+'">' : esc(initials))+'</div>'
+      + '<div class="tc-info"><div class="tc-name">'+esc(t.name)+'</div><div class="tc-type">'+esc(typeLabel)+'</div></div>'
+      + '<button class="tc-del" title="'+esc(I18N.t('delete_shop'))+'">&#10005;</button>';
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('.tc-del')){
+        e.stopPropagation();
+        if(confirm(I18N.t('delete_shop_confirm',{name:t.name}))) Store.deleteTenant(t.id);
+        renderTenantScreen();
+        return;
+      }
+      enterTenant(t.id);
+    });
+    listEl.appendChild(card);
+  });
+}
+
+document.getElementById('createShopBtn').addEventListener('click', () => {
+  const name = document.getElementById('newShopName').value.trim();
+  const type = document.getElementById('newShopType').value;
+  const location = document.getElementById('newShopLocation').value.trim();
+  const phone = document.getElementById('newShopPhone').value.trim();
+  if(!name){ alert(I18N.t('shop_name_required')); return; }
+  const t = Store.createTenant({name, businessType:type});
+  Store.setSettings(t.id, {
+    shopName: name,
+    logo: null,
+    address: '',
+    location: location,
+    phone: phone,
+    accentColor: '#7132f5',
+    fontFamily: 'IBM Plex Sans',
+    defaultTemplateId: null
+  });
+  enterTenant(t.id);
+});
+
+function enterTenant(id){
+  currentTenantId = id;
+  const t = Store.getTenant(id);
+  document.getElementById('tenantScreen').style.display = 'none';
+  document.getElementById('appMain').classList.add('active');
+  const settings = Store.getSettings(id);
+  document.querySelector('.al-tenant').innerHTML = esc(t.name) + ' <span id="switchTenant" title="'+esc(I18N.t('switch_shop_title'))+'">' + esc(I18N.t('switch_shop')) + '</span>';
+  document.getElementById('switchTenant').addEventListener('click', () => {
+    document.getElementById('appMain').classList.remove('active');
+    document.getElementById('tenantScreen').style.display = '';
+    renderTenantScreen();
+  });
+  switchView('receipts');
+}
+
+/* ===================================================================
+   LANGUAGE SCREEN
+   =================================================================== */
+function setLang(lang){
+  I18N.lang = lang;
+  try{ localStorage.setItem('rd_lang', lang); }catch(e){}
+  I18N.applyStatic();
+  if(currentTenantId){
+    document.querySelector('.al-tenant').innerHTML = esc(Store.getTenant(currentTenantId).name) + ' <span id="switchTenant" title="'+esc(I18N.t('switch_shop_title'))+'">' + esc(I18N.t('switch_shop')) + '</span>';
+    document.getElementById('switchTenant').addEventListener('click', () => {
+      document.getElementById('appMain').classList.remove('active');
+      document.getElementById('tenantScreen').style.display = '';
+      renderTenantScreen();
+    });
+    switchView(currentView);
+  }
+}
+
+function showLangScreen(){
+  document.getElementById('langScreen').style.display = 'flex';
+  document.getElementById('tenantScreen').style.display = 'none';
+  document.getElementById('appMain').classList.remove('active');
+}
+function hideLangScreen(){
+  document.getElementById('langScreen').style.display = 'none';
+  document.getElementById('tenantScreen').style.display = 'flex';
+}
+
+/* ===================================================================
+   AUTH / SUPABASE
+   =================================================================== */
+const authMode = { isSignup:false };
+let authUser = null;
+
+function showAuthScreen(){
+  document.getElementById('authScreen').classList.remove('hidden');
+  document.getElementById('langScreen').style.display = 'none';
+  document.getElementById('tenantScreen').style.display = 'none';
+  document.getElementById('appMain').classList.remove('active');
+}
+function hideAuthScreen(){
+  document.getElementById('authScreen').classList.add('hidden');
+}
+function setAuthMode(signup){
+  authMode.isSignup = !!signup;
+  document.getElementById('authNameField').style.display = signup ? '' : 'none';
+  document.getElementById('authConfirmField').style.display = signup ? '' : 'none';
+  document.getElementById('authSubmitBtn').textContent = I18N.t(signup ? 'sign_up' : 'login');
+  document.getElementById('authToggleText').textContent = I18N.t(signup ? 'have_account' : 'no_account');
+  document.getElementById('authToggleLink').textContent = I18N.t(signup ? 'login' : 'create_account');
+  document.getElementById('authMsg').className = 'auth-msg';
+  document.getElementById('authMsg').textContent = '';
+}
+function authMsg(msg, type){
+  const el = document.getElementById('authMsg');
+  el.className = 'auth-msg ' + (type || 'error');
+  el.textContent = msg || '';
+}
+
+async function handleSignout(){
+  if(supabase) await supabase.auth.signOut();
+  authUser = null;
+  Store.releaseCache();
+  showAuthScreen();
+  try{ localStorage.removeItem('rd_activeTenant'); }catch(e){}
+}
+
+/* Sidebar logout wiring (called after app renders) */
+function wireLogout(){
+  const btn = document.getElementById('logoutBtn');
+  if(!btn) return;
+  btn.addEventListener('click', async () => {
+    await handleSignout();
+  });
+}
+
+/* Toggle between tenant view and sign-in view  */
+function gotoAuthScreen(){
+  showAuthScreen();
+}
+function gotoTenantScreen(){
+  document.getElementById('authScreen').classList.add('hidden');
+  document.getElementById('langScreen').style.display = 'none';
+  document.getElementById('tenantScreen').style.display = 'flex';
+}
+
+async function authSubmit(e){
+  e.preventDefault();
+  const email = document.getElementById('authEmail').value.trim();
+  const password = document.getElementById('authPassword').value;
+  if(!supabase || !sbReady){ authMsg(I18N.t('auth_failed')); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg(I18N.t('auth_email_invalid')); return; }
+  if(password.length < 6){ authMsg(I18N.t('auth_password_short')); return; }
+  if(authMode.isSignup){
+    const name = document.getElementById('authName').value.trim();
+    const confirmPw = document.getElementById('authConfirm').value;
+    if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
+    try{
+      const { data, error } = await supabase.auth.signUp({ email, password, options:{ data:{ full_name: name } } });
+      if(error){ authMsg(I18N.t(error.message && /already/i.test(error.message) ? 'auth_exists' : 'auth_failed')); return; }
+      if(data && data.session && data.session.user){
+        await afterAuth(data.session.user);
+        return;
+      }
+      authMsg('', 'info');
+      setAuthMode(false);
+      document.getElementById('authPassword').value = '';
+      document.getElementById('authConfirm').value = '';
+      document.getElementById('authEmail').value = '';
+      authMsg(I18N.t('auth_check_email'), 'info');
+    }catch(err){ authMsg(I18N.t('auth_failed')); }
+    return;
+  }
+  try{
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if(error){ authMsg(I18N.t('auth_invalid')); return; }
+    await afterAuth(data.user);
+  }catch(err){ authMsg(I18N.t('auth_failed')); }
+}
+
+async function afterAuth(user){
+  if(!user) return;
+  authUser = user;
+  hideAuthScreen();
+  await Store.initCloud();
+  gotoTenantScreen();
+  renderTenantScreen();
+  const evt = new Event('authready');
+  document.dispatchEvent(evt);
+}
+
+document.getElementById('authForm').addEventListener('submit', authSubmit);
+document.getElementById('authToggleLink').addEventListener('click', () => setAuthMode(!authMode.isSignup));
+
+/* ===================================================================
+   INIT
+   =================================================================== */
+document.querySelectorAll('.lang-opt').forEach(opt => {
+  opt.addEventListener('click', () => {
+    setLang(opt.dataset.lang);
+    hideLangScreen();
+    bootstrapAfterLang();
+  });
+});
+document.getElementById('changeLangBtn').addEventListener('click', showLangScreen);
+
+async function bootstrapAfterLang(){
+  if(sbReady && supabase){
+    try{
+      const { data, error } = await supabase.auth.getSession();
+      const session = data && data.session;
+      if(session && session.user){
+        authUser = session.user;
+        Store.setCloudUser(session.user.id);
+        await Store.initCloud();
+        hideAuthScreen();
+        if(currentTenantId){
+          document.getElementById('appMain').classList.add('active');
+        } else {
+          document.getElementById('tenantScreen').style.display = 'flex';
+          renderTenantScreen();
+        }
+        return;
+      }
+    }catch(err){ console.warn('session check failed', err); }
+  }
+  showAuthScreen();
+}
+if(typeof wireLogout === 'function') wireLogout();
+
+(function flowFieldInit(){
+  const canvas = document.getElementById('flowCanvas');
+  if(!canvas || !canvas.getContext){ return; }
+  const ctx = canvas.getContext('2d');
+  if(!ctx){ return; }
+
+  /* Light-theme config to match the app (white cards on light gray) */
+  var cfg = {
+    hueStart: 240,      /* violet/blue anchor */
+    hueRange: 140,      /* sweep through blue->teal->green */
+    saturation: 62,
+    lightness: 60,
+    bg: '246, 246, 248',
+    trailAlpha: 0.09,
+    count: 750,
+    speedMin: 1.0,
+    speedMax: 2.4
+  };
+
+  function fieldAngle(x, y, t){
+    var s = 0.0025;
+    return (
+      Math.sin(x * s + t * 0.0007) * Math.PI +
+      Math.cos(y * s + t * 0.0005) * Math.PI +
+      Math.sin((x + y) * s * 0.6 + t * 0.0009) * Math.PI * 0.6 +
+      Math.cos((x - y) * s * 0.4 + t * 0.0006) * Math.PI * 0.4
+    );
+  }
+
+  var dpr = window.devicePixelRatio || 1;
+  var width = 0, height = 0, time = 0, animId = 0, particles = [];
+
+  function spawnParticle(){
+    var maxLife = 200 + Math.floor(Math.random() * 300);
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      speed: cfg.speedMin + Math.random() * (cfg.speedMax - cfg.speedMin),
+      hue: cfg.hueStart + Math.random() * cfg.hueRange,
+      life: Math.floor(Math.random() * maxLife),
+      maxLife: maxLife
+    };
+  }
+
+  function resize(){
+    width = window.innerWidth;
+    height = window.innerHeight;
+    dpr = window.devicePixelRatio || 1;
+    canvas.width = Math.round(width * dpr);
+    canvas.height = Math.round(height * dpr);
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = 'rgb(' + cfg.bg + ')';
+    ctx.fillRect(0, 0, width, height);
+    particles = [];
+    var i = 0;
+    for(; i < cfg.count; i++){ particles.push(spawnParticle()); }
+  }
+
+  function render(){
+    time++;
+    ctx.fillStyle = 'rgba(' + cfg.bg + ', ' + cfg.trailAlpha + ')';
+    ctx.fillRect(0, 0, width, height);
+    var i = 0;
+    var p, angle, progress, fadeIn, fadeOut, alpha, hueMod;
+    for(; i < particles.length; i++){
+      p = particles[i];
+      angle = fieldAngle(p.x, p.y, time);
+      p.x += Math.cos(angle) * p.speed;
+      p.y += Math.sin(angle) * p.speed;
+      p.life++;
+      if(p.life > p.maxLife){
+        p.x = Math.random() * width;
+        p.y = Math.random() * height;
+        p.life = 0;
+        p.hue = cfg.hueStart + Math.random() * cfg.hueRange;
+        continue;
+      }
+      if(p.x < 0){ p.x += width; } else if(p.x > width){ p.x -= width; }
+      if(p.y < 0){ p.y += height; } else if(p.y > height){ p.y -= height; }
+      progress = p.life / p.maxLife;
+      fadeIn = Math.min(progress * 8, 1);
+      fadeOut = Math.min((1 - progress) * 6, 1);
+      alpha = fadeIn * fadeOut * 0.7;
+      hueMod = (p.hue + (angle / (Math.PI * 2)) * 70 + 360) % 360;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 1.3, 0, Math.PI * 2);
+      ctx.fillStyle = 'hsla(' + hueMod + ', ' + cfg.saturation + '%, ' + cfg.lightness + '%, ' + alpha + ')';
+      ctx.fill();
+    }
+    animId = requestAnimationFrame(render);
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+  render();
+
+  window.addEventListener('beforeunload', function(){ cancelAnimationFrame(animId); });
+})();
+
+(function init(){
+  let stored = null;
+  try{ stored = localStorage.getItem('rd_lang'); }catch(e){}
+  if(stored === 'fr' || stored === 'en'){ stored = I18N.dict[stored] ? stored : 'en'; }
+  const lang = (stored === 'fr') ? 'fr' : 'en';
+  I18N.lang = lang;
+  I18N.applyStatic();
+  hideAuthScreen();
+  if(stored){ hideLangScreen(); bootstrapAfterLang(); }
+  else{ showLangScreen(); }
+})();
+})();
+</script>
+</body>
+</html>
