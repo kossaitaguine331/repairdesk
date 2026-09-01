@@ -265,6 +265,27 @@ button{cursor:pointer;}
 .rh-stat.earnings{background:linear-gradient(135deg,var(--purple-subtle),var(--panel));border-color:rgba(113,50,245,0.35);}
 .rh-stat.earnings .rh-num{color:var(--purple-dark);}
 .rh-stat.earnings .rh-lab{color:var(--purple-dark);font-weight:600;}
+.earn-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.earn-tab{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .12s;}
+.earn-tab:hover{color:var(--ink);}
+.earn-tab.active{background:var(--purple-dark);border-color:var(--purple-dark);color:#fff;}
+.earn-summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:16px;}
+.earn-sum-card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;box-shadow:var(--shadow-micro);border-left:3px solid var(--line);}
+.earn-sum-card.active{border-color:rgba(113,50,245,0.4);border-left-color:var(--purple);background:var(--purple-subtle);}
+.earn-sum-card .es-lab{font-size:11.5px;color:var(--muted);font-weight:500;}
+.earn-sum-card .es-num{font-size:22px;font-weight:700;color:var(--ink);letter-spacing:-0.5px;margin-top:2px;}
+.earn-sum-card.active .es-num{color:var(--purple-dark);}
+.earn-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap;background:linear-gradient(135deg,var(--purple-dark),#5b21b6);color:#fff;border-radius:var(--radius);padding:18px 22px;margin-bottom:18px;}
+.earn-banner .eb-label{font-size:13px;opacity:.9;font-weight:500;}
+.earn-banner .eb-total{font-size:30px;font-weight:700;letter-spacing:-0.5px;margin-top:2px;}
+.earn-banner .eb-count{font-size:12px;opacity:.85;}
+.earn-list{display:flex;flex-direction:column;gap:8px;}
+.earn-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 16px;cursor:pointer;transition:all .12s;}
+.earn-row:hover{border-color:var(--purple);box-shadow:var(--shadow-micro);}
+.earn-row .er-main{min-width:0;}
+.earn-row .er-name{font-weight:600;color:var(--ink);}
+.earn-row .er-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;font-size:12px;color:var(--muted);}
+.earn-row .er-amt{font-weight:700;color:var(--green-ink);font-size:15px;white-space:nowrap;}
 .rh-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
 .rh-toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;}
 .rh-toolbar input[type=text]:focus{border-color:var(--purple);}
@@ -447,6 +468,7 @@ button{cursor:pointer;}
     </div>
     <div class="nav-section" data-i18n="nav_workspace">Workspace</div>
     <button class="nav-item active" data-view="receipts"><span class="ni-icon">&#9776;</span><span data-i18n="nav_receipts">Receipts</span></button>
+    <button class="nav-item" data-view="earnings"><span class="ni-icon">&#128176;</span><span data-i18n="nav_earnings">Earnings</span></button>
     <button class="nav-item" data-view="templates"><span class="ni-icon">&#9635;</span><span data-i18n="nav_templates">Templates</span></button>
     <button class="nav-item" data-view="builder"><span class="ni-icon">&#9998;</span><span data-i18n="nav_builder">Template Builder</span></button>
     <div class="nav-section" data-i18n="nav_manage">Manage</div>
@@ -478,6 +500,7 @@ const I18N = {
       nav_language:'Language',
       nav_workspace:'Workspace',
       nav_receipts:'Receipts',
+      nav_earnings:'Earnings',
       nav_templates:'Templates',
       nav_builder:'Template Builder',
       nav_manage:'Manage',
@@ -539,6 +562,12 @@ const I18N = {
       unpaid:'Unpaid',
       paid:'Paid',
       earnings_this_month:'Earnings {month}',
+      period_day:'Day',
+      period_week:'Week',
+      period_month:'Month',
+      earnings_range:'Total for {range}',
+      receipts_paid:'receipts paid',
+      earnings_empty:'No paid receipts in this period yet. Mark a receipt as Paid to see it here.',
       search_receipts:'Search by name, phone, number or device...',
       all_statuses:'All Statuses',
       all:'All',
@@ -686,6 +715,7 @@ const I18N = {
       nav_language:'Langue',
       nav_workspace:'Espace de travail',
       nav_receipts:'Reçus',
+      nav_earnings:'Gains',
       nav_templates:'Modèles',
       nav_builder:'Éditeur de modèle',
       nav_manage:'Gérer',
@@ -747,6 +777,12 @@ const I18N = {
       unpaid:'Non payé',
       paid:'Payé',
       earnings_this_month:'Gains {month}',
+      period_day:'Jour',
+      period_week:'Semaine',
+      period_month:'Mois',
+      earnings_range:'Total de {range}',
+      receipts_paid:'reçus payés',
+      earnings_empty:'Aucun reçu payé sur cette période. Marquez un reçu comme Payé pour le voir ici.',
       search_receipts:'Rechercher par nom, téléphone, numéro ou appareil...',
       all_statuses:'Tous les statuts',
       all:'Tous',
@@ -1261,10 +1297,18 @@ function switchView(view){
   renderView();
 }
 
+/* Nav-item click binding (data-view based) */
+function wireNav(){
+  document.querySelectorAll('.nav-item[data-view]').forEach(btn => {
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+}
+
 function renderView(){
   const content = document.getElementById('appContent');
   switch(currentView){
     case 'receipts': renderReceiptsView(content); break;
+    case 'earnings': renderEarningsView(content); break;
     case 'templates': renderTemplatesView(content); break;
     case 'builder': renderBuilderView(content); break;
     case 'settings': renderSettingsView(content); break;
@@ -1725,6 +1769,113 @@ function exportAllReceipts(){
   a.download = (tenant?.name || 'shop') + '_receipts_' + new Date().toISOString().slice(0,10) + '.json';
   a.click();
   URL.revokeObjectURL(a.href);
+}
+
+/* ----- EARNINGS VIEW ----- */
+function earningsWindowStart(period){
+  const now = new Date();
+  if(period === 'day'){ return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime(); }
+  if(period === 'week'){
+    const dow = (now.getDay() + 6) % 7; /* Monday first */
+    return new Date(now.getFullYear(), now.getMonth(), now.getDate() - dow).getTime();
+  }
+  return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+}
+function periodLabel(period){
+  try{
+    const opt = (I18N.lang === 'fr') ? 'fr' : (I18N.lang === 'en' ? 'en' : undefined);
+    if(period === 'day') return new Date().toLocaleDateString(opt, { weekday:'long', day:'numeric', month:'long', year:'numeric' });
+    if(period === 'week'){
+      const start = new Date(earningsWindowStart('week'));
+      const end = new Date();
+      return start.toLocaleDateString(opt, { day:'numeric', month:'short' }) + ' – ' + end.toLocaleDateString(opt, { day:'numeric', month:'short', year:'numeric' });
+    }
+    return new Date().toLocaleDateString(opt, { month:'long', year:'numeric' });
+  }catch(e){ return ''; }
+}
+function renderEarningsView(el){
+  if(typeof window.earnState === 'undefined'){ window.earnState = { period:'month' }; }
+  const period = window.earnState.period;
+  const settings = Store.getSettings(currentTenantId);
+  const cur = settings.currency || 'DZD';
+  const receipts = Store.getReceipts(currentTenantId);
+  const now = Date.now();
+  const start = earningsWindowStart(period);
+
+  const paid = receipts.filter(r => {
+    if(!r.paid) return false;
+    const ts = r.paidAt || r.updatedAt || r.createdAt || 0;
+    return ts >= start && ts <= now;
+  });
+  let sum = 0;
+  const listRows = paid.map(r => {
+    const v = parseFloat(r.fields.total);
+    if(!isNaN(v)){ sum += v; }
+    return r;
+  });
+
+  let html = '<div class="content-header"><h2>' + I18N.t('nav_earnings') + '</h2></div>';
+
+  /* Period tabs */
+  html += '<div class="earn-tabs">';
+  [['day','period_day'],['week','period_week'],['month','period_month']].forEach(t => {
+    html += '<button class="earn-tab' + (period === t[0] ? ' active' : '') + '" data-period="' + t[0] + '">' + I18N.t(t[1]) + '</button>';
+  });
+  html += '</div>';
+
+  /* Summary cards */
+  const dayStart = earningsWindowStart('day');
+  const weekStart = earningsWindowStart('week');
+  const monthStart = earningsWindowStart('month');
+  const recent = ts => ts >= start && ts <= now;
+  const sumIn = fn => {
+    let s = 0;
+    receipts.forEach(r => { if(r.paid && fn(r.paidAt || r.updatedAt || r.createdAt || 0)){ const v = parseFloat(r.fields.total); if(!isNaN(v)) s += v; } });
+    return s;
+  };
+  html += '<div class="earn-summary">';
+  html += '<div class="earn-sum-card' + (period === 'day' ? ' active' : '') + '"><div class="es-lab">' + I18N.t('period_day') + '</div><div class="es-num">' + money(sumIn(ts => ts >= dayStart), cur) + '</div></div>';
+  html += '<div class="earn-sum-card' + (period === 'week' ? ' active' : '') + '"><div class="es-lab">' + I18N.t('period_week') + '</div><div class="es-num">' + money(sumIn(ts => ts >= weekStart), cur) + '</div></div>';
+  html += '<div class="earn-sum-card' + (period === 'month' ? ' active' : '') + '"><div class="es-lab">' + I18N.t('period_month') + '</div><div class="es-num">' + money(sumIn(ts => ts >= monthStart), cur) + '</div></div>';
+  html += '</div>';
+
+  /* Current-period total banner */
+  html += '<div class="earn-banner">';
+  html += '<div class="eb-label">' + I18N.t('earnings_range', {range: periodLabel(period)}) + '</div>';
+  html += '<div class="eb-total">' + money(sum, cur) + '</div>';
+  html += '<div class="eb-count">' + listRows.length + ' ' + I18N.t('receipts_paid') + '</div>';
+  html += '</div>';
+
+  /* Paid receipt list */
+  if(listRows.length === 0){
+    html += '<div class="empty-state">' + I18N.t('earnings_empty') + '</div>';
+  } else {
+    listRows.sort((a,b) => (b.paidAt || b.updatedAt || 0) - (a.paidAt || a.updatedAt || 0));
+    html += '<div class="earn-list">';
+    listRows.forEach(r => {
+      const name = r.fields.customer_name || I18N.t('unnamed');
+      const phone = r.fields.customer_phone || '';
+      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || '';
+      const v = parseFloat(r.fields.total); const vv = isNaN(v) ? 0 : v;
+      html += '<div class="earn-row" data-id="' + r.id + '">';
+      html += '<div class="er-main"><div class="er-name">' + esc(name) + ' <span class="rh-id">#' + esc(r.id.slice(-6).toUpperCase()) + '</span></div>';
+      html += '<div class="er-meta">';
+      if(phone) html += '<span class="rc-phone">&#128222; ' + esc(phone) + '</span>';
+      if(device) html += '<span class="rc-device">' + esc(device) + '</span>';
+      html += '<span class="rc-date">' + formatDate(r.paidAt || r.updatedAt || r.createdAt) + '</span>';
+      html += '</div></div>';
+      html += '<div class="er-amt">' + money(vv, cur) + '</div>';
+      html += '</div>';
+    });
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+
+  /* Tab clicks */
+  el.querySelectorAll('.earn-tab').forEach(t => t.addEventListener('click', () => { window.earnState.period = t.dataset.period; renderEarningsView(el); }));
+  /* Row clicks -> open receipt detail */
+  el.querySelectorAll('.earn-row').forEach(row => row.addEventListener('click', () => renderReceiptDetails(row.dataset.id)));
 }
 
 /* ----- TEMPLATES VIEW ----- */
@@ -2691,6 +2842,7 @@ if(typeof wireLogout === 'function') wireLogout();
   const lang = (stored === 'fr') ? 'fr' : 'en';
   I18N.lang = lang;
   I18N.applyStatic();
+  wireNav();
   hideAuthScreen();
   if(stored){ hideLangScreen(); bootstrapAfterLang(); }
   else{ showLangScreen(); }
