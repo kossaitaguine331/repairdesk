@@ -260,8 +260,6 @@ button{cursor:pointer;}
 .rh-stat.unpaid .rh-num{color:var(--danger);}
 .rh-stat.paid .rh-num{color:var(--green);}
 .rh-stat.earnings{background:linear-gradient(135deg,var(--purple-subtle),var(--panel));border-color:rgba(113,50,245,0.35);}
-.rh-stat.earnings .rh-num{color:var(--purple-dark);}
-.rh-stat.earnings .rh-lab{color:var(--purple-dark);font-weight:600;}
 .earn-tabs{display:flex;gap:8px;margin-bottom:16px;}
 .earn-tab{border:1px solid var(--line);background:var(--panel);border-radius:999px;padding:7px 18px;font-size:13px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .12s;}
 .earn-tab:hover{color:var(--ink);}
@@ -616,7 +614,6 @@ const I18N = {
       not_repaired:'Not Repaired',
       unpaid:'Unpaid',
       paid:'Paid',
-      earnings_this_month:'Earnings {month}',
       period_day:'Day',
       period_week:'Week',
       period_month:'Month',
@@ -862,7 +859,6 @@ const I18N = {
       not_repaired:'Non réparé',
       unpaid:'Non payé',
       paid:'Payé',
-      earnings_this_month:'Gains {month}',
       period_day:'Jour',
       period_week:'Semaine',
       period_month:'Mois',
@@ -1108,7 +1104,6 @@ ar: {
       not_repaired:'لم يتم إصلاحه',
       unpaid:'غير مدفوع',
       paid:'مدفوع',
-      earnings_this_month:'أرباح {month}',
       period_day:'يوم',
       period_week:'أسبوع',
       period_month:'شهر',
@@ -1548,11 +1543,6 @@ function money(val, cur){
   if(isNaN(n)){ n = 0; }
   return n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ' + (cur || 'DZD');
 }
-function monthLabel(){
-  try{
-    return new Date().toLocaleString(I18N.lang === 'fr' ? 'fr' : undefined, { month:'long', year:'numeric' });
-  }catch(e){ return new Date().toLocaleDateString(undefined, { month:'long', year:'numeric' }); }
-}
 function receiptNumber(r){
   const n = r && r.invoiceNum ? String(r.invoiceNum) : (r ? String(r.id || '').slice(-6) : '');
   const digits = n.replace(/\D/g, '') || n;
@@ -1677,21 +1667,6 @@ function renderReceiptsView(el){
     if(r.paid){ paidC++; } else { unpaidC++; }
   });
 
-  /* Monthly earnings (receipts marked Paid this calendar month) */
-  const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-  let paidMoney = 0;
-  receipts.forEach(r => {
-    if(!r.paid) return;
-    const paidTs = r.paidAt || r.updatedAt || r.createdAt || 0;
-    if(paidTs >= monthStart){
-      const v = parseFloat(r.fields.total);
-      if(!isNaN(v)) paidMoney += v;
-    }
-  });
-  const settings = Store.getSettings(currentTenantId);
-  const cur = settings.currency || 'DZD';
-
   /* Search + filter */
   const q = (st.q || '').toLowerCase();
   let filtered = receipts.filter(r => {
@@ -1722,7 +1697,6 @@ function renderReceiptsView(el){
   html += '<div class="rh-stat repaired"><div class="rh-num">'+repCount+'</div><div class="rh-lab">'+I18N.t('repaired')+'</div></div>';
   html += '<div class="rh-stat unpaid"><div class="rh-num">'+unpaidC+'</div><div class="rh-lab">'+I18N.t('unpaid')+'</div></div>';
   html += '<div class="rh-stat paid"><div class="rh-num">'+paidC+'</div><div class="rh-lab">'+I18N.t('paid')+'</div></div>';
-  html += '<div class="rh-stat earnings"><div class="rh-num">'+esc(money(paidMoney, cur))+'</div><div class="rh-lab">'+I18N.t('earnings_this_month',{month:monthLabel()})+'</div></div>';
   html += '</div>';
 
   /* Toolbar */
