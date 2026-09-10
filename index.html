@@ -106,7 +106,7 @@ button{cursor:pointer;}
 .nav-item.active{background:var(--purple-subtle);color:var(--purple-dark);box-shadow:inset 3px 0 0 var(--purple);}
 .nav-item .ni-icon{width:18px;text-align:center;font-size:15px;flex-shrink:0;}
 .nav-section{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:var(--muted-soft);padding:16px 12px 6px;font-weight:600;}
-.app-content{margin-left:240px;flex:1;padding:28px 32px 80px;}
+.app-content{margin-left:240px;flex:1;padding:28px 32px 80px;position:relative;}
 .app-content.max-w{max-width:1100px;}
 .content-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;}
 .content-header h2{font-size:20px;font-weight:700;letter-spacing:-0.3px;}
@@ -283,6 +283,11 @@ button{cursor:pointer;}
 .earn-row .er-name{font-weight:600;color:var(--ink);}
 .earn-row .er-meta{display:flex;gap:12px;flex-wrap:wrap;margin-top:2px;font-size:12px;color:var(--muted);}
 .earn-row .er-amt{font-weight:700;color:var(--green-ink);font-size:15px;white-space:nowrap;}
+.earn-hidden{filter:blur(12px);user-select:none;pointer-events:none;transition:filter .3s;}
+.earn-hidden.earn-revealed{filter:none;pointer-events:auto;}
+.earn-reveal-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.6);border-radius:var(--radius);cursor:pointer;z-index:10;transition:opacity .3s;}
+.earn-reveal-overlay.earn-revealed{opacity:0;pointer-events:none;}
+.earn-reveal-overlay span{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:12px 24px;font-weight:600;font-size:14px;color:var(--ink);box-shadow:var(--shadow-micro);pointer-events:auto;}
 .rh-toolbar{display:flex;gap:10px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
 .rh-toolbar input[type=text]{flex:1;min-width:220px;padding:9px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;}
 .rh-toolbar input[type=text]:focus{border-color:var(--purple);}
@@ -1632,6 +1637,7 @@ function renderPreview(template, fieldValues, format){
    VIEWS
    =================================================================== */
 function switchView(view){
+  if(view !== 'earnings'){ window.earnRevealed = false; }
   currentView = view;
   document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.view === view));
   renderView();
@@ -2244,6 +2250,21 @@ function renderEarningsView(el){
   }
 
   el.innerHTML = html;
+
+  /* Earnings blur: hide numbers until tapped (privacy in-store) */
+  if(!window.earnRevealed){
+    const children = el.querySelectorAll(':scope > *');
+    children.forEach(c => c.classList.add('earn-hidden'));
+    const overlay = document.createElement('div');
+    overlay.className = 'earn-reveal-overlay';
+    overlay.innerHTML = '<span>&#128274; Tap to reveal earnings</span>';
+    el.appendChild(overlay);
+    overlay.addEventListener('click', () => {
+      window.earnRevealed = true;
+      overlay.classList.add('earn-revealed');
+      children.forEach(c => c.classList.add('earn-revealed'));
+    });
+  }
 
   /* Tab clicks */
   el.querySelectorAll('.earn-tab').forEach(t => t.addEventListener('click', () => { window.earnState.period = t.dataset.period; renderEarningsView(el); }));
