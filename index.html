@@ -407,6 +407,9 @@ button{cursor:pointer;}
       <span id="authToggleText" data-i18n="no_account">No account yet?</span>
       <a id="authToggleLink" data-i18n="create_account">Create account</a>
     </div>
+    <div class="auth-toggle" style="margin-top:6px;">
+      <a id="authForgotLink" data-i18n="forgot_password">Forgot password?</a>
+    </div>
   </div>
 </div>
 
@@ -557,6 +560,13 @@ const I18N = {
       auth_email_invalid:'Please enter a valid email address.',
       auth_password_mismatch:'Passwords do not match.',
       auth_signed_out:'You have been signed out.',
+      forgot_password:'Forgot password?',
+      reset_password:'Reset password',
+      back_to_login:'Back to log in',
+      reset_hint:'Enter your email, your access code and a new password.',
+      reset_no_account:'No account found with this email. Please contact the administrator.',
+      reset_code_invalid:'Access code not accepted. Please contact the administrator.',
+      reset_success:'Password updated. You can now log in.',
       users_restricted:'Only administrators can manage users.',
       users_hint:'Issue a unique access code per client so they can sign up. Revoke a code to block that client.',
       users_issue:'Issue a new access code',
@@ -802,6 +812,13 @@ const I18N = {
       auth_email_invalid:'Veuillez saisir une adresse email valide.',
       auth_password_mismatch:'Les mots de passe ne correspondent pas.',
       auth_signed_out:'Vous avez été déconnecté.',
+      forgot_password:'Mot de passe oublié ?',
+      reset_password:'Réinitialiser le mot de passe',
+      back_to_login:'Retour à la connexion',
+      reset_hint:'Saisissez votre email, votre code d\'accès et un nouveau mot de passe.',
+      reset_no_account:'Aucun compte trouvé avec cet email. Contactez l\'administrateur.',
+      reset_code_invalid:'Code d\'accès non accepté. Contactez l\'administrateur.',
+      reset_success:'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.',
       users_restricted:'Seuls les administrateurs peuvent gérer les utilisateurs.',
       users_hint:'Émettez un code d\'accès unique par client afin qu\'il puisse s\'inscrire. Révoquez un code pour bloquer ce client.',
       users_issue:'Émettre un nouveau code d\'accès',
@@ -1047,6 +1064,13 @@ ar: {
       auth_email_invalid:'يرجى إدخال بريد إلكتروني صالح.',
       auth_password_mismatch:'كلمتا المرور غير متطابقتين.',
       auth_signed_out:'تم تسجيل خروجك.',
+      forgot_password:'نسيت كلمة المرور؟',
+      reset_password:'إعادة تعيين كلمة المرور',
+      back_to_login:'العودة إلى تسجيل الدخول',
+      reset_hint:'أدخل بريدك الإلكتروني ورمز الدخول وكلمة مرور جديدة.',
+      reset_no_account:'لا يوجد حساب بهذا البريد الإلكتروني. يرجى التواصل مع المسؤول.',
+      reset_code_invalid:'رمز الدخول غير مقبول. يرجى التواصل مع المسؤول.',
+      reset_success:'تم تحديث كلمة المرور. يمكنك الآن تسجيل الدخول.',
       users_restricted:'يمكن للمسؤولين فقط إدارة المستخدمين.',
       users_hint:'أصدر رمز دخول فريداً لكل عميل ليتمكن من التسجيل. ألغِ الرمز لحظر العميل وإيقاف دخوله.',
       users_issue:'إصدار رمز دخول جديد',
@@ -3182,7 +3206,7 @@ function hideLangScreen(){
 /* ===================================================================
    AUTH – local accounts (stored in this browser, no backend)
    =================================================================== */
-const authMode = { isSignup:false };
+const authMode = { isSignup:false, isReset:false };
 let authUser = null;
 
 function makeSalt(){
@@ -3212,14 +3236,35 @@ function hideAuthScreen(){
 }
 function setAuthMode(signup){
   authMode.isSignup = !!signup;
+  authMode.isReset = false;
   document.getElementById('authNameField').style.display = signup ? '' : 'none';
   document.getElementById('authConfirmField').style.display = signup ? '' : 'none';
   document.getElementById('authCodeField').style.display = signup ? '' : 'none';
   document.getElementById('authSubmitBtn').textContent = I18N.t(signup ? 'sign_up' : 'login');
   document.getElementById('authToggleText').textContent = I18N.t(signup ? 'have_account' : 'no_account');
   document.getElementById('authToggleLink').textContent = I18N.t(signup ? 'login' : 'create_account');
+  document.getElementById('authForgotLink').style.display = signup ? 'none' : '';
+  document.getElementById('authPassword').autocomplete = 'current-password';
+  document.getElementById('authConfirm').autocomplete = 'new-password';
+  document.getElementById('authCode').autocomplete = 'one-time-code';
   document.getElementById('authMsg').className = 'auth-msg';
   document.getElementById('authMsg').textContent = '';
+}
+function setResetMode(){
+  authMode.isSignup = false;
+  authMode.isReset = true;
+  document.getElementById('authNameField').style.display = 'none';
+  document.getElementById('authConfirmField').style.display = '';
+  document.getElementById('authCodeField').style.display = '';
+  document.getElementById('authSubmitBtn').textContent = I18N.t('reset_password');
+  document.getElementById('authToggleText').textContent = '';
+  document.getElementById('authToggleLink').textContent = I18N.t('back_to_login');
+  document.getElementById('authForgotLink').style.display = 'none';
+  document.getElementById('authPassword').autocomplete = 'new-password';
+  document.getElementById('authConfirm').autocomplete = 'new-password';
+  document.getElementById('authCode').autocomplete = 'one-time-code';
+  document.getElementById('authMsg').className = 'auth-msg info';
+  document.getElementById('authMsg').textContent = I18N.t('reset_hint');
 }
 function authMsg(msg, type){
   const el = document.getElementById('authMsg');
@@ -3244,7 +3289,18 @@ function getRegistry(){
       saveRegistry((typeof EMBEDDED_REGISTRY !== 'undefined' && Array.isArray(EMBEDDED_REGISTRY)) ? EMBEDDED_REGISTRY : []);
       return getRegistry();
     }
-    return JSON.parse(v) || [];
+    const list = JSON.parse(v) || [];
+    /* Merge any newly published codes so already-seeded browsers also receive
+       codes the administrator issued after their first visit. */
+    if(typeof EMBEDDED_REGISTRY !== 'undefined' && Array.isArray(EMBEDDED_REGISTRY) && EMBEDDED_REGISTRY.length){
+      let merged = false;
+      EMBEDDED_REGISTRY.forEach(er => {
+        const exists = list.some(r => (r.email||'').toLowerCase() === (er.email||'').toLowerCase() && (r.code||'') === (er.code||''));
+        if(!exists){ list.push(er); merged = true; }
+      });
+      if(merged) saveRegistry(list);
+    }
+    return list;
   }catch(e){ return []; }
 }
 function saveRegistry(list){
@@ -3346,6 +3402,28 @@ async function authSubmit(e){
   if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg(I18N.t('auth_email_invalid')); return; }
   if(password.length < 6){ authMsg(I18N.t('auth_password_short')); return; }
 
+  if(authMode.isReset){
+    const confirmPw = document.getElementById('authConfirm').value;
+    const code = document.getElementById('authCode').value.trim();
+    if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
+    const accounts = Store._accounts();
+    const acc = accounts.find(a => a.email === email);
+    if(!acc){ authMsg(I18N.t('reset_no_account')); return; }
+    const reg = getRegistry();
+    const rec = reg.find(r => (r.email||'').toLowerCase() === email && (r.code||'') === code && r.active !== false);
+    if(!rec){ authMsg(I18N.t('reset_code_invalid')); return; }
+    const salt = makeSalt();
+    const hash = await hashPassword(password, salt);
+    acc.salt = salt;
+    acc.hash = hash;
+    acc.approved = true;
+    acc.approvedAt = acc.approvedAt || Date.now();
+    Store._saveAccounts(accounts);
+    authMsg(I18N.t('reset_success'), 'info');
+    setAuthMode(false);
+    return;
+  }
+
   if(authMode.isSignup){
     const name = document.getElementById('authName').value.trim();
     const confirmPw = document.getElementById('authConfirm').value;
@@ -3378,7 +3456,11 @@ async function authSubmit(e){
 }
 
 document.getElementById('authForm').addEventListener('submit', authSubmit);
-document.getElementById('authToggleLink').addEventListener('click', () => setAuthMode(!authMode.isSignup));
+document.getElementById('authForgotLink').addEventListener('click', setResetMode);
+document.getElementById('authToggleLink').addEventListener('click', () => {
+  if(authMode.isReset){ setAuthMode(false); return; }
+  setAuthMode(!authMode.isSignup);
+});
 
 /* ===================================================================
    INIT
