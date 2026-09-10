@@ -3402,6 +3402,16 @@ function bootstrapAfterLang(){
 }
 if(typeof wireLogout === 'function') wireLogout();
 
+/* Pre-access-code accounts lack the 'approved' flag; approve them so old clients keep access */
+function migrateLegacyAccounts(){
+  try{
+    const accs = Store._accounts();
+    let changed = false;
+    accs.forEach(a => { if(a && a.approved === undefined && a.role !== 'admin'){ a.approved = true; changed = true; } });
+    if(changed) Store._saveAccounts(accs);
+  }catch(e){}
+}
+
 (function init(){
   let stored = null;
   try{ stored = localStorage.getItem('rd_lang'); }catch(e){}
@@ -3413,6 +3423,7 @@ if(typeof wireLogout === 'function') wireLogout();
   document.documentElement.classList.toggle('lang-rtl', rtlInit);
   document.documentElement.lang = lang;
   I18N.applyStatic();
+  migrateLegacyAccounts();
   wireNav();
   hideAuthScreen();
   if(stored){ hideLangScreen(); bootstrapAfterLang(); }
