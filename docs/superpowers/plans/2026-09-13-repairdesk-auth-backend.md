@@ -1112,7 +1112,7 @@ function genCode(): string {
     for (let j = 0; j < 3; j++) g += CODE_CHARS[rand[i * 3 + j] % CODE_CHARS.length];
     s += g;
   }
-  return s; // XXXX-XXXX-XXXX
+  return s; // XXX-XXX-XXX-XXX
 }
 
 Deno.serve(async (req) => {
@@ -1191,7 +1191,7 @@ Deno.serve(async (req) => {
 
 1. `list-accounts` → `200` array containing `u_admin` and both signup test accounts; non-admin user token → `403 {"error":"forbidden"}`.
 2. `login-history?uid=u_admin` → rows with `success`/`ip`/`device`/`attempted_at`.
-3. `issue-code {"email":"owner3@example.com","note":"v3"}` → `{code}` (format `XXXX-XXXX-XXXX`).
+3. `issue-code {"email":"owner3@example.com","note":"v3"}` → `{code}` (format `XXX-XXX-XXX-XXX`).
 4. `ban {"uid":"<owner1's uid>","banned":true}` → `{success:true}`; then attempt `POST login` for that account → `403 {"error":"banned"}`. Also confirm all sessions rows for that uid were deleted (instant kill). Unban → login works again.
 5. `list-sessions?uid=u_admin` → masked tokens + device + last_seen.
 6. Banning self (`{"uid":"u_admin","banned":true}`) → `400 {"error":"cannot_ban_self"}`.

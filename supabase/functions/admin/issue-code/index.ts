@@ -10,7 +10,7 @@ function genCode(): string {
     for (let j = 0; j < 3; j++) g += CODE_CHARS[rand[i * 3 + j] % CODE_CHARS.length];
     s += g;
   }
-  return s; // XXXX-XXXX-XXXX
+  return s; // XXX-XXX-XXX-XXX
 }
 
 Deno.serve(async (req) => {

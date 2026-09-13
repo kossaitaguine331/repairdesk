@@ -299,7 +299,8 @@ target doesn't exist).
 ### `admin/issue-code`
 
 `POST /functions/v1/admin/issue-code` — body `{"email", "note"}`. Generates a
-one-time access code in `XXXX-XXXX-XXXX` format (alphabet excludes `0/O/1/I`)
+one-time access code in `XXX-XXX-XXX-XXX` format (12 chars in 4 groups of 3;
+alphabet excludes `0/O/1/I`)
 and inserts it into `access_codes`. Returns `{code, reused}` (reused = an unexpired
 unused code already existed for that email). Errors: `400 auth_email_invalid`.
 
@@ -355,7 +356,7 @@ Authorization: Bearer <admin-token>
 {"email":"owner3@example.com","note":"some-note"}
 ```
 
-returns `200 {"code":"V2F7-K3QL-X9RM","reused":false}` (or `reused:true` if an
+returns `200 {"code":"V2F-K3Q-LX9-RM","reused":false}` (or `reused:true` if an
 active unused code already exists for that email).
 
 ## Banning a user
@@ -449,7 +450,7 @@ for the admin calls (from Task 8 Step 7 of the implementation plan):
   accounts; a non-admin user token returns `403 {"error":"forbidden"}`.
 - `login-history?uid=u_admin` → rows with `success`/`ip`/`device`/`attempted_at`.
 - `issue-code {"email":"owner3@example.com","note":"v3"}` → `{code}` in
-  `XXXX-XXXX-XXXX` format.
+  `XXX-XXX-XXX-XXX` format.
 - `ban {"uid":"<owner1's uid>","banned":true}` → `{success:true}`; the following
   `login` for that account returns `403 {"error":"banned"}` and its session rows
   are gone (instant kill). Unban → login works again.
