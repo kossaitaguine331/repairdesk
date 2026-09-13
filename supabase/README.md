@@ -356,7 +356,7 @@ Authorization: Bearer <admin-token>
 {"email":"owner3@example.com","note":"some-note"}
 ```
 
-returns `200 {"code":"V2F-K3Q-LX9-RM","reused":false}` (or `reused:true` if an
+returns `200 {"code":"V2F-7K3-QLX-9RM","reused":false}` (or `reused:true` if an
 active unused code already exists for that email).
 
 ## Banning a user
