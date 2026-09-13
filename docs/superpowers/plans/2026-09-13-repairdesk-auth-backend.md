@@ -46,6 +46,15 @@ supabase/
     admin/list-sessions/index.ts        # GET active sessions for a uid
     cleanup/index.ts                    # POST weekly log retention
     _shared/helpers.ts                  # CORS, hashing, token, rate-limit, auth helpers (imported by each function via ../_shared/helpers.ts)
+
+> **DEPLOYMENT NOTE (added post-implementation):** Supabase rejects `/` in
+> function slugs, so the admin functions were deployed with FLAT names
+> (`list-accounts`, `login-history`, `ban`, `issue-code`, `list-sessions`) and
+> live at `/functions/v1/list-accounts` etc. (not `/functions/v1/admin/...`).
+> The committed files moved from `functions/admin/<name>/` to flat
+> `functions/<name>/` folders with `../_shared/helpers.ts` imports; `supabase/README.md`
+> and the frontend plan's `RD_API` calls use the flat URLs. This was verified in
+> the live E2E pass against project `kjfiljoxpmrypzclmdyx`.
 .github/
   workflows/
     supabase-keepalive.yml             # pings /health every 4 days

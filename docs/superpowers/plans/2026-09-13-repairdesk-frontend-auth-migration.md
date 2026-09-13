@@ -4,7 +4,7 @@
 
 **Goal:** Rewire the RepairDesk static single-file app (`D:\v2.html`) so login, signup, password reset, session validation, and the admin Users panel talk to the Supabase backend instead of `localStorage`, while keeping all shop data (customers, receipts, settings) local exactly as today.
 
-**Architecture:** The front-end keeps its current look, i18n, and localStorage shop layer. A new `RD_API` module wraps fetch calls to the deployed Edge Functions. `rd_sess` holds the opaque session token instead of a uid. `authUser` is hydrated by `/validate-session`. The admin Users view (`renderUsersView`) becomes a read-only+actions panel driven by `/admin/*` endpoints. On migration re-register, once the backend returns a new uid, the app re-prefixes the user's existing shop-data keys from the old local uid to the new uid so no shop data is orphaned.
+**Architecture:** The front-end keeps its current look, i18n, and localStorage shop layer. A new `RD_API` module wraps fetch calls to the deployed Edge Functions. `rd_sess` holds the opaque session token instead of a uid. `authUser` is hydrated by `/validate-session`. The admin Users view (`renderUsersView`) becomes a read-only+actions panel driven by the admin endpoints. On migration re-register, once the backend returns a new uid, the app re-prefixes the user's existing shop-data keys from the old local uid to the new uid so no shop data is orphaned.
 
 **Tech Stack:** Vanilla JS (single `index.html`), Web Crypto SHA-256 (already present) for backend-verifiable hashing, fetch to Supabase Edge Functions. No new libraries, no build step. Deployment stays: edit `D:\v2.html` → copy to `D:\Default Project\index.html` → Commit & push → GitHub Pages.
 
@@ -91,11 +91,11 @@ const RD = (() => {
     rdFetch('/reset', { method: 'POST', body: { email, code, newPassword, confirmPassword } });
   const validateSession = (token) => rdFetch('/validate-session', { method: 'POST', body: { token } });
   const logout = (token) => rdFetch('/logout', { method: 'POST', body: { token } });
-  const adminListAccounts = (token) => rdFetch('/admin/list-accounts', { method: 'GET', token });
-  const adminLoginHistory = (token, uid) => rdFetch('/admin/login-history?uid=' + encodeURIComponent(uid), { method: 'GET', token });
-  const adminBan = (token, uid, banned) => rdFetch('/admin/ban', { method: 'POST', token, body: { uid, banned } });
-  const adminIssueCode = (token, email, note) => rdFetch('/admin/issue-code', { method: 'POST', token, body: { email, note } });
-  const adminListSessions = (token, uid) => rdFetch('/admin/list-sessions?uid=' + encodeURIComponent(uid), { method: 'GET', token });
+  const adminListAccounts = (token) => rdFetch('/list-accounts', { method: 'GET', token });
+  const adminLoginHistory = (token, uid) => rdFetch('/login-history?uid=' + encodeURIComponent(uid), { method: 'GET', token });
+  const adminBan = (token, uid, banned) => rdFetch('/ban', { method: 'POST', token, body: { uid, banned } });
+  const adminIssueCode = (token, email, note) => rdFetch('/issue-code', { method: 'POST', token, body: { email, note } });
+  const adminListSessions = (token, uid) => rdFetch('/list-sessions?uid=' + encodeURIComponent(uid), { method: 'GET', token });
 
   return { RDError, login, signup, reset, validateSession, logout, adminListAccounts, adminLoginHistory, adminBan, adminIssueCode, adminListSessions };
 })();
