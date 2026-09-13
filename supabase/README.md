@@ -178,3 +178,15 @@ All five endpoints require `Authorization: Bearer <admin-token>` (enforced by
 - **GET `list-sessions?uid=...`** — returns up to 100 session rows with `token_id`
   (first 8 chars + "…"), `device`, `created_at`, `last_seen_at`, `expires_at`, optionally
   filtered by uid.
+
+## Cleanup endpoint
+
+`POST /functions/v1/cleanup` — on-demand trigger of the `cleanup_old_logs()`
+RPC, i.e. the same function the weekly pg_cron job (`cleanup-old-logs`,
+`0 3 * * 1`) already runs. Success returns `200 {success:true}`; failures
+return `{error}`. This endpoint is intentionally NOT admin-gated — it is
+idempotent, deletes only rows older than the retention window, and mirrors the
+privilege of the scheduled cron job.
+
+Deploy like `health` (dashboard editor, name `cleanup`, include
+`_shared/helpers.ts`, same `ALLOWED_ORIGIN` secret).
