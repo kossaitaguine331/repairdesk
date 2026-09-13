@@ -151,3 +151,30 @@ idempotent: an unknown or empty token still succeeds.
 
 Deploy both like `health` (dashboard editor, include `_shared/helpers.ts`,
 same `ALLOWED_ORIGIN` secret).
+
+## Admin endpoints
+
+All five endpoints require `Authorization: Bearer <admin-token>` (enforced by
+`requireAdmin`). Error codes: `401 unauthorized` (no/invalid token), `403 forbidden`
+(non-admin token).
+
+- **GET `list-accounts`** — returns an array of all accounts with `uid`, `email`, `name`,
+  `approved`, `banned`, `created_at`, and `last_login` (timestamp of the most recent
+  successful login, or `null`).
+
+- **GET `login-history?uid=...` or `?email=...`** — returns up to 100 login-log rows
+  (`success`, `ip`, `device`, `attempted_at`) filtered by uid or email. Omitting both
+  returns the 100 most recent entries.
+
+- **POST `ban`** — body `{"uid", "banned": true|false}`. Bans via the atomic
+  `ban_user(p_uid)` RPC (which also deletes the user's sessions) or unbans by
+  flipping `banned=false`. Returns `{success:true}`. Errors: `400 missing_fields`
+  (uid absent), `400 cannot_ban_self`, `404 not_found` (unban target doesn't exist).
+
+- **POST `issue-code`** — body `{"email", "note"}`. Generates a one-time access code
+  in `XXXX-XXXX-XXXX` format and inserts it into `access_codes`. Returns
+  `{code, reused}`. Errors: `400 auth_email_invalid`.
+
+- **GET `list-sessions?uid=...`** — returns up to 100 session rows with `token_id`
+  (first 8 chars + "…"), `device`, `created_at`, `last_seen_at`, `expires_at`, optionally
+  filtered by uid.
