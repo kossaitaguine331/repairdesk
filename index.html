@@ -568,6 +568,23 @@ const I18N = {
       reset_code_invalid:'Access code not accepted. Please contact the administrator.',
       reset_success:'Password updated. You can now log in.',
       users_restricted:'Only administrators can manage users.',
+      auth_network:'Cannot reach the server. Check your connection and try again.',
+      auth_banned:'This account has been banned. Contact your administrator.',
+      auth_too_many:'Too many attempts. Try again later.',
+      auth_server:'Server error. Please try again.',
+      users_banned:'Banned',
+      users_unban:'Unban',
+      users_ban:'Ban',
+      users_login_history:'Login history',
+      users_sessions:'Active sessions',
+      users_last_login:'Last login',
+      users_reported_ip:'Reported IP',
+      users_device:'Device',
+      users_attempt_time:'Attempt time',
+      users_loading:'Loading…',
+      users_code_reused:'A code already exists for this email (reused).',
+      users_confirm_ban:'Ban this account? All active sessions will be terminated.',
+      users_confirm_unban:'Unban this account?',
       users_hint:'Issue a unique access code per client so they can sign up. Revoke a code to block that client.',
       users_issue:'Issue a new access code',
       users_note:'Note',
@@ -820,6 +837,23 @@ const I18N = {
       reset_code_invalid:'Code d\'accès non accepté. Contactez l\'administrateur.',
       reset_success:'Mot de passe mis à jour. Vous pouvez maintenant vous connecter.',
       users_restricted:'Seuls les administrateurs peuvent gérer les utilisateurs.',
+      auth_network:'Impossible de joindre le serveur. Vérifiez votre connexion.',
+      auth_banned:'Ce compte a été banni. Contactez votre administrateur.',
+      auth_too_many:'Trop de tentatives. Réessayez plus tard.',
+      auth_server:'Erreur serveur. Veuillez réessayer.',
+      users_banned:'Banni',
+      users_unban:'Débannir',
+      users_ban:'Bannir',
+      users_login_history:'Historique de connexion',
+      users_sessions:'Sessions actives',
+      users_last_login:'Dernière connexion',
+      users_reported_ip:'IP rapportée',
+      users_device:'Appareil',
+      users_attempt_time:'Date de tentative',
+      users_loading:'Chargement…',
+      users_code_reused:'Un code existe déjà pour cet email (réutilisé).',
+      users_confirm_ban:'Bannir ce compte ? Toutes les sessions actives seront terminées.',
+      users_confirm_unban:'Débannir ce compte ?',
       users_hint:'Émettez un code d\'accès unique par client afin qu\'il puisse s\'inscrire. Révoquez un code pour bloquer ce client.',
       users_issue:'Émettre un nouveau code d\'accès',
       users_note:'Note',
@@ -1072,6 +1106,23 @@ ar: {
       reset_code_invalid:'رمز الدخول غير مقبول. يرجى التواصل مع المسؤول.',
       reset_success:'تم تحديث كلمة المرور. يمكنك الآن تسجيل الدخول.',
       users_restricted:'يمكن للمسؤولين فقط إدارة المستخدمين.',
+      auth_network:'تعذر الوصول إلى الخادم. تحقق من اتصالك.',
+      auth_banned:'تم حظر هذا الحساب. اتصل بمسؤولك.',
+      auth_too_many:'محاولات كثيرة جدًا. حاول مرة أخرى لاحقًا.',
+      auth_server:'خطأ في الخادم. حاول مرة أخرى.',
+      users_banned:'محظور',
+      users_unban:'إلغاء الحظر',
+      users_ban:'حظر',
+      users_login_history:'سجل الدخول',
+      users_sessions:'الجلسات النشطة',
+      users_last_login:'آخر دخول',
+      users_reported_ip:'IP المُبلَّغ',
+      users_device:'الجهاز',
+      users_attempt_time:'وقت المحاولة',
+      users_loading:'جارٍ التحميل…',
+      users_code_reused:'يوجد رمز لهذا البريد بالفعل (أُعيد استخدامه).',
+      users_confirm_ban:'حظر هذا الحساب؟ سيتم إنهاء جميع الجلسات النشطة.',
+      users_confirm_unban:'إلغاء حظر هذا الحساب؟',
       users_hint:'أصدر رمز دخول فريداً لكل عميل ليتمكن من التسجيل. ألغِ الرمز لحظر العميل وإيقاف دخوله.',
       users_issue:'إصدار رمز دخول جديد',
       users_note:'ملاحظة',
@@ -1381,8 +1432,8 @@ const Store = {
   },
   _accounts(){ return this._readLocal('accts') || []; },
   _saveAccounts(list){ this._writeLocal('accts', list); },
-  getSession(){ return this._readLocal('sess'); },
-  _saveSession(uid){ this._writeLocal('sess', uid); },
+  getSession(){ return this._readLocal('sess'); },          // now = opaque token
+  _saveSession(token){ this._writeLocal('sess', token); },  // new param name only (same key)
   _clearSession(){ try{ localStorage.removeItem('rd_sess'); }catch(e){} },
   getTemplates(tenantId){
     const list = this.get(tenantId, 'templates') || [];
@@ -1534,6 +1585,55 @@ const Store = {
     return defaults.map(t => ({...t, id:'tpl_' + Date.now() + Math.random().toString(36).slice(2,6)}));
   }
 };
+
+/* ===================================================================
+   RD_API — Supabase backend client
+   =================================================================== */
+const RD_CONFIG = {
+  projectUrl: 'https://kjfiljoxpmrypzclmdyx.supabase.co',
+  anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtqZmlsam94cG1yeXB6Y2xtZHl4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODgyNTk0NzEsImV4cCI6MjEwMzgzNTQ3MX0.U5DqIvTxTEv3kozq2qkiOhThXTm2uFl2FGQOtGMxQ7s',
+  allowedOrigin: 'https://kossaitaguine331.github.io'
+};
+const RD = (() => {
+  const base = RD_CONFIG.projectUrl + '/functions/v1';
+
+  async function rdFetch(path, opts = {}) {
+    const { method = 'GET', body, token } = opts;
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = 'Bearer ' + token;
+    let res;
+    try {
+      res = await fetch(base + path, { method, headers, body: body ? JSON.stringify(body) : undefined });
+    } catch (netErr) {
+      throw new RDError('network_error', 0);
+    }
+    let json = null;
+    try { json = await res.json(); } catch (e) { /* body may be empty */ }
+    if (!res.ok || (json && json.error)) {
+      throw new RDError((json && json.error) || 'server_error', res.status);
+    }
+    return json;
+  }
+
+  class RDError extends Error {
+    constructor(errorCode, status) { super(errorCode); this.errorCode = errorCode; this.status = status; }
+  }
+
+  const login = (email, password) => rdFetch('/login', { method: 'POST', body: { email, password } });
+  const signup = (email, name, password, confirmPassword, code) =>
+    rdFetch('/signup', { method: 'POST', body: { email, name, password, confirmPassword, code } });
+  const reset = (email, code, newPassword, confirmPassword) =>
+    rdFetch('/reset', { method: 'POST', body: { email, code, newPassword, confirmPassword } });
+  const validateSession = (token) => rdFetch('/validate-session', { method: 'POST', body: { token } });
+  const logout = (token) => rdFetch('/logout', { method: 'POST', body: { token } });
+  const adminListAccounts = (token) => rdFetch('/list-accounts', { method: 'GET', token });
+  const adminLoginHistory = (token, uid) => rdFetch('/login-history?uid=' + encodeURIComponent(uid), { method: 'GET', token });
+  const adminBan = (token, uid, banned) => rdFetch('/ban', { method: 'POST', token, body: { uid, banned } });
+  const adminIssueCode = (token, email, note) => rdFetch('/issue-code', { method: 'POST', token, body: { email, note } });
+  const adminListSessions = (token, uid) => rdFetch('/list-sessions?uid=' + encodeURIComponent(uid), { method: 'GET', token });
+
+  return { RDError, login, signup, reset, validateSession, logout, adminListAccounts, adminLoginHistory, adminBan, adminIssueCode, adminListSessions };
+})();
 
 /* ===================================================================
    APP STATE
@@ -2986,19 +3086,24 @@ function renderSettingsView(el){
 }
 
 /* ----- USERS / ACCESS CODES VIEW (admin only) ----- */
-function renderUsersView(el){
+async function renderUsersView(el){
   if(!authUser || authUser.role !== 'admin'){
     el.innerHTML = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div><p style="color:var(--muted);">' + esc(I18N.t('users_restricted')) + '</p>';
     return;
   }
-  const reg = getRegistry();
-  const accounts = Store._accounts();
-  const emailOf = (uid) => { const a = accounts.find(x => x.uid === uid); return a ? a.email : ''; };
+  const token = Store.getSession();
+  el.innerHTML = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div>'
+    + '<p style="color:var(--muted);">' + esc(I18N.t('users_loading')) + '</p>';
+
+  let accounts = [];
+  try{
+    accounts = await RD.adminListAccounts(token) || [];
+  }catch(e){ accounts = []; }
 
   let html = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div>';
   html += '<p class="field-hint" style="margin-bottom:16px;">' + esc(I18N.t('users_hint')) + '</p>';
 
-  /* Issue a code */
+  /* Issue a code (server-side; idempotent per email) */
   html += '<div class="settings-section"><h3>' + esc(I18N.t('users_issue')) + '</h3>';
   html += '<div class="row" style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-start;">';
   html += '<div class="field" style="flex:1;min-width:180px;"><label>' + esc(I18N.t('email')) + '</label><input id="newUserEmail" placeholder="client@beemail.com"></div>';
@@ -3006,97 +3111,111 @@ function renderUsersView(el){
   html += '<div class="field" style="align-self:flex-end;"><label>&nbsp;</label><button class="btn primary" id="genUserCodeBtn">' + esc(I18N.t('users_gen')) + '</button></div>';
   html += '</div>';
   html += '<div id="genCodeResult" style="margin-top:10px;font-weight:700;color:var(--purple);"></div>';
-  html += '<button class="btn" id="publishCodesBtn" style="margin-top:10px;">' + esc(I18N.t('users_publish')) + '</button>';
-  html += '<div class="field-hint" style="margin-top:6px;">' + esc(I18N.t('users_publish_hint')) + '</div>';
   html += '</div>';
 
-  /* Registered / existing codes */
-  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_list')) + '</h3>';
+  /* Registered accounts with ban + history */
+  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_accounts')) + '</h3>';
   html += '<div class="table-wrap" style="overflow-x:auto;">';
   html += '<table class="rc-table" style="width:100%;border-collapse:collapse;font-size:13px;">';
-  html += '<thead><tr><th style="text-align:left;padding:8px;">' + esc(I18N.t('email')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('users_note')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('users_code')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('status')) + '</th><th style="padding:8px;"></th></tr></thead><tbody>';
-  if(reg.length === 0){
-    html += '<tr><td colspan="5" style="padding:12px;color:var(--muted);">' + esc(I18N.t('users_empty')) + '</td></tr>';
+  html += '<thead><tr><th style="text-align:left;padding:8px;">' + esc(I18N.t('email'))
+    + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('full_name'))
+    + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('users_last_login'))
+    + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('status'))
+    + '</th><th style="padding:8px;"></th></tr></thead><tbody>';
+  if(accounts.length === 0){
+    html += '<tr><td colspan="5" style="padding:12px;color:var(--muted);">' + esc(I18N.t('users_no_accounts')) + '</td></tr>';
   }
-  reg.forEach((r, idx) => {
-    const active = r.active !== false;
+  accounts.forEach(a => {
+    const banned = !!a.banned; const approved = !!a.approved;
+    const lastLogin = a.last_login ? new Date(a.last_login).toLocaleString() : '—';
+    const statusHtml = banned
+      ? '<span style="color:var(--danger);">' + esc(I18N.t('users_banned')) + '</span>'
+      : (approved
+        ? '<span style="color:var(--green-ink);">' + esc(I18N.t('users_active')) + '</span>'
+        : '<span style="color:var(--danger);">' + esc(I18N.t('users_blocked')) + '</span>');
     html += '<tr>'
-      + '<td style="padding:8px;">' + esc(r.email) + '</td>'
-      + '<td style="padding:8px;">' + esc(r.note || '') + '</td>'
-      + '<td style="padding:8px;font-family:monospace;">' + esc(r.code) + (r.used ? ' <span style="color:var(--green-ink);">' + esc(I18N.t('users_used')) + '</span>' : '') + '</td>'
-      + '<td style="padding:8px;">' + (active ? '<span style="color:var(--green-ink);">' + esc(I18N.t('users_active')) + '</span>' : '<span style="color:var(--danger);">' + esc(I18N.t('users_blocked')) + '</span>') + '</td>'
-      + '<td style="padding:8px;text-align:right;">'
-      + '<button class="btn" data-rev="' + idx + '" style="padding:5px 10px;font-size:12px;">' + (active ? esc(I18N.t('users_revoke')) : esc(I18N.t('users_reactivate'))) + '</button>'
-      + '<button class="btn danger" data-del="' + idx + '" style="padding:5px 10px;font-size:12px;margin-left:6px;">' + esc(I18N.t('delete')) + '</button>'
+      + '<td style="padding:8px;">' + esc(a.email) + '</td>'
+      + '<td style="padding:8px;">' + esc(a.name || '') + '</td>'
+      + '<td style="padding:8px;">' + lastLogin + '</td>'
+      + '<td style="padding:8px;">' + statusHtml + '</td>'
+      + '<td style="padding:8px;text-align:right;white-space:nowrap;">'
+      + '<button class="btn" data-history="' + esc(a.uid) + '" style="padding:5px 10px;font-size:12px;">' + esc(I18N.t('users_login_history')) + '</button> '
+      + '<button class="btn ' + (banned ? '' : 'danger') + '" data-ban="' + esc(a.uid) + '" data-banned="' + (banned ? '1' : '0') + '" style="padding:5px 10px;font-size:12px;">' + (banned ? esc(I18N.t('users_unban')) : esc(I18N.t('users_ban'))) + '</button>'
       + '</td></tr>';
   });
   html += '</tbody></table></div></div>';
 
-  /* Registered accounts & approval status */
-  html += '<div class="settings-section"><h3>' + esc(I18N.t('users_accounts')) + '</h3>';
-  html += '<div class="table-wrap" style="overflow-x:auto;">';
-  html += '<table class="rc-table" style="width:100%;border-collapse:collapse;font-size:13px;">';
-  html += '<thead><tr><th style="text-align:left;padding:8px;">' + esc(I18N.t('email')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('full_name')) + '</th><th style="text-align:left;padding:8px;">' + esc(I18N.t('status')) + '</th></tr></thead><tbody>';
-  const userAccounts = accounts.filter(a => a.role !== 'admin');
-  if(userAccounts.length === 0){
-    html += '<tr><td colspan="3" style="padding:12px;color:var(--muted);">' + esc(I18N.t('users_no_accounts')) + '</td></tr>';
-  }
-  userAccounts.forEach(a => {
-    html += '<tr><td style="padding:8px;">' + esc(a.email) + '</td><td style="padding:8px;">' + esc(a.name||'') + '</td>'
-      + '<td style="padding:8px;">' + (isApproved(a) ? '<span style="color:var(--green-ink);">' + esc(I18N.t('users_active')) + '</span>' : '<span style="color:var(--danger);">' + esc(I18N.t('users_blocked')) + '</span>') + '</td></tr>';
-  });
-  html += '</tbody></table></div></div>';
+  /* Detail drawer (history + sessions), populated async on demand */
+  html += '<div id="adminDetail" style="margin-top:16px;"></div>';
 
   el.innerHTML = html;
 
-  /* Issue code */
-  document.getElementById('genUserCodeBtn').addEventListener('click', () => {
+  document.getElementById('genUserCodeBtn').addEventListener('click', async () => {
     const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
-    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert(I18N.t('auth_email_invalid')); return; }
     const note = document.getElementById('newUserNote').value.trim();
-    const code = genAccessCode();
-    const list = getRegistry();
-    const existing = list.find(r => r.email === email && r.active !== false);
-    if(existing){ document.getElementById('genCodeResult').textContent = I18N.t('users_already_has') + ': ' + existing.code; }
-    else{
-      list.push({ email:email, code:code, note:note, active:true, used:false, issuedAt:Date.now() });
-      saveRegistry(list);
-      document.getElementById('genCodeResult').textContent = email + ' \u2192 ' + code;
-    }
-    renderUsersView(document.getElementById('appContent'));
-  });
-
-  /* Publish: copy the embedded code-book snippet so it can be deployed */
-  const pubBtn = document.getElementById('publishCodesBtn');
-  if(pubBtn) pubBtn.addEventListener('click', () => {
-    const snippet = 'const EMBEDDED_REGISTRY = ' + JSON.stringify(getRegistry()) + ';';
+    if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert(I18N.t('auth_email_invalid')); return; }
     try{
-      if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(snippet); }
-      else { const ta = document.createElement('textarea'); ta.value = snippet; document.body.appendChild(ta); ta.select(); try{ document.execCommand('copy'); }catch(e){} document.body.removeChild(ta); }
-      alert(I18N.t('users_publish_copied'));
-    }catch(e){ alert(snippet); }
+      const res = await RD.adminIssueCode(token, email, note);
+      document.getElementById('genCodeResult').textContent =
+        (res.reused ? I18N.t('users_code_reused') + ' ' : '') + email + ' \u2192 ' + res.code;
+    }catch(err){
+      document.getElementById('genCodeResult').textContent = authErr(err.errorCode);
+    }
   });
 
-  /* Revoke / reactivate / delete */
-  el.querySelectorAll('[data-rev]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(e.target.getAttribute('data-rev'), 10);
-      const list = getRegistry();
-      if(!list[idx]) return;
-      list[idx].active = (list[idx].active !== false) ? false : true;
-      saveRegistry(list);
-      renderUsersView(document.getElementById('appContent'));
+  el.querySelectorAll('[data-ban]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid = btn.getAttribute('data-ban');
+      const banned = btn.getAttribute('data-banned') === '1';
+      if(banned && !confirm(I18N.t('users_confirm_unban'))) return;
+      if(!banned && !confirm(I18N.t('users_confirm_ban'))) return;
+      try{
+        await RD.adminBan(token, uid, !banned);
+        renderUsersView(el);
+      }catch(err){
+        alert(authErr(err.errorCode));
+      }
     });
   });
-  el.querySelectorAll('[data-del]').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      const idx = parseInt(e.target.getAttribute('data-del'), 10);
-      const list = getRegistry();
-      if(!list[idx]) return;
-      if(!confirm(I18N.t('users_delete_confirm'))) return;
-      list.splice(idx, 1);
-      saveRegistry(list);
-      renderUsersView(document.getElementById('appContent'));
+
+  el.querySelectorAll('[data-history]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const uid = btn.getAttribute('data-history');
+      const detail = document.getElementById('adminDetail');
+      if(!detail) return;
+      detail.innerHTML = '<p style="color:var(--muted);">' + esc(I18N.t('users_loading')) + '</p>';
+      try{
+        const [history, sessions] = await Promise.all([
+          RD.adminLoginHistory(token, uid),
+          RD.adminListSessions(token, uid)
+        ]);
+        let h = '<div class="settings-section"><h3>' + esc(I18N.t('users_login_history')) + '</h3>';
+        h += '<div class="table-wrap" style="overflow-x:auto;"><table class="rc-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
+        h += '<thead><tr><th style="text-align:left;padding:6px;">' + esc(I18N.t('users_attempt_time')) + '</th>'
+          + '<th style="text-align:left;padding:6px;">' + esc(I18N.t('status')) + '</th>'
+          + '<th style="text-align:left;padding:6px;">' + esc(I18N.t('users_reported_ip')) + '</th>'
+          + '<th style="text-align:left;padding:6px;">' + esc(I18N.t('users_device')) + '</th></tr></thead><tbody>';
+        (history || []).forEach(row => {
+          h += '<tr><td style="padding:6px;">' + new Date(row.attempted_at).toLocaleString() + '</td>'
+            + '<td style="padding:6px;">' + (row.success ? '<span style="color:var(--green-ink);">✓</span>' : '<span style="color:var(--danger);">✗</span>') + '</td>'
+            + '<td style="padding:6px;font-family:monospace;">' + esc(row.ip || '—') + '</td>'
+            + '<td style="padding:6px;">' + esc(row.device || '—') + '</td></tr>';
+        });
+        h += '</tbody></table></div></div>';
+
+        h += '<div class="settings-section"><h3>' + esc(I18N.t('users_sessions')) + '</h3>';
+        h += '<div class="table-wrap" style="overflow-x:auto;"><table class="rc-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
+        h += '<thead><tr><th style="text-align:left;padding:6px;">' + esc(I18N.t('users_device')) + '</th>'
+          + '<th style="text-align:left;padding:6px;">' + esc(I18N.t('users_attempt_time')) + '</th></tr></thead><tbody>';
+        (sessions || []).forEach(s => {
+          h += '<tr><td style="padding:6px;font-family:monospace;">' + esc(s.device || '—') + '</td>'
+            + '<td style="padding:6px;">' + (s.last_seen_at ? new Date(s.last_seen_at).toLocaleString() : '—') + '</td></tr>';
+        });
+        h += '</tbody></table></div></div>';
+        detail.innerHTML = h;
+      }catch(err){
+        detail.innerHTML = '<p style="color:var(--danger);">' + esc(authErr(err.errorCode)) + '</p>';
+      }
     });
   });
 }
@@ -3272,62 +3391,6 @@ function authMsg(msg, type){
   el.textContent = msg || '';
 }
 
-/* ===================================================================
-   ACCESS CODES – manual approval registry (admin issues/revokes)
-   Stored locally (no backend). Each code is tied to an email.
-   =================================================================== */
-/* Embedded (deployed) access-code book. The administrator edits codes in the
-   Users panel, then publishes this list by redeploying the app so clients
-   receive the updated codes. Format: [{email, code, note, active, used}] */
-const EMBEDDED_REGISTRY = [];
-function getRegistry(){
-  try{
-    let v = localStorage.getItem('rd_registry');
-    if(v === null){
-      /* Seed from the embedded, deployed code book so clients can sign up with
-         the codes the administrator publishes. */
-      saveRegistry((typeof EMBEDDED_REGISTRY !== 'undefined' && Array.isArray(EMBEDDED_REGISTRY)) ? EMBEDDED_REGISTRY : []);
-      return getRegistry();
-    }
-    const list = JSON.parse(v) || [];
-    /* Merge any newly published codes so already-seeded browsers also receive
-       codes the administrator issued after their first visit. */
-    if(typeof EMBEDDED_REGISTRY !== 'undefined' && Array.isArray(EMBEDDED_REGISTRY) && EMBEDDED_REGISTRY.length){
-      let merged = false;
-      EMBEDDED_REGISTRY.forEach(er => {
-        const exists = list.some(r => (r.email||'').toLowerCase() === (er.email||'').toLowerCase() && (r.code||'') === (er.code||''));
-        if(!exists){ list.push(er); merged = true; }
-      });
-      if(merged) saveRegistry(list);
-    }
-    return list;
-  }catch(e){ return []; }
-}
-function saveRegistry(list){
-  try{ localStorage.setItem('rd_registry', JSON.stringify(list)); }catch(e){}
-}
-function regFind(email, code){
-  const list = getRegistry();
-  const e = (email||'').trim().toLowerCase();
-  const c = (code||'').trim();
-  return list.find(r => (r.email||'').toLowerCase() === e && (r.code||'') === c);
-}
-function genAccessCode(){
-  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let s = '';
-  for(let i=0;i<4;i++){
-    let g='';
-    for(let j=0;j<3;j++){ g += chars[Math.floor(Math.random()*chars.length)]; }
-    if(s) s += '-';
-    s += g;
-  }
-  return s;
-}
-function isApproved(acc){
-  if(acc && acc.role === 'admin') return true;
-  return !!(acc && acc.approved);
-}
-
 function playAkumaFx(){
   const fx = document.getElementById('akumaFx');
   if(!fx) return;
@@ -3345,26 +3408,24 @@ function playAkumaFx(){
 }
 
 function beginSession(acc){
-  if(!isApproved(acc)){
-    authMsg(I18N.t('access_blocked'));
-    return;
-  }
-  authUser = acc;
+  authUser = { uid: acc.uid, email: acc.email, name: acc.name, role: acc.role };
   Store.account = acc.uid;
-  Store._saveSession(acc.uid);
+  if(acc.token) Store._saveSession(acc.token);
   const uBtn = document.getElementById('navUsersBtn');
-  if(uBtn) uBtn.style.display = (acc.role === 'admin') ? '' : 'none';
+  if(uBtn) uBtn.style.display = (authUser.role === 'admin') ? '' : 'none';
   hideAuthScreen();
   gotoTenantScreen();
   renderTenantScreen();
 }
 
 function handleSignout(){
+  const token = Store.getSession();
   authUser = null;
   Store._clearSession();
   Store.account = null;
-  showAuthScreen();
   try{ localStorage.removeItem('rd_activeTenant'); }catch(e){}
+  if(token){ RD.logout(token).catch(() => {}); }   // best-effort server-side kill
+  showAuthScreen();
 }
 
 /* Sidebar logout wiring */
@@ -3380,48 +3441,45 @@ function gotoTenantScreen(){
   document.getElementById('tenantScreen').style.display = 'flex';
 }
 
+function authErr(code){
+  const map = {
+    network_error: 'auth_network',
+    auth_invalid: 'auth_invalid',
+    banned: 'auth_banned',
+    access_blocked: 'access_blocked',
+    too_many_attempts: 'auth_too_many',
+    auth_email_invalid: 'auth_email_invalid',
+    auth_password_short: 'auth_password_short',
+    auth_password_mismatch: 'auth_password_mismatch',
+    auth_exists: 'auth_exists',
+    full_name_required: 'full_name_required',
+    access_code_invalid: 'access_code_invalid',
+    reset_no_account: 'reset_no_account',
+    reset_code_invalid: 'reset_code_invalid',
+    server_error: 'auth_server',
+    origin_not_allowed: 'auth_server'
+  };
+  return I18N.t(map[code] || 'auth_server');
+}
+
 async function authSubmit(e){
   e.preventDefault();
   const email = document.getElementById('authEmail').value.trim().toLowerCase();
   const password = document.getElementById('authPassword').value;
 
-  /* Admin testing login: user "akuma" / password "gouki" */
-  if(email === 'akuma' && password === 'gouki'){
-    playAkumaFx();
-    let admin = Store._accounts().find(a => a.uid === 'u_admin');
-    if(!admin){
-      admin = { uid:'u_admin', email:'akuma', name:'Admin', salt:'admin-salt', hash:await hashPassword('permanent', 'admin-salt'), role:'admin', createdAt:Date.now() };
-      const list = Store._accounts();
-      list.push(admin);
-      Store._saveAccounts(list);
-    }
-    beginSession(admin);
-    return;
-  }
-
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ authMsg(I18N.t('auth_email_invalid')); return; }
-  if(password.length < 6){ authMsg(I18N.t('auth_password_short')); return; }
-
   if(authMode.isReset){
     const confirmPw = document.getElementById('authConfirm').value;
     const code = document.getElementById('authCode').value.trim();
     if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
-    const accounts = Store._accounts();
-    const acc = accounts.find(a => a.email === email);
-    if(!acc){ authMsg(I18N.t('reset_no_account')); return; }
-    const reg = getRegistry();
-    const rec = reg.find(r => (r.email||'').toLowerCase() === email && (r.code||'') === code && r.active !== false);
-    if(!rec){ authMsg(I18N.t('reset_code_invalid')); return; }
-    const salt = makeSalt();
-    const hash = await hashPassword(password, salt);
-    acc.salt = salt;
-    acc.hash = hash;
-    acc.approved = true;
-    acc.approvedAt = acc.approvedAt || Date.now();
-    Store._saveAccounts(accounts);
-    authMsg(I18N.t('reset_success'), 'info');
-    setAuthMode(false);
-    return;
+    try{
+      await RD.reset(email, code, password, confirmPw);
+      authMsg(I18N.t('reset_success'), 'info');
+      setAuthMode(false);
+      return;
+    }catch(err){
+      authMsg(authErr(err.errorCode));
+      return;
+    }
   }
 
   if(authMode.isSignup){
@@ -3430,29 +3488,51 @@ async function authSubmit(e){
     const code = document.getElementById('authCode').value.trim();
     if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
     if(!name){ authMsg(I18N.t('full_name_required')); return; }
-    const accounts = Store._accounts();
-    if(accounts.some(a => a.email === email)){ authMsg(I18N.t('auth_exists')); return; }
-    /* Access code gate: every signup must use a valid, active code for this email */
-    const reg = getRegistry();
-    const rec = reg.find(r => (r.email||'').toLowerCase() === email && (r.code||'') === code && r.active !== false);
-    if(!rec){ authMsg(I18N.t('access_code_invalid')); return; }
-    rec.used = true;
-    saveRegistry(reg);
-    const salt = makeSalt();
-    const hash = await hashPassword(password, salt);
-    const uid = 'u' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    accounts.push({ uid:uid, email:email, name:name, salt:salt, hash:hash, createdAt:Date.now(), approved:true, approvedAt:rec.issuedAt || Date.now() });
-    Store._saveAccounts(accounts);
-    beginSession(accounts[accounts.length - 1]);
-    return;
+    try{
+      const res = await RD.signup(email, name, password, confirmPw, code);
+      beginSession({ uid: res.uid, email, name, role: res.role, token: res.token });
+      migrateShopDataForEmail(email, res.uid);
+      return;
+    }catch(err){
+      authMsg(authErr(err.errorCode));
+      return;
+    }
   }
 
-  const accounts = Store._accounts();
-  const acc = accounts.find(a => a.email === email);
-  if(!acc){ authMsg(I18N.t('auth_invalid')); return; }
-  const hash = await hashPassword(password, acc.salt);
-  if(hash !== acc.hash){ authMsg(I18N.t('auth_invalid')); return; }
-  beginSession(acc);
+  /* login */
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) && email !== 'akuma'){ authMsg(I18N.t('auth_email_invalid')); return; }
+  if(password.length < 6 && email !== 'akuma'){ authMsg(I18N.t('auth_password_short')); return; }
+  try{
+    const res = await RD.login(email, password);
+    if(email === 'akuma') playAkumaFx();
+    beginSession({ uid: res.uid, email, name: res.name, role: res.role, token: res.token });
+    migrateShopDataForEmail(email, res.uid);
+  }catch(err){
+    authMsg(authErr(err.errorCode));
+  }
+}
+
+/* Re-prefix a legacy local account's shop keys from its old uid to the new
+   backend uid so the returning client keeps all tenant data. */
+function migrateShopDataForEmail(email, newUid){
+  try{
+    const accts = Store._accounts() || [];
+    const legacy = accts.find(a => a.email === email && a.role !== 'admin');
+    if(!legacy || legacy.uid === newUid) return;
+    const oldPrefix = 'rd_' + legacy.uid + '_';
+    const newPrefix = 'rd_' + newUid + '_';
+    const keys = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf(oldPrefix) === 0) keys.push(k);
+    }
+    keys.forEach(k => {
+      const v = localStorage.getItem(k);
+      if(v !== null){ localStorage.setItem(newPrefix + k.slice(oldPrefix.length), v); localStorage.removeItem(k); }
+    });
+    /* drop the legacy account entry so we never re-run the migration */
+    localStorage.setItem('rd_accts', JSON.stringify(accts.filter(a => a.uid !== legacy.uid)));
+  }catch(e){ /* migration is best-effort; never block auth */ }
 }
 
 document.getElementById('authForm').addEventListener('submit', authSubmit);
@@ -3474,11 +3554,17 @@ document.querySelectorAll('.lang-opt').forEach(opt => {
 });
 document.getElementById('changeLangBtn').addEventListener('click', showLangScreen);
 
-function bootstrapAfterLang(){
-  const uid = Store.getSession();
-  if(uid){
-    const acc = Store._accounts().find(a => a.uid === uid);
-    if(acc && isApproved(acc)){ beginSession(acc); return; }
+async function bootstrapAfterLang(){
+  const token = Store.getSession();
+  if(token){
+    try{
+      const v = await RD.validateSession(token);
+      if(v && v.valid && v.uid){
+        beginSession({ uid: v.uid, name: v.name, role: v.role, email: '', token });
+        return;
+      }
+    }catch(e){}
+    Store._clearSession();
   }
   showAuthScreen();
 }
