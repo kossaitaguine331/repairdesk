@@ -107,3 +107,25 @@ Failures return `{error}` with one of these statuses:
 Failed code redemptions are written to `login_attempts` for rate-limiting.
 Deploy like `health` (dashboard editor, name `signup`, include `_shared/helpers.ts`,
 same `ALLOWED_ORIGIN` secret).
+
+## Reset endpoint
+
+`POST /functions/v1/reset` with body `{"email", "code", "newPassword", "confirmPassword"}`.
+
+Flow: validate input, rate-limit by email, require an existing account, atomically
+redeem the one-time access code, then re-salt + re-hash the new password, mark the
+account approved, and delete ALL of the user's sessions (forcing re-login).
+Success returns `200` `{success:true}`. Failures return `{error}` with one of
+these statuses:
+
+- `400 auth_email_invalid` — malformed email
+- `400 auth_password_short` — new password under 6 characters
+- `400 auth_password_mismatch` — newPassword ≠ confirmPassword
+- `400 reset_no_account` — no account with this email
+- `400 reset_code_invalid` — no active unused access code (a failed redemption
+  is written to `login_attempts`)
+- `405 method_not_allowed` — non-POST
+- `429 too_many_attempts` — 5+ failed attempts in the last 15 min (email-based)
+
+Deploy like `health` (dashboard editor, name `reset`, include `_shared/helpers.ts`,
+same `ALLOWED_ORIGIN` secret).
