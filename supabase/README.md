@@ -36,3 +36,33 @@ insert into public.access_codes (email, code, note)
 values ('owner1@example.com','OWNR-0001-CODE','task-test')
 on conflict do nothing;
 ```
+
+## Health endpoint and keepalive
+
+### `health` Edge Function
+
+Minimal probe used by the keepalive Action and for manual uptime checks.
+GET returns `200 {"status":"ok"}`; anything else returns 405. Non-browser
+callers (curl, cron) are allowed — only requests with a disallowed `Origin`
+header are rejected (403).
+
+Deploy in the dashboard:
+
+1. **Edge Functions → Deploy a new function → Via editor**, name it `health`.
+2. Add `functions/health/index.ts` and also `functions/_shared/helpers.ts`
+   (the editor supports multiple files — place it under `_shared/helpers.ts`).
+3. **Project Settings → Edge Functions → Secrets**: add `ALLOWED_ORIGIN` =
+   `https://kossaitaguine331.github.io`.
+4. Deploy.
+
+Invoke URL: `https://<project-ref>.supabase.co/functions/v1/health`.
+
+### Keepalive GitHub Action
+
+`.github/workflows/supabase-keepalive.yml` pings the health endpoint every 4
+days (cron `0 4 */4 * *`, plus manual `workflow_dispatch`) to keep the free-tier
+project awake. It requires two repository secrets:
+
+- `SUPABASE_HEALTH_URL` — the Invoke URL from above.
+- `SUPABASE_HEALTH_TOKEN` — any long random string; add the same value as an
+  Edge Function secret so only this Action can hit the endpoint.
