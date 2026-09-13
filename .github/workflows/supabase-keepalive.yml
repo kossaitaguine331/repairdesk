@@ -1,0 +1,18 @@
+name: supabase-keepalive
+
+on:
+  schedule:
+    - cron: "0 4 */4 * *"    # 04:00 on the 1st, 5th, 9th... of every month
+  workflow_dispatch: {}
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase health endpoint
+        run: |
+          code=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.SUPABASE_HEALTH_TOKEN }}" \
+            "${{ secrets.SUPABASE_HEALTH_URL }}" || echo 000)
+          echo "health status: $code"
+          test "$code" = "200"
