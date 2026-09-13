@@ -97,7 +97,9 @@ Every non-public endpoint must: validate the session token against `sessions`, r
 ## Section 4: Migration
 
 - The existing `akuma`/`gouki` **admin** is seeded into `accounts` on first migration run (role `admin`, `approved = true`, `banned = false`), with its SHA-256 hash computed with the same `salt + '::' + pw` scheme so the existing admin login keeps working unchanged.
-- **Existing store-owner accounts** (per-browser, SHA-256) are imported with their identity fields only — `email`, `name`, `role`, `created_at` — because hashes use a custom scheme that cannot be moved. Their password is set via the existing one-time re-register flow: the client signs up again with a fresh/admin-issued valid `access_codes.code` for their email, which the `/signup` endpoint uses to set the new password (this is the approved "import accounts, one-time re-register" path).
+- **Existing store-owner accounts** cannot be server-side imported: accounts and shop data live per-browser in `localStorage` (`rd_accts` on each client's own device), so the admin's browser only sees accounts created there. The migration is therefore a **one-time re-register on each client's own device**:
+  1. Client opens the new version and signs up with a valid, admin-issued `access_codes.code` for their email (`/signup`), which sets their new password and creates the backend account (`approved = true` by using the code).
+  2. On first successful backend login for that email, the front-end detects any legacy local account with the same email, and **re-prefixes** that browser's shop data keys from the old local `uid` to the new backend `uid` (e.g. `rd_uOld_<tenant>_receipts` → `rd_uNew_<tenant>_receipts`), preserving all shop data.
 - The old `EMBEDDED_REGISTRY` publish-and-redeploy mechanism is retired; `access_codes` in the DB is the single source of truth.
 
 ## Section 5: Keepalive workflow YAML
