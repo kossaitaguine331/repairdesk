@@ -1,4 +1,4 @@
-import { json, handleCors, createDb, requireAdmin, handleError, cryptoToken } from "../../_shared/helpers.ts";
+﻿import { json, handleCors, createDb, requireAdmin, handleError, cryptoToken } from "../_shared/helpers.ts";
 
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O/1/I
 function genCode(): string {

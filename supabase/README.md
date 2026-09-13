@@ -76,28 +76,34 @@ on conflict do nothing;
 
 ## Deploy the Edge Functions
 
-There are 12 HTTP endpoints implemented as 10 function deployments (5 admin
-endpoints are nested under `admin/`). Each is deployed the same way through the
-dashboard:
+There are 12 HTTP endpoints, deployed as 12 functions (all flat slugs — Supabase
+does not allow `/` in function names, so the admin functions are NOT nested).
+Deploy with the Supabase CLI from the repo root (`D:\Default Project`):
 
-1. **Edge Functions → Deploy a new function → Via editor**, and name it exactly
-   as shown in the URL table below (`health`, `login`, `signup`, `reset`,
-   `validate-session`, `logout`, `cleanup`, `admin/list-accounts`,
-   `admin/login-history`, `admin/ban`, `admin/issue-code`, `admin/list-sessions`).
-   The function's editor supports multiple files — add the deploy file listed
-   below **and** the shared helper under `_shared/helpers.ts` from
-   `functions/_shared/helpers.ts`.
-2. **Project Settings → Edge Functions → Secrets**, add:
+```bash
+supabase login
+supabase link --project-ref <project-ref>
+supabase functions deploy --no-verify-jwt
+```
+
+This uploads `functions/_shared/helpers.ts` with each function automatically.
+(Alternatively, create each function in the dashboard editor and paste the
+`index.ts` and the shared helper under `_shared/helpers.ts` for each one.)
+
+After deployment, set the CORS secret:
+
+1. **Project Settings → Edge Functions → Secrets**, add:
    - `ALLOWED_ORIGIN` = `https://kossaitaguine331.github.io`
    - (No others are needed: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are
      auto-injected by the platform and must never be added by hand.)
-3. **Deploy.**
 
-> Verify JWT: if a function's dashboard **Verify JWT** toggle is enabled, the
-> platform rejects requests whose `Authorization` header is not a valid Supabase
-> JWT/anon key before the code runs. This backend authenticates in code, and the
-> keepalive ping (below) uses a random token, so leave **Verify JWT OFF** on
-> every function — otherwise bare curl calls and the keepalive will get `401`.
+2. **Verify JWT must be OFF** on every function. If the **Verify JWT** toggle is
+   enabled, the platform rejects requests whose `Authorization` header is not a
+   valid Supabase JWT/anon key before the code runs. This backend authenticates
+   in code, and the keepalive ping (below) uses a random token, so leave it OFF on
+   every function — otherwise bare curl calls and the keepalive will get `401`.
+   (`supabase functions deploy` deploys with JWT verification disabled by
+   default; the `--no-verify-jwt` flag ensures this.)
 
 ### Function URLs
 
@@ -113,11 +119,11 @@ Replace `<project-ref>` with your project ref. Every URL is
 | 5 | POST   | `/functions/v1/validate-session` | `validate-session` | `200 {valid:true, uid, name, role, banned}` or `{valid:false}` |
 | 6 | POST   | `/functions/v1/logout` | `logout` | `200 {success:true}` |
 | 7 | POST   | `/functions/v1/cleanup` | `cleanup` | `200 {success:true}` |
-| 8 | GET    | `/functions/v1/admin/list-accounts` | `admin/list-accounts` | `200` array of accounts |
-| 9 | GET    | `/functions/v1/admin/login-history` | `admin/login-history` | `200` array of login-log rows |
-| 10 | POST  | `/functions/v1/admin/ban` | `admin/ban` | `200 {success:true}` |
-| 11 | POST  | `/functions/v1/admin/issue-code` | `admin/issue-code` | `200 {code, reused}` |
-| 12 | GET   | `/functions/v1/admin/list-sessions` | `admin/list-sessions` | `200` array of masked sessions |
+| 8 | GET    | `/functions/v1/list-accounts` | `list-accounts` | `200` array of accounts |
+| 9 | GET    | `/functions/v1/login-history` | `login-history` | `200` array of login-log rows |
+| 10 | POST  | `/functions/v1/ban` | `ban` | `200 {success:true}` |
+| 11 | POST  | `/functions/v1/issue-code` | `issue-code` | `200 {code, reused}` |
+| 12 | GET   | `/functions/v1/list-sessions` | `list-sessions` | `200` array of masked sessions |
 
 Each endpoint also has its own section below with request/response details.
 
@@ -276,42 +282,42 @@ All five endpoints require `Authorization: Bearer <admin-token>` (enforced by
 `requireAdmin`). Error codes: `401 unauthorized` (no/invalid token), `403 forbidden`
 (non-admin token).
 
-### `admin/list-accounts`
+### `list-accounts`
 
-`GET /functions/v1/admin/list-accounts` — returns an array of all accounts with
+`GET /functions/v1/list-accounts` — returns an array of all accounts with
 `uid`, `email`, `name`, `approved`, `banned`, `created_at`, and `last_login`
 (timestamp of the most recent successful login, or `null`).
 
-### `admin/login-history`
+### `login-history`
 
-`GET /functions/v1/admin/login-history?uid=...` or `?email=...` — returns up to
+`GET /functions/v1/login-history?uid=...` or `?email=...` — returns up to
 100 login-log rows (`success`, `ip`, `device`, `attempted_at`) filtered by uid
 or email. Omitting both returns the 100 most recent entries.
 
-### `admin/ban`
+### `ban`
 
-`POST /functions/v1/admin/ban` — body `{"uid", "banned": true|false}`. Bans via
+`POST /functions/v1/ban` — body `{"uid", "banned": true|false}`. Bans via
 the atomic `ban_user(p_uid)` RPC (which also deletes the user's sessions) or
 unbans by flipping `banned=false`. Returns `{success:true}`. Errors: `400
 missing_fields` (uid absent), `400 cannot_ban_self`, `404 not_found` (unban
 target doesn't exist).
 
-### `admin/issue-code`
+### `issue-code`
 
-`POST /functions/v1/admin/issue-code` — body `{"email", "note"}`. Generates a
+`POST /functions/v1/issue-code` — body `{"email", "note"}`. Generates a
 one-time access code in `XXX-XXX-XXX-XXX` format (12 chars in 4 groups of 3;
 alphabet excludes `0/O/1/I`)
 and inserts it into `access_codes`. Returns `{code, reused}` (reused = an unexpired
 unused code already existed for that email). Errors: `400 auth_email_invalid`.
 
-### `admin/list-sessions`
+### `list-sessions`
 
-`GET /functions/v1/admin/list-sessions?uid=...` — returns up to 100 session rows
+`GET /functions/v1/list-sessions?uid=...` — returns up to 100 session rows
 with `token_id` (first 8 chars + "…"), `device`, `created_at`, `last_seen_at`,
 `expires_at`, optionally filtered by uid.
 
-Deploy all five like `health` (dashboard editor, name each exactly as in the URL
-table, include `_shared/helpers.ts`, same `ALLOWED_ORIGIN` secret).
+Each admin endpoint requires `Authorization: Bearer <admin-token>` and returns
+`401 unauthorized` / `403 forbidden` for missing or non-admin tokens.
 
 ---
 
@@ -351,7 +357,7 @@ they are needed both for signup (`POST /signup`) and password reset
 **2. Admin endpoint (runtime, from an admin session):**
 
 ```
-POST /functions/v1/admin/issue-code
+POST /functions/v1/issue-code
 Authorization: Bearer <admin-token>
 {"email":"owner3@example.com","note":"some-note"}
 ```
@@ -362,7 +368,7 @@ active unused code already exists for that email).
 ## Banning a user
 
 ```
-POST /functions/v1/admin/ban
+POST /functions/v1/ban
 Authorization: Bearer <admin-token>
 {"uid":"u_...","banned":true}     # ban
 {"uid":"u_...","banned":false}    # unban
@@ -393,25 +399,25 @@ failing responses share the shape `{"error": "<code>"}`.
 |------------|------|-------|---------|
 | `access_blocked` | 403 | `login` | account exists but is not yet approved (non-admin) |
 | `access_code_invalid` | 400 | `signup` | no active, unused access code for the email |
-| `auth_email_invalid` | 400 | `signup`, `reset`, `admin/issue-code` | malformed email address |
+| `auth_email_invalid` | 400 | `signup`, `reset`, `issue-code` | malformed email address |
 | `auth_exists` | 400 | `signup` | an account with this email already exists |
 | `auth_invalid` | 401 | `login` | unknown account or wrong password |
 | `auth_password_mismatch` | 400 | `signup`, `reset` | password ≠ confirmPassword |
 | `auth_password_short` | 400 | `signup`, `reset` | password under 6 characters |
 | `banned` | 403 | `login` | account is banned |
-| `cannot_ban_self` | 400 | `admin/ban` | target uid is the calling admin's own uid |
-| `forbidden` | 403 | all `admin/*` | bearer token valid but account is not admin |
+| `cannot_ban_self` | 400 | `ban` | target uid is the calling admin's own uid |
+| `forbidden` | 403 | all admin endpoints | bearer token valid but account is not admin |
 | `full_name_required` | 400 | `signup` | missing `name` in the body |
 | `invalid_session` | — (n/a) | `validate-session` | documentary: for empty/unknown/expired/banned tokens the endpoint returns `200 {"valid":false}` instead of an error string |
 | `method_not_allowed` | 405 | every endpoint | request used the wrong HTTP method |
-| `missing_fields` | 400 | `login`, `admin/ban` | required body field(s) absent (email/password; uid) |
-| `not_found` | 404 | `admin/ban` | unban target account does not exist |
+| `missing_fields` | 400 | `login`, `ban` | required body field(s) absent (email/password; uid) |
+| `not_found` | 404 | `ban` | unban target account does not exist |
 | `origin_not_allowed` | 403 | every endpoint | request carried an `Origin` header not on the CORS allow-list (browser cross-origin only; curl/cron have no Origin and pass) |
 | `reset_code_invalid` | 400 | `reset` | no active, unused access code for the email |
 | `reset_no_account` | 400 | `reset` | no account with this email |
 | `server_error` | 500 | every endpoint | unexpected server or database error |
 | `too_many_attempts` | 429 | `login`, `signup`, `reset` | 5+ failed attempts in the last 15 min (`login`/`reset` by email, `signup` by IP) |
-| `unauthorized` | 401 | all `admin/*` | missing or invalid bearer token |
+| `unauthorized` | 401 | all admin endpoints | missing or invalid bearer token |
 
 ---
 
@@ -437,7 +443,7 @@ $login = curl.exe -s -X POST "$base/login" -H "Content-Type: application/json" -
 $token = ($login | ConvertFrom-Json).token
 
 # list-accounts with admin token
-curl.exe -s "$base/admin/list-accounts" -H "Authorization: Bearer $token"
+curl.exe -s "$base/list-accounts" -H "Authorization: Bearer $token"
 
 # issue a code, ban, login-history, sessions — all with the token
 # (see Task 8 Step 7 for expected values)

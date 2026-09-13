@@ -1,4 +1,4 @@
-import { json, handleCors, createDb, requireAdmin, handleError } from "../../_shared/helpers.ts";
+﻿import { json, handleCors, createDb, requireAdmin, handleError } from "../_shared/helpers.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
@@ -12,20 +12,18 @@ Deno.serve(async (req) => {
 
     const url = new URL(req.url);
     const uid = url.searchParams.get("uid");
-    let q = db.from("sessions")
-      .select("token,device,created_at,last_seen_at,expires_at")
-      .order("created_at", { ascending: false })
+    const email = url.searchParams.get("email");
+
+    let q = db.from("login_logs")
+      .select("success,ip,device,attempted_at")
+      .order("attempted_at", { ascending: false })
       .limit(100);
     if (uid) q = q.eq("uid", uid);
+    else if (email) q = q.eq("email", (email || "").toLowerCase());
+
     const { data, error } = await q;
     if (error) return handleError(error);
-    return json(200, (data || []).map((s: any) => ({
-      token_id: s.token.slice(0, 8) + "…",
-      device: s.device,
-      created_at: s.created_at,
-      last_seen_at: s.last_seen_at,
-      expires_at: s.expires_at,
-    })));
+    return json(200, data || []);
   } catch (e) {
     return handleError(e);
   }

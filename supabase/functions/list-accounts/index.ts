@@ -1,4 +1,4 @@
-import { json, handleCors, createDb, requireAdmin, handleError } from "../../_shared/helpers.ts";
+﻿import { json, handleCors, createDb, requireAdmin, handleError } from "../_shared/helpers.ts";
 
 Deno.serve(async (req) => {
   const cors = handleCors(req);
