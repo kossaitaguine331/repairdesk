@@ -242,8 +242,7 @@ select cron.schedule(
   'cleanup-old-logs',
   '0 3 * * 1',  -- 03:00 Monday
   $$select public.cleanup_old_logs();$$
-)
-on conflict do nothing;
+);
 
 -- ---------------------------------------------------------------------
 -- Seed admin (akuma / gouki). Hash = SHA256(admin-salt::gouki) hex.
