@@ -129,3 +129,25 @@ these statuses:
 
 Deploy like `health` (dashboard editor, name `reset`, include `_shared/helpers.ts`,
 same `ALLOWED_ORIGIN` secret).
+
+## Session endpoints
+
+### `validate-session`
+
+`POST /functions/v1/validate-session` with body `{"token"}`.
+
+Reads the session joined to its account. Returns `200 {valid:false}` when the token
+is empty/unknown, expired, the account is banned, or the account is not approved.
+Otherwise slides the session (sets `last_seen_at` to now and `expires_at` to
+now + 30 days) and returns `200 {valid:true, uid, name, role, banned:false}`.
+Failures return `{error}` (`405 method_not_allowed` for non-POST, `500 server_error`).
+
+### `logout`
+
+`POST /functions/v1/logout` with body `{"token"}`.
+
+Deletes the session row server-side. Always returns `200 {success:true}` —
+idempotent: an unknown or empty token still succeeds.
+
+Deploy both like `health` (dashboard editor, include `_shared/helpers.ts`,
+same `ALLOWED_ORIGIN` secret).
