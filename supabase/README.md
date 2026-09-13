@@ -85,3 +85,25 @@ Every attempt is written to `login_logs`; failures also to `login_attempts`
 (except when already rate-limited, so retries don't extend the lockout window).
 Deploy like `health` (dashboard editor, name `login`, include `_shared/helpers.ts`,
 same `ALLOWED_ORIGIN` secret).
+
+## Signup endpoint
+
+`POST /functions/v1/signup` with body `{"email", "name", "password", "confirmPassword", "code"}`.
+
+Flow: validate input, IP rate-limit, reject duplicate email, atomically redeem the
+one-time access code, then create the account (approved immediately, role `user`)
+and mint a 30-day session. Success returns `200` `{token, uid, name, role}`.
+Failures return `{error}` with one of these statuses:
+
+- `400 auth_email_invalid` — malformed email
+- `400 full_name_required` — missing name
+- `400 auth_password_short` — password under 6 characters
+- `400 auth_password_mismatch` — password ≠ confirmPassword
+- `400 access_code_invalid` — no active unused code for the email
+- `400 auth_exists` — an account with this email already exists
+- `405 method_not_allowed` — non-POST
+- `429 too_many_attempts` — 5+ failed signups in the last 15 min (IP-based)
+
+Failed code redemptions are written to `login_attempts` for rate-limiting.
+Deploy like `health` (dashboard editor, name `signup`, include `_shared/helpers.ts`,
+same `ALLOWED_ORIGIN` secret).
