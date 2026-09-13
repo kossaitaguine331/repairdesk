@@ -66,3 +66,22 @@ project awake. It requires two repository secrets:
 - `SUPABASE_HEALTH_URL` — the Invoke URL from above.
 - `SUPABASE_HEALTH_TOKEN` — any long random string; add the same value as an
   Edge Function secret so only this Action can hit the endpoint.
+
+## Login endpoint
+
+`POST /functions/v1/login` with body `{"email", "password"}`.
+
+Success returns `200` `{token, uid, name, role}` (token = 64-hex session token,
+expires 30 days). Failures return `{error}` with one of these statuses:
+
+- `400 missing_fields` — email or password absent
+- `401 auth_invalid` — unknown account or wrong password
+- `403 banned` — account is banned
+- `403 access_blocked` — account not yet approved (non-admin)
+- `405 method_not_allowed` — non-POST
+- `429 too_many_attempts` — 5+ failed attempts in the last 15 min
+
+Every attempt is written to `login_logs`; failures also to `login_attempts`
+(except when already rate-limited, so retries don't extend the lockout window).
+Deploy like `health` (dashboard editor, name `login`, include `_shared/helpers.ts`,
+same `ALLOWED_ORIGIN` secret).
