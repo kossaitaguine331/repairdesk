@@ -630,6 +630,7 @@ const I18N = {
       delete_shop_confirm:'Delete shop "{name}"? This will remove all templates and receipts.',
       receipts:'Receipts',
       new_receipt:'+ New Receipt',
+      new_phone_receipt:'+ Phone Purchase',
       export_all:'Export CSV',
       export_csv:'Export CSV',
       receipts_empty:'No receipts yet. Click <strong>+ New Receipt</strong> to create your first one.',
@@ -899,6 +900,7 @@ const I18N = {
       delete_shop_confirm:'Supprimer la boutique « {name} » ? Cela supprimera tous les modèles et reçus.',
       receipts:'Reçus',
       new_receipt:'+ Nouveau reçu',
+      new_phone_receipt:'+ Achat de téléphone',
       export_all:'Exporter CSV',
       export_csv:'Exporter CSV',
       receipts_empty:'Aucun reçu. Cliquez sur <strong>+ Nouveau reçu</strong> pour en créer un.',
@@ -1168,6 +1170,7 @@ ar: {
       delete_shop_confirm:'حذف المتجر «{name}»؟ سيؤدي ذلك إلى حذف جميع النماذج والفواتير.',
       receipts:'الفواتير',
       new_receipt:'+ فاتورة جديدة',
+      new_phone_receipt:'+ شراء هاتف',
       export_all:'تصدير CSV',
       export_csv:'تصدير CSV',
       receipts_empty:'لا توجد فواتير بعد. اضغط <strong>+ فاتورة جديدة</strong> لإنشاء أول فاتورة.',
@@ -1349,6 +1352,7 @@ I18N.fieldLabels = {
     'Device Model':'Device Model','Device Color':'Device Color','IMEI / Serial':'IMEI / Serial',
     'Issue Description':'Issue Description','Technician':'Technician','Status':'Status',
     'Brand':'Brand','Model':'Model','Serial Number':'Serial Number',
+    'Phone / Model':'Phone / Model','Condition':'Condition','Purchase or Sale':'Purchase or Sale','Price':'Price',
     'Subtotal':'Subtotal','Tax':'Tax','Total':'Total','Payment Method':'Payment Method',
     'Warranty':'Warranty','Notes':'Notes','Invoice Number':'Invoice Number','Date':'Date'
   },
@@ -1357,6 +1361,7 @@ I18N.fieldLabels = {
     'Device Model':'Modèle de l\'appareil','Device Color':'Couleur de l\'appareil','IMEI / Serial':'IMEI / N° de série',
     'Issue Description':'Description du problème','Technician':'Technicien','Status':'Statut',
     'Brand':'Marque','Model':'Modèle','Serial Number':'N° de série',
+    'Phone / Model':'Téléphone / Modèle','Condition':'État','Purchase or Sale':'Achat ou Vente','Price':'Prix',
     'Subtotal':'Sous-total','Tax':'Taxe','Total':'Total','Payment Method':'Mode de paiement',
     'Warranty':'Garantie','Notes':'Notes','Invoice Number':'N° de facture','Date':'Date'
   },
@@ -1365,6 +1370,7 @@ I18N.fieldLabels = {
     'Device Model':'طراز الجهاز','Device Color':'لون الجهاز','IMEI / Serial':'IMEI / الرقم التسلسلي',
     'Issue Description':'وصف المشكلة','Technician':'الفني','Status':'الحالة',
     'Brand':'العلامة','Model':'الطراز','Serial Number':'الرقم التسلسلي',
+    'Phone / Model':'الهاتف / الطراز','Condition':'الحالة','Purchase or Sale':'شراء أو بيع','Price':'السعر',
     'Subtotal':'المجموع الفرعي','Tax':'الضريبة','Total':'الإجمالي','Payment Method':'طريقة الدفع',
     'Warranty':'الضمان','Notes':'ملاحظات','Invoice Number':'رقم الفاتورة','Date':'التاريخ'
   }
@@ -1804,7 +1810,7 @@ function renderReceiptsView(el){
     const name = (r.fields.customer_name || '').toLowerCase();
     const phone = (r.fields.customer_phone || '').toLowerCase();
     const num = ((r.invoiceNum ? String(r.invoiceNum) : '') + ' ' + r.id.slice(-6)).toLowerCase();
-    const dev = ((r.fields.device_model||'') + ' ' + (r.fields.laptop_brand||'') + ' ' + (r.fields.laptop_model||'')).toLowerCase();
+    const dev = ((r.fields.device_model||'') + ' ' + (r.fields.laptop_brand||'') + ' ' + (r.fields.laptop_model||'') + ' ' + (r.fields.phone_brand_model||'')).toLowerCase();
     return name.includes(q) || phone.includes(q) || num.includes(q) || dev.includes(q);
   });
   filtered.sort((a,b) => st.sort === 'oldest' ? a.createdAt - b.createdAt : b.updatedAt - a.updatedAt);
@@ -1847,7 +1853,7 @@ function renderReceiptsView(el){
       const name = r.fields.customer_name || I18N.t('unnamed');
       const phone = r.fields.customer_phone || '';
       const price = r.fields.total || '';
-      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || '';
+      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || r.fields.phone_brand_model || '';
       const issue = r.fields.issue || '';
       const repOn = !!r.repaired;
       const paidOn = !!r.paid;
@@ -1875,6 +1881,7 @@ function renderReceiptsView(el){
     html += '</div>';
   }
   html += '<div style="position:fixed;bottom:24px;right:24px;display:flex;gap:8px;z-index:50;">';
+  html += '<button class="btn" id="newPhoneReceiptBtn" style="padding:14px 24px;font-size:15px;border-radius:14px;background:var(--panel);border:1px solid var(--purple);color:var(--purple);">' + I18N.t('new_phone_receipt') + '</button>';
   html += '<button class="btn primary" id="newReceiptBtn" style="padding:14px 24px;font-size:15px;border-radius:14px;box-shadow:0 4px 16px rgba(113,50,245,0.3);">' + I18N.t('new_receipt') + '</button>';
   html += '</div>';
   el.innerHTML = html;
@@ -1885,6 +1892,7 @@ function renderReceiptsView(el){
   el.querySelector('#rhSort')?.addEventListener('change', (e) => { st.sort = e.target.value; renderReceiptsView(el); });
 
   el.querySelector('#newReceiptBtn')?.addEventListener('click', () => openReceiptEditor(null));
+  el.querySelector('#newPhoneReceiptBtn')?.addEventListener('click', () => openReceiptEditor(null, createPhonePurchaseTemplate(currentTenantId)));
   el.querySelector('#exportAllReceipts')?.addEventListener('click', () => exportAllReceipts());
 
   el.querySelectorAll('.receipt-card').forEach(card => {
@@ -1964,7 +1972,7 @@ function renderReceiptDetails(id){
 }
 
 
-function openReceiptEditor(receiptId){
+function openReceiptEditor(receiptId, forcedTplId){
   currentReceiptId = receiptId;
   const templates = Store.getTemplates(currentTenantId);
   if(templates.length === 0){ alert(I18N.t('templates_empty')); return; }
@@ -1975,7 +1983,7 @@ function openReceiptEditor(receiptId){
     receipt = Store.getReceipts(currentTenantId).find(r => r.id === receiptId);
   }
 
-  const tplId = receipt ? receipt.templateId : (templates[0]?.id || null);
+  const tplId = receipt ? receipt.templateId : (forcedTplId || templates[0]?.id || null);
   const tpl = templates.find(t => t.id === tplId) || templates[0];
   const fieldValues = receipt ? {...receipt.fields} : {};
   tpl.fieldDefs.forEach(f => { if(!(f.key in fieldValues) && f.defaultVal) fieldValues[f.key] = f.defaultVal; });
@@ -2378,7 +2386,7 @@ function renderEarningsView(el){
     const rows = [['Invoice','Customer','Phone','Device','Total ('+cur+')','Date Paid'].join(',')];
     listRows.slice().sort((a,b) => (b.paidAt||0)-(a.paidAt||0)).forEach(r => {
       const f = r.fields || {};
-      const device = f.device_model || f.laptop_brand || f.laptop_model || '';
+const device = f.device_model || f.laptop_brand || f.laptop_model || f.phone_brand_model || '';
       const v = parseFloat(f.total); const vv = isNaN(v) ? '' : v.toFixed(2);
       rows.push([escCsv(receiptNumber(r)), escCsv(f.customer_name), escCsv(f.customer_phone), escCsv(device), vv, r.paidAt ? new Date(r.paidAt).toLocaleString() : ''].join(','));
     });
@@ -2389,6 +2397,56 @@ function renderEarningsView(el){
     a.click();
     URL.revokeObjectURL(a.href);
   });
+}
+
+/* ----- PHONE PURCHASE TEMPLATE ----- */
+function createPhonePurchaseTemplate(tenantId){
+  const templates = Store.getTemplates(tenantId);
+  const existing = templates.find(t => t.name === 'Phone Purchase Receipt');
+  if(existing) return existing.id;
+  const newTpl = {
+    id:'tpl_pp_' + Date.now() + Math.random().toString(36).slice(2,6),
+    name:'Phone Purchase Receipt', format:'receipt_80', isDefault:false,
+    fieldDefs:[
+      {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
+      {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
+      {key:'phone_brand_model',label:'Phone / Model',type:'text',placeholder:'e.g. iPhone 13, Samsung S22',required:true,group:'device'},
+      {key:'imei_serial',label:'IMEI / Serial',type:'text',placeholder:'IMEI or serial number',group:'device'},
+      {key:'condition',label:'Condition',type:'select',options:['New','Used','For Parts'],defaultVal:'New',group:'device'},
+      {key:'direction',label:'Purchase or Sale',type:'select',options:['Purchase','Sale'],defaultVal:'Purchase',group:'meta'},
+      {key:'total',label:'Price',type:'currency',placeholder:'0.00',required:true,group:'payment'},
+      {key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Transfer'],defaultVal:'Cash',group:'payment'},
+      {key:'date',label:'Date',type:'text',placeholder:'DD/MM/YYYY',defaultVal:new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}),group:'meta'},
+      {key:'notes',label:'Notes',type:'textarea',placeholder:'Accessories, visible damage, etc.',group:'meta'}
+    ],
+    elements:[
+      {id:uid(),type:'logo',config:{maxWidth:80,maxHeight:50,align:'center'}},
+      {id:uid(),type:'text',config:{content:'{{shop_name}}',align:'center',fontSize:16,fontWeight:'bold'}},
+      {id:uid(),type:'divider',config:{style:'solid'}},
+      {id:uid(),type:'text',config:{content:'PHONE PURCHASE RECEIPT',align:'center',fontSize:14,fontWeight:'bold'}},
+      {id:uid(),type:'text',config:{content:'No. {{receipt_number}}',align:'center',fontSize:10,color:'#9497a9',fontFamily:'monospace'}},
+      {id:uid(),type:'divider',config:{style:'solid'}},
+      {id:uid(),type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
+      {id:uid(),type:'field',config:{fieldKey:'customer_phone',layout:'inline'}},
+      {id:uid(),type:'field',config:{fieldKey:'phone_brand_model',layout:'inline'}},
+      {id:uid(),type:'field',config:{fieldKey:'imei_serial',layout:'inline'}},
+      {id:uid(),type:'divider',config:{style:'solid'}},
+      {id:uid(),type:'field',config:{fieldKey:'condition',layout:'inline'}},
+      {id:uid(),type:'field',config:{fieldKey:'direction',layout:'inline'}},
+      {id:uid(),type:'divider',config:{style:'solid'}},
+      {id:uid(),type:'field',config:{fieldKey:'price',layout:'inline',bold:true}},
+      {id:uid(),type:'field',config:{fieldKey:'payment_method',layout:'inline'}},
+      {id:uid(),type:'field',config:{fieldKey:'date',layout:'inline'}},
+      {id:uid(),type:'divider',config:{style:'solid'}},
+      {id:uid(),type:'field',config:{fieldKey:'notes',layout:'block'}},
+      {id:uid(),type:'text',config:{content:'{{shop_address}}',align:'center',fontSize:10,color:'#9497a9'}},
+      {id:uid(),type:'text',config:{content:'Thank you!',align:'center',fontSize:11,color:'#686b82'}}
+    ],
+    styles:{accentColor:'#7132f5',fontFamily:'IBM Plex Sans'}
+  };
+  templates.push(newTpl);
+  Store.setTemplates(tenantId, templates);
+  return newTpl.id;
 }
 
 /* ----- TEMPLATES VIEW ----- */
