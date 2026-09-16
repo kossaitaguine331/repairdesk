@@ -499,6 +499,7 @@ button{cursor:pointer;}
     <div class="nav-section" data-i18n="nav_workspace">Workspace</div>
     <button class="nav-item active" data-view="receipts"><span class="ni-icon">&#9776;</span><span data-i18n="nav_receipts">Receipts</span></button>
     <button class="nav-item" data-view="earnings"><span class="ni-icon">&#128176;</span><span data-i18n="nav_earnings">Earnings</span></button>
+    <button class="nav-item" data-view="notes"><span class="ni-icon">&#128221;</span><span data-i18n="nav_notes">Notes</span></button>
     <button class="nav-item" data-view="templates"><span class="ni-icon">&#9635;</span><span data-i18n="nav_templates">Templates</span></button>
     <button class="nav-item" data-view="builder"><span class="ni-icon">&#9998;</span><span data-i18n="nav_builder">Template Builder</span></button>
     <div class="nav-section" data-i18n="nav_manage">Manage</div>
@@ -532,6 +533,7 @@ const I18N = {
       nav_workspace:'Workspace',
       nav_receipts:'Receipts',
       nav_earnings:'Earnings',
+      nav_notes:'Notes',
       nav_templates:'Templates',
       nav_builder:'Template Builder',
       nav_manage:'Manage',
@@ -631,6 +633,11 @@ const I18N = {
       receipts:'Receipts',
       new_receipt:'+ New Receipt',
       new_phone_receipt:'+ Phone Purchase',
+      new_note:'+ New Note',
+      note_placeholder:'Write your note here...',
+      save_note:'Save Note',
+      confirm_delete_note:'Delete this note?',
+      notes_empty:'No notes yet. Click <strong>+ New Note</strong> to create your first one.',
       export_all:'Export CSV',
       export_csv:'Export CSV',
       receipts_empty:'No receipts yet. Click <strong>+ New Receipt</strong> to create your first one.',
@@ -802,6 +809,7 @@ const I18N = {
       nav_workspace:'Espace de travail',
       nav_receipts:'Reçus',
       nav_earnings:'Gains',
+      nav_notes:'Notes',
       nav_templates:'Modèles',
       nav_builder:'Éditeur de modèle',
       nav_manage:'Gérer',
@@ -901,6 +909,11 @@ const I18N = {
       receipts:'Reçus',
       new_receipt:'+ Nouveau reçu',
       new_phone_receipt:'+ Achat de téléphone',
+      new_note:'+ Nouvelle note',
+      note_placeholder:'Écrivez votre note ici...',
+      save_note:'Enregistrer',
+      confirm_delete_note:'Supprimer cette note ?',
+      notes_empty:'Aucune note. Cliquez sur <strong>+ Nouvelle note</strong> pour en créer une.',
       export_all:'Exporter CSV',
       export_csv:'Exporter CSV',
       receipts_empty:'Aucun reçu. Cliquez sur <strong>+ Nouveau reçu</strong> pour en créer un.',
@@ -1072,6 +1085,7 @@ ar: {
       nav_workspace:'مساحة العمل',
       nav_receipts:'الفواتير',
       nav_earnings:'الأرباح',
+      nav_notes:'ملاحظات',
       nav_templates:'النماذج',
       nav_builder:'مصمم النماذج',
       nav_manage:'إدارة',
@@ -1171,6 +1185,11 @@ ar: {
       receipts:'الفواتير',
       new_receipt:'+ فاتورة جديدة',
       new_phone_receipt:'+ شراء هاتف',
+      new_note:'+ ملاحظة جديدة',
+      note_placeholder:'اكتب ملاحظتك هنا...',
+      save_note:'حفظ الملاحظة',
+      confirm_delete_note:'حذف هذه الملاحظة؟',
+      notes_empty:'لا توجد ملاحظات. انقر على <strong>+ ملاحظة جديدة</strong> لإنشاء أول ملاحظة.',
       export_all:'تصدير CSV',
       export_csv:'تصدير CSV',
       receipts_empty:'لا توجد فواتير بعد. اضغط <strong>+ فاتورة جديدة</strong> لإنشاء أول فاتورة.',
@@ -1775,6 +1794,7 @@ function renderView(){
   switch(currentView){
     case 'receipts': renderReceiptsView(content); break;
     case 'earnings': renderEarningsView(content); break;
+    case 'notes': renderNotesView(content); break;
     case 'templates': renderTemplatesView(content); break;
     case 'builder': renderBuilderView(content); break;
     case 'settings': renderSettingsView(content); break;
@@ -2447,6 +2467,114 @@ function createPhonePurchaseTemplate(tenantId){
   templates.push(newTpl);
   Store.setTemplates(tenantId, templates);
   return newTpl.id;
+}
+
+/* ----- NOTES VIEW ----- */
+const NOTE_COLORS = ['#ef4444','#f97316','#facc15','#22c55e','#3b82f6','#a855f7','#ec4899','#6b7280'];
+function getNotes(){
+  const list = Store.getGlobal('notes');
+  return Array.isArray(list) ? list : [];
+}
+function saveNotes(list){
+  Store.setGlobal('notes', list);
+}
+function renderNotesView(el){
+  const notes = getNotes();
+  let editingId = null;
+  let draftColor = NOTE_COLORS[3];
+
+  let html = '<div class="content-header"><h2>' + I18N.t('nav_notes') + '</h2><div class="actions">';
+  html += '<button class="btn primary" id="newNoteBtn">' + I18N.t('new_note') + '</button>';
+  html += '</div></div>';
+
+  html += '<div id="noteEditorWrap" style="display:none;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin-bottom:16px;">';
+  html += '<textarea id="noteEditorText" style="width:100%;min-height:110px;padding:10px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--bg);color:var(--text);resize:vertical;" placeholder="'+esc(I18N.t('note_placeholder'))+'"></textarea>';
+  html += '<div style="display:flex;align-items:center;gap:8px;margin-top:12px;">';
+  NOTE_COLORS.forEach(c => {
+    html += '<button class="note-color" data-color="'+c+'" title="'+c+'" style="width:26px;height:26px;border-radius:50%;border:2px solid var(--line);background:'+c+';cursor:pointer;padding:0;" data-active="'+(c===draftColor?'1':'0')+'"></button>';
+  });
+  html += '<div style="flex:1;"></div>';
+  html += '<button class="btn" id="noteCancelBtn">' + I18N.t('back') + '</button>';
+  html += '<button class="btn primary" id="noteSaveBtn">' + I18N.t('save_note') + '</button>';
+  html += '</div></div>';
+
+  if(notes.length === 0){
+    html += '<div class="empty-state">' + I18N.t('notes_empty') + '</div>';
+  } else {
+    html += '<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;">';
+    notes.slice().sort((a,b) => b.updatedAt - a.updatedAt).forEach(n => {
+      const bg = n.color || NOTE_COLORS[3];
+      const text = (n.text || '').replace(/\n/g,'<br>');
+      html += '<div class="note-card" data-id="'+n.id+'" style="background:'+bg+'1a;border-left:4px solid '+bg+';border-radius:var(--radius);padding:14px;cursor:pointer;">';
+      html += '<div style="font-size:13px;line-height:1.5;color:var(--text);white-space:pre-wrap;word-break:break-word;">'+esc(n.text)+'</div>';
+      html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;opacity:0.7;">';
+      html += '<span style="font-size:11px;color:var(--muted);">'+formatDate(n.updatedAt||n.createdAt)+'</span>';
+      html += '<span><button class="note-del" data-id="'+n.id+'" title="'+esc(I18N.t('delete'))+'" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px;">&#10005;</button></span>';
+      html += '</div></div>';
+    });
+    html += '</div>';
+  }
+
+  el.innerHTML = html;
+
+  function showEditor(note, isNew){
+    editingId = note ? note.id : null;
+    draftColor = note ? (note.color||NOTE_COLORS[3]) : NOTE_COLORS[3];
+    const wrap = document.getElementById('noteEditorWrap');
+    const ta = document.getElementById('noteEditorText');
+    const saveBtn = document.getElementById('noteSaveBtn');
+    wrap.style.display = 'block';
+    ta.value = note ? (note.text||'') : '';
+    ta.focus();
+    saveBtn.firstChild.textContent = I18N.t('save_note');
+    document.querySelectorAll('.note-color').forEach(b => {
+      b.setAttribute('data-active', b.dataset.color===draftColor ? '1' : '0');
+      b.style.borderColor = b.dataset.color===draftColor ? '#000' : 'var(--line)';
+    });
+  }
+
+  el.querySelector('#newNoteBtn')?.addEventListener('click', () => showEditor(null, true));
+  el.querySelector('#noteCancelBtn')?.addEventListener('click', () => {
+    document.getElementById('noteEditorWrap').style.display = 'none';
+    renderNotesView(el);
+  });
+  el.querySelectorAll('.note-color').forEach(b => b.addEventListener('click', () => {
+    draftColor = b.dataset.color;
+    document.querySelectorAll('.note-color').forEach(x => {
+      x.setAttribute('data-active', x.dataset.color===draftColor ? '1' : '0');
+      x.style.borderColor = x.dataset.color===draftColor ? '#000' : 'var(--line)';
+    });
+  }));
+  el.querySelector('#noteSaveBtn')?.addEventListener('click', () => {
+    const text = document.getElementById('noteEditorText').value;
+    if(!text || !text.trim()){ alert(I18N.t('note_placeholder')); return; }
+    const list = getNotes();
+    const now = Date.now();
+    if(editingId){
+      const idx = list.findIndex(n => n.id === editingId);
+      if(idx > -1) list[idx] = {...list[idx], text:text.trim(), color:draftColor, updatedAt:now};
+    } else {
+      list.push({id:'n' + now + Math.random().toString(36).slice(2,7), text:text.trim(), color:draftColor, createdAt:now, updatedAt:now});
+    }
+    saveNotes(list);
+    renderNotesView(el);
+  });
+  el.querySelectorAll('.note-card').forEach(card => {
+    card.addEventListener('click', (e) => {
+      if(e.target.closest('.note-del')) return;
+      const note = getNotes().find(n => n.id === card.dataset.id);
+      if(!note) return;
+      showEditor(note, false);
+      document.getElementById('noteEditorWrap').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  el.querySelectorAll('.note-del').forEach(b => b.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if(!confirm(I18N.t('confirm_delete_note'))) return;
+    const list = getNotes().filter(n => n.id !== b.dataset.id);
+    saveNotes(list);
+    renderNotesView(el);
+  }));
 }
 
 /* ----- TEMPLATES VIEW ----- */
