@@ -773,6 +773,7 @@ const I18N = {
       backup_all:'Backup All Shops',
       restore_shop_data:'Restore Backup',
       restore_confirm:'This will overwrite the current data for matching shops. Continue?',
+      restore_confirm_notes:'This backup also contains account-wide notes. Restoring will replace ALL notes in every shop with the ones in the backup. Continue?',
       restore_invalid:'This is not a valid RepairDesk backup file.',
       restore_done:'Backup restored successfully.',
       clear_receipts:'Clear All Receipts',
@@ -1049,6 +1050,7 @@ const I18N = {
       backup_all:'Sauvegarder toutes les boutiques',
       restore_shop_data:'Restaurer la sauvegarde',
       restore_confirm:'Cela va remplacer les données actuelles des boutiques correspondantes. Continuer ?',
+      restore_confirm_notes:'Cette sauvegarde contient aussi des notes valables pour tout le compte. La restauration remplacera TOUTES les notes de toutes les boutiques par celles de la sauvegarde. Continuer ?',
       restore_invalid:'Ce n\'est pas un fichier de sauvegarde RepairDesk valide.',
       restore_done:'Sauvegarde restaurée avec succès.',
       clear_receipts:'Effacer tous les reçus',
@@ -1323,6 +1325,7 @@ ar: {
       backup_all:'نسخ احتياطي لكل المتاجر',
       restore_shop_data:'استعادة نسخة احتياطية',
       restore_confirm:'سيؤدي هذا إلى استبدال البيانات الحالية للمتاجر المتطابقة. متابعة؟',
+      restore_confirm_notes:'تحتوي هذه النسخة الاحتياطية أيضاً على ملاحظات على مستوى الحساب. ستؤدي الاستعادة إلى استبدال جميع الملاحظات في كل المتاجر بملاحظات النسخة الاحتياطية. متابعة؟',
       restore_invalid:'هذا ليس ملف نسخة احتياطية صالحاً من RepairDesk.',
       restore_done:'تمت استعادة النسخة الاحتياطية بنجاح.',
       clear_receipts:'مسح جميع الفواتير',
@@ -1462,14 +1465,25 @@ const Store = {
   _clearSession(){ try{ localStorage.removeItem('rd_sess'); }catch(e){} },
   getTemplates(tenantId){
     const list = this.get(tenantId, 'templates') || [];
-    const removedKeys = ['subtotal','tax','payment_method','technician'];
     let changed = false;
     const cleaned = list.map(tpl => {
       if(!tpl || typeof tpl !== 'object') return tpl;
-      const fd = (tpl.fieldDefs || []).filter(f => !removedKeys.includes(f && f.key));
-      if(fd.length !== (tpl.fieldDefs || []).length) changed = true;
-      const els = (tpl.elements || []).filter(el => !(el && el.type === 'field' && removedKeys.includes(el.config && el.config.fieldKey)));
-      if(els.length !== (tpl.elements || []).length) changed = true;
+      const fd = [...(tpl.fieldDefs || [])];
+      const els = [...(tpl.elements || [])];
+      if(isPhoneTradeTemplate(tpl) && !tpl.purchaseFieldsMigrated){
+        if(!fd.some(f => f.key === 'payment_method')){
+          fd.push({key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Transfer'],defaultVal:'Cash',group:'payment'});
+        }
+        if(!fd.some(f => f.key === 'price') && fd.some(f => f.key === 'total')){
+          els.forEach(el => { if(el.type === 'field' && el.config?.fieldKey === 'price') el.config = {...el.config, fieldKey:'total'}; });
+        }
+        if(!els.some(el => el.type === 'field' && el.config?.fieldKey === 'payment_method')){
+          const priceIdx = els.findIndex(el => el.type === 'field' && ['total','price'].includes(el.config?.fieldKey));
+          els.splice(priceIdx < 0 ? els.length : priceIdx + 1, 0, {id:uid(),type:'field',config:{fieldKey:'payment_method',layout:'inline'}});
+        }
+        changed = true;
+        return { ...tpl, fieldDefs:fd, elements:els, purchaseFieldsMigrated:true };
+      }
       return { ...tpl, fieldDefs:fd, elements:els };
     });
     if(changed){ this.set(tenantId, 'templates', cleaned); }
@@ -1675,7 +1689,24 @@ let receiptPreviewFormat = 'receipt_80';
    UTILS
    =================================================================== */
 function uid(){ return 'id_' + Date.now() + Math.random().toString(36).slice(2,8); }
-function esc(s){ if(!s) return ''; const d=document.createElement('div'); d.textContent=s; return d.innerHTML; }
+function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+function isPhoneTradeTemplate(tpl){
+  if(!tpl) return false;
+  const keys = (tpl.fieldDefs || []).map(f => f.key);
+  return String(tpl.id || '').startsWith('tpl_pp_') || tpl.name === 'Phone Purchase Receipt' || (keys.includes('phone_brand_model') && keys.includes('direction'));
+}
+function isPhoneTrade(receipt, templates){
+  const f = receipt.fields || {};
+  return ['purchase','sale'].includes(String(f.direction || '').trim().toLowerCase()) || String(receipt.templateId || '').startsWith('tpl_pp_') || isPhoneTradeTemplate((templates || []).find(t => t.id === receipt.templateId));
+}
+function isPurchaseExpense(receipt, templates){
+  const direction = String((receipt.fields || {}).direction || '').trim().toLowerCase();
+  return direction === 'purchase' || (!direction && isPhoneTrade(receipt, templates));
+}
+function deviceDescription(fields){
+  const f = fields || {};
+  return f.phone_brand_model || f.device_model || [f.laptop_brand, f.laptop_model].filter(Boolean).join(' ') || '';
+}
 function formatDate(ts){
   const d = new Date(ts);
   return d.toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}) + '  ' + d.toLocaleTimeString(undefined,{hour:'2-digit',minute:'2-digit'});
@@ -1813,7 +1844,7 @@ function renderReceiptsView(el){
   const total = receipts.length;
   let waiting = 0, repCount = 0, unpaidC = 0, paidC = 0;
   receipts.forEach(r => {
-    if(r.repaired){ repCount++; } else { waiting++; }
+    if(!isPhoneTrade(r, templates)){ if(r.repaired){ repCount++; } else { waiting++; } }
     if(r.paid){ paidC++; } else { unpaidC++; }
   });
 
@@ -1821,8 +1852,8 @@ function renderReceiptsView(el){
   const q = (st.q || '').toLowerCase();
   let filtered = receipts.filter(r => {
     if(st.filter !== 'all'){
-      if(st.filter === 'repaired' && !r.repaired) return false;
-      if(st.filter === 'not_repaired' && r.repaired) return false;
+      if(st.filter === 'repaired' && (isPhoneTrade(r, templates) || !r.repaired)) return false;
+      if(st.filter === 'not_repaired' && (isPhoneTrade(r, templates) || r.repaired)) return false;
       if(st.filter === 'paid' && !r.paid) return false;
       if(st.filter === 'unpaid' && r.paid) return false;
     }
@@ -1873,7 +1904,7 @@ function renderReceiptsView(el){
       const name = r.fields.customer_name || I18N.t('unnamed');
       const phone = r.fields.customer_phone || '';
       const price = r.fields.total || '';
-      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || r.fields.phone_brand_model || '';
+      const device = deviceDescription(r.fields);
       const issue = r.fields.issue || '';
       const repOn = !!r.repaired;
       const paidOn = !!r.paid;
@@ -1888,7 +1919,7 @@ function renderReceiptsView(el){
       html += '</div></div>';
       if(price) html += '<div class="rc-price">'+esc(fmtMoney(price, Store.getSettings(currentTenantId)))+'</div>';
       html += '<div class="rc-status">';
-      html += '<div class="status-toggle'+(repOn?' on':'')+'" data-status="repaired" data-id="'+r.id+'"><span class="dot"></span>'+(repOn?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
+      if(!isPhoneTrade(r, templates)) html += '<div class="status-toggle'+(repOn?' on':'')+'" data-status="repaired" data-id="'+r.id+'"><span class="dot"></span>'+(repOn?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
       html += '<div class="status-toggle amber'+(paidOn?' on':'')+'" data-status="paid" data-id="'+r.id+'"><span class="dot"></span>'+(paidOn?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
       html += '<button class="rc-wa" title="'+esc(I18N.t('whatsapp_btn'))+'" data-id="'+r.id+'"><span class="rc-wa-icon">&#128172;</span><span class="rc-wa-label">WhatsApp</span></button>';
       html += '</div>';
@@ -1907,7 +1938,14 @@ function renderReceiptsView(el){
   el.innerHTML = html;
 
   /* Toolbar events */
-  el.querySelector('#rhSearch')?.addEventListener('input', (e) => { st.q = e.target.value; renderReceiptsView(el); });
+  el.querySelector('#rhSearch')?.addEventListener('input', (e) => {
+    const {selectionStart, selectionEnd, selectionDirection} = e.target;
+    st.q = e.target.value;
+    renderReceiptsView(el);
+    const input = el.querySelector('#rhSearch');
+    input.focus();
+    input.setSelectionRange(selectionStart, selectionEnd, selectionDirection);
+  });
   el.querySelector('#rhFilter')?.addEventListener('change', (e) => { st.filter = e.target.value; renderReceiptsView(el); });
   el.querySelector('#rhSort')?.addEventListener('change', (e) => { st.sort = e.target.value; renderReceiptsView(el); });
 
@@ -1938,7 +1976,10 @@ function setReceiptStatus(id, status){
   const idx = list.findIndex(r => r.id === id);
   if(idx === -1) return;
   const r = list[idx];
-  if(status === 'repaired'){ r.repaired = !r.repaired; }
+  if(status === 'repaired'){
+    if(isPhoneTrade(r, Store.getTemplates(currentTenantId))) return;
+    r.repaired = !r.repaired;
+  }
   if(status === 'paid'){
     r.paid = !r.paid;
     r.paidAt = r.paid ? Date.now() : (r.paidAt || null);
@@ -1960,7 +2001,7 @@ function renderReceiptDetails(id){
   html += '</div></div>';
   html += '<div class="rh-detail">';
   html += '<div class="rd-statusline">';
-  html += '<div class="status-toggle'+(receipt.repaired?' on':'')+'" data-status="repaired" data-id="'+id+'"><span class="dot"></span>'+(receipt.repaired?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
+  if(!isPhoneTrade(receipt, templates)) html += '<div class="status-toggle'+(receipt.repaired?' on':'')+'" data-status="repaired" data-id="'+id+'"><span class="dot"></span>'+(receipt.repaired?I18N.t('repaired'):I18N.t('not_repaired'))+'</div>';
   html += '<div class="status-toggle amber'+(receipt.paid?' on':'')+'" data-status="paid" data-id="'+id+'"><span class="dot"></span>'+(receipt.paid?I18N.t('paid'):I18N.t('unpaid'))+'</div>';
   html += '</div>';
   html += '<div class="rd-grid">';
@@ -1992,7 +2033,7 @@ function renderReceiptDetails(id){
 }
 
 
-function openReceiptEditor(receiptId, forcedTplId){
+function openReceiptEditor(receiptId, forcedTplId, draft){
   currentReceiptId = receiptId;
   const templates = Store.getTemplates(currentTenantId);
   if(templates.length === 0){ alert(I18N.t('templates_empty')); return; }
@@ -2003,10 +2044,15 @@ function openReceiptEditor(receiptId, forcedTplId){
     receipt = Store.getReceipts(currentTenantId).find(r => r.id === receiptId);
   }
 
-  const tplId = receipt ? receipt.templateId : (forcedTplId || templates[0]?.id || null);
-  const tpl = templates.find(t => t.id === tplId) || templates[0];
-  const fieldValues = receipt ? {...receipt.fields} : {};
-  tpl.fieldDefs.forEach(f => { if(!(f.key in fieldValues) && f.defaultVal) fieldValues[f.key] = f.defaultVal; });
+  const requestedTplId = forcedTplId || (receipt ? receipt.templateId : Store.getSettings(currentTenantId).defaultTemplateId);
+  const tpl = templates.find(t => t.id === requestedTplId) || templates[0];
+  const tplId = tpl.id;
+  const fieldValues = {...(receipt ? receipt.fields : {}), ...draft};
+  tpl.fieldDefs.forEach(f => {
+    if(f.key in fieldValues) return;
+    if(!receipt && f.key === 'date' && isPhoneTradeTemplate(tpl)) fieldValues[f.key] = new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'});
+    else if(f.defaultVal) fieldValues[f.key] = f.defaultVal;
+  });
   receiptPreviewFormat = tpl.format || 'receipt_80';
 
   let html = '<div class="content-header"><h2>'+(receipt?I18N.t('edit_receipt'):I18N.t('new_receipt_title'))+'</h2><div class="actions">';
@@ -2065,7 +2111,17 @@ function openReceiptEditor(receiptId, forcedTplId){
   const formEl = document.getElementById('editorForm');
   function getFormValues(){
     const vals = {};
-    formEl.querySelectorAll('[data-field]').forEach(inp => { vals[inp.dataset.field] = inp.value; });
+    const draftKeys = {};
+    formEl.querySelectorAll('[data-field]').forEach(inp => { draftKeys[inp.dataset.field] = inp.value; });
+    const allowed = new Set(tpl.fieldDefs.map(f => f.key));
+    for(const [k,v] of Object.entries(draftKeys)){
+      if(allowed.has(k)) vals[k] = v;
+    }
+    if(receipt){
+      for(const [k,v] of Object.entries(receipt.fields || {})){
+        if(allowed.has(k) && !(k in vals)) vals[k] = v;
+      }
+    }
     return vals;
   }
   function updatePreview(){
@@ -2117,12 +2173,10 @@ function openReceiptEditor(receiptId, forcedTplId){
       else if(e.key==='Escape') close();
     });
   });
-  document.addEventListener('click', (e) => { if(!e.target.closest('.ac-wrap')) formEl.querySelectorAll('.ac-list.open').forEach(el => el.classList.remove('open')); });
+  formEl.addEventListener('focusout', (e) => { if(!e.relatedTarget?.closest('.ac-wrap')) formEl.querySelectorAll('.ac-list.open').forEach(el => el.classList.remove('open')); });
 
-  document.getElementById('tplSelect').addEventListener('change', () => {
-    const opt = document.getElementById('tplSelect').selectedOptions[0];
-    receiptPreviewFormat = (opt.dataset.fmt || (opt.textContent.includes('A4') ? 'a4' : 'receipt_80'));
-    currentView = 'receipts'; openReceiptEditor(receiptId); 
+  document.getElementById('tplSelect').addEventListener('change', (e) => {
+    currentView = 'receipts'; openReceiptEditor(receiptId, e.target.value, getFormValues());
   });
   document.querySelectorAll('.preview-toggle button').forEach(b => b.addEventListener('click', () => {
     receiptPreviewFormat = b.dataset.fmt;
@@ -2206,7 +2260,7 @@ function whatsappReceipt(id){
     return;
   }
   const cur = settings.currency || 'DZD';
-  const device = receipt.fields.device_model || receipt.fields.laptop_brand || receipt.fields.laptop_model || '';
+  const device = deviceDescription(receipt.fields);
   const name = receipt.fields.customer_name || '';
   const total = receipt.fields.total || '';
   const lines = [];
@@ -2246,11 +2300,12 @@ function exportAllReceipts(){
     if(/[",\n\r]/.test(s)){ return '"' + s.replace(/"/g,'""') + '"'; }
     return s;
   };
-  const headers = ['Invoice','Customer','Phone','Device','Issue','Total ('+cur+')','Status','Repaired','Paid','Date Paid','Created'];
+  const exportDate = ts => escCsv(ts ? new Date(ts).toLocaleString() : '');
+  const headers = ['Invoice','Customer','Phone','Device','Issue','Total ('+cur+')','Status','Repaired','Paid','Date Paid','Created'].map(escCsv);
   const rows = [headers.join(',')];
   receipts.forEach(r => {
     const f = r.fields || {};
-    const device = f.device_model || f.laptop_brand || f.laptop_model || '';
+    const device = deviceDescription(f);
     const issues = f.issue || '';
     const total = parseFloat(f.total);
     const status = r.repaired ? (r.paid ? 'Repaired & Paid' : 'Repaired / Unpaid') : (r.paid ? 'Paid' : 'Pending');
@@ -2264,8 +2319,8 @@ function exportAllReceipts(){
       escCsv(status),
       r.repaired ? 'Yes' : 'No',
       r.paid ? 'Yes' : 'No',
-      r.paidAt ? new Date(r.paidAt).toLocaleString() : '',
-      r.createdAt ? new Date(r.createdAt).toLocaleString() : ''
+      exportDate(r.paidAt),
+      exportDate(r.createdAt)
     ].join(','));
   });
   const blob = new Blob(['\ufeff' + rows.join('\r\n')], {type:'text/csv;charset=utf-8;'});
@@ -2303,7 +2358,8 @@ function renderEarningsView(el){
   const period = window.earnState.period;
   const settings = Store.getSettings(currentTenantId);
   const cur = settings.currency || 'DZD';
-  const receipts = Store.getReceipts(currentTenantId);
+  const templates = Store.getTemplates(currentTenantId);
+  const receipts = Store.getReceipts(currentTenantId).filter(r => !isPurchaseExpense(r, templates));
   const now = Date.now();
   const start = earningsWindowStart(period);
 
@@ -2360,7 +2416,7 @@ function renderEarningsView(el){
     listRows.forEach(r => {
       const name = r.fields.customer_name || I18N.t('unnamed');
       const phone = r.fields.customer_phone || '';
-      const device = r.fields.device_model || r.fields.laptop_brand || r.fields.laptop_model || '';
+      const device = deviceDescription(r.fields);
       const v = parseFloat(r.fields.total); const vv = isNaN(v) ? 0 : v;
       html += '<div class="earn-row" data-id="' + r.id + '">';
       html += '<div class="er-main"><div class="er-name">' + esc(name) + ' <span class="rh-id">#' + esc(receiptNumber(r)) + '</span></div>';
@@ -2403,12 +2459,12 @@ function renderEarningsView(el){
       const s = String(v == null ? '' : v);
       return /[",\n\r]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
     };
-    const rows = [['Invoice','Customer','Phone','Device','Total ('+cur+')','Date Paid'].join(',')];
+    const rows = [['Invoice','Customer','Phone','Device','Total ('+cur+')','Date Paid'].map(escCsv).join(',')];
     listRows.slice().sort((a,b) => (b.paidAt||0)-(a.paidAt||0)).forEach(r => {
       const f = r.fields || {};
-const device = f.device_model || f.laptop_brand || f.laptop_model || f.phone_brand_model || '';
+const device = deviceDescription(f);
       const v = parseFloat(f.total); const vv = isNaN(v) ? '' : v.toFixed(2);
-      rows.push([escCsv(receiptNumber(r)), escCsv(f.customer_name), escCsv(f.customer_phone), escCsv(device), vv, r.paidAt ? new Date(r.paidAt).toLocaleString() : ''].join(','));
+      rows.push([escCsv(receiptNumber(r)), escCsv(f.customer_name), escCsv(f.customer_phone), escCsv(device), vv, escCsv(r.paidAt ? new Date(r.paidAt).toLocaleString() : '')].join(','));
     });
     const blob = new Blob(['\ufeff' + rows.join('\r\n')], {type:'text/csv;charset=utf-8;'});
     const a = document.createElement('a');
@@ -2422,7 +2478,7 @@ const device = f.device_model || f.laptop_brand || f.laptop_model || f.phone_bra
 /* ----- PHONE PURCHASE TEMPLATE ----- */
 function createPhonePurchaseTemplate(tenantId){
   const templates = Store.getTemplates(tenantId);
-  const existing = templates.find(t => t.name === 'Phone Purchase Receipt');
+  const existing = templates.find(t => isPhoneTradeTemplate(t));
   if(existing) return existing.id;
   const newTpl = {
     id:'tpl_pp_' + Date.now() + Math.random().toString(36).slice(2,6),
@@ -2436,7 +2492,7 @@ function createPhonePurchaseTemplate(tenantId){
       {key:'direction',label:'Purchase or Sale',type:'select',options:['Purchase','Sale'],defaultVal:'Purchase',group:'meta'},
       {key:'total',label:'Price',type:'currency',placeholder:'0.00',required:true,group:'payment'},
       {key:'payment_method',label:'Payment Method',type:'select',options:['Cash','Card','Transfer'],defaultVal:'Cash',group:'payment'},
-      {key:'date',label:'Date',type:'text',placeholder:'DD/MM/YYYY',defaultVal:new Date().toLocaleDateString(undefined,{year:'numeric',month:'short',day:'numeric'}),group:'meta'},
+      {key:'date',label:'Date',type:'text',placeholder:'DD/MM/YYYY',group:'meta'},
       {key:'notes',label:'Notes',type:'textarea',placeholder:'Accessories, visible damage, etc.',group:'meta'}
     ],
     elements:[
@@ -2454,7 +2510,7 @@ function createPhonePurchaseTemplate(tenantId){
       {id:uid(),type:'field',config:{fieldKey:'condition',layout:'inline'}},
       {id:uid(),type:'field',config:{fieldKey:'direction',layout:'inline'}},
       {id:uid(),type:'divider',config:{style:'solid'}},
-      {id:uid(),type:'field',config:{fieldKey:'price',layout:'inline',bold:true}},
+      {id:uid(),type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
       {id:uid(),type:'field',config:{fieldKey:'payment_method',layout:'inline'}},
       {id:uid(),type:'field',config:{fieldKey:'date',layout:'inline'}},
       {id:uid(),type:'divider',config:{style:'solid'}},
@@ -2760,7 +2816,7 @@ function renderBuilderView(el){
   html += '<div class="builder-props"><h4>' + I18N.t('properties') + '</h4>';
   html += '<div id="propsPanel"><div class="bp-empty">' + I18N.t('select_element') + '</div></div>';
   html += '<div style="margin-top:14px;"><h4>' + I18N.t('field_definitions') + '</h4><div id="fieldDefsList">';
-  renderFieldDefsList();
+  html += renderFieldDefsList();
   html += '</div></div></div>';
 
   html += '</div>';
@@ -3129,7 +3185,7 @@ function renderSettingsView(el){
 
   /* Event bindings */
   const saveSettings = () => {
-    Store.setSettings(currentTenantId, {
+    Store.setSettings(currentTenantId, { ...Store.getSettings(currentTenantId),
       shopName: document.getElementById('setShopName').value,
       logo: s.logo,
       address: document.getElementById('setAddress').value,
@@ -3207,7 +3263,7 @@ function renderSettingsView(el){
       templates: Store.getTemplates(t.id),
       receipts: Store.getReceipts(t.id)
     }));
-    const data = { app:'RepairDesk', version:1, exportedAt:Date.now(), shops };
+    const data = { app:'RepairDesk', version:1, exportedAt:Date.now(), notes:getNotes(), shops };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
@@ -3227,10 +3283,22 @@ function renderSettingsView(el){
         let data = null;
         try{ data = JSON.parse(e.target.result); }catch(err){ alert(I18N.t('restore_invalid')); return; }
         if(data && typeof data === 'object'){
+          if(data.shops && Array.isArray(data.shops)){
+            const validShops = data.shops.every(sh => sh && typeof sh === 'object' && sh.id && sh.name);
+            const notesValid = data.notes === undefined || (Array.isArray(data.notes) && data.notes.every(n => n && typeof n === 'object'));
+            if(!validShops || !notesValid){
+              alert(I18N.t('restore_invalid'));
+              return;
+            }
+          }
           if(!confirm(I18N.t('restore_confirm'))) return;
+          if(data.shops && Array.isArray(data.shops) && data.notes !== undefined && !confirm(I18N.t('restore_confirm_notes'))){
+            return;
+          }
           try{
-            if(data.shops && Array.isArray(data.shops)){
-              /* Account-level backup: restore all shops */
+        if(data.shops && Array.isArray(data.shops)){
+          /* Account-level backup: restore all shops */
+          if(data.notes !== undefined) saveNotes(data.notes);
               const existing = Store.getTenants();
               const ids = existing.map(t => t.id);
               data.shops.forEach(sh => {
@@ -3272,12 +3340,16 @@ function renderSettingsView(el){
 }
 
 /* ----- USERS / ACCESS CODES VIEW (admin only) ----- */
+let usersViewGeneration = 0;
+let usersHistoryRequest = 0;
 async function renderUsersView(el){
   if(!authUser || authUser.role !== 'admin'){
     el.innerHTML = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div><p style="color:var(--muted);">' + esc(I18N.t('users_restricted')) + '</p>';
     return;
   }
   const token = Store.getSession();
+  const generation = ++usersViewGeneration;
+  const viewEl = document.getElementById('appContent');
   el.innerHTML = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div>'
     + '<p style="color:var(--muted);">' + esc(I18N.t('users_loading')) + '</p>';
 
@@ -3285,6 +3357,9 @@ async function renderUsersView(el){
   try{
     accounts = await RD.adminListAccounts(token) || [];
   }catch(e){ accounts = []; }
+  if(generation !== usersViewGeneration) return;
+  const isUsersView = () => currentView === 'users' && document.getElementById('appContent') === el;
+  if(!isUsersView()) return;
 
   let html = '<div class="content-header"><h2>' + esc(I18N.t('nav_users')) + '</h2></div>';
   html += '<p class="field-hint" style="margin-bottom:16px;">' + esc(I18N.t('users_hint')) + '</p>';
@@ -3339,33 +3414,38 @@ async function renderUsersView(el){
   document.getElementById('genUserCodeBtn').addEventListener('click', async () => {
     const email = document.getElementById('newUserEmail').value.trim().toLowerCase();
     const note = document.getElementById('newUserNote').value.trim();
+    const resultEl = document.getElementById('genCodeResult');
     if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ alert(I18N.t('auth_email_invalid')); return; }
     try{
       const res = await RD.adminIssueCode(token, email, note);
-      document.getElementById('genCodeResult').textContent =
+      if(!resultEl.isConnected || generation !== usersViewGeneration || !isUsersView()) return;
+      resultEl.textContent =
         (res.reused ? I18N.t('users_code_reused') + ' ' : '') + email + ' \u2192 ' + res.code;
     }catch(err){
-      document.getElementById('genCodeResult').textContent = authErr(err.errorCode);
+      if(!resultEl.isConnected || generation !== usersViewGeneration || !isUsersView()) return;
+      resultEl.textContent = authErr(err.errorCode);
     }
   });
 
   el.querySelectorAll('[data-ban]').forEach(btn => {
     btn.addEventListener('click', async () => {
+      const banGeneration = generation;
       const uid = btn.getAttribute('data-ban');
       const banned = btn.getAttribute('data-banned') === '1';
       if(banned && !confirm(I18N.t('users_confirm_unban'))) return;
       if(!banned && !confirm(I18N.t('users_confirm_ban'))) return;
       try{
         await RD.adminBan(token, uid, !banned);
-        renderUsersView(el);
+        if(banGeneration === usersViewGeneration && isUsersView()) renderUsersView(el);
       }catch(err){
-        alert(authErr(err.errorCode));
+        if(banGeneration === usersViewGeneration && isUsersView()) alert(authErr(err.errorCode));
       }
     });
   });
 
   el.querySelectorAll('[data-history]').forEach(btn => {
     btn.addEventListener('click', async () => {
+      const requestSeq = ++usersHistoryRequest;
       const uid = btn.getAttribute('data-history');
       const detail = document.getElementById('adminDetail');
       if(!detail) return;
@@ -3375,6 +3455,7 @@ async function renderUsersView(el){
           RD.adminLoginHistory(token, uid),
           RD.adminListSessions(token, uid)
         ]);
+        if(requestSeq !== usersHistoryRequest || generation !== usersViewGeneration || !isUsersView() || !detail.isConnected) return;
         let h = '<div class="settings-section"><h3>' + esc(I18N.t('users_login_history')) + '</h3>';
         h += '<div class="table-wrap" style="overflow-x:auto;"><table class="rc-table" style="width:100%;border-collapse:collapse;font-size:12px;">';
         h += '<thead><tr><th style="text-align:left;padding:6px;">' + esc(I18N.t('users_attempt_time')) + '</th>'
@@ -3398,8 +3479,10 @@ async function renderUsersView(el){
             + '<td style="padding:6px;">' + (s.last_seen_at ? new Date(s.last_seen_at).toLocaleString() : '—') + '</td></tr>';
         });
         h += '</tbody></table></div></div>';
+        if(requestSeq !== usersHistoryRequest || generation !== usersViewGeneration || !isUsersView() || !detail.isConnected) return;
         detail.innerHTML = h;
       }catch(err){
+        if(requestSeq !== usersHistoryRequest || generation !== usersViewGeneration || !isUsersView() || !detail.isConnected) return;
         detail.innerHTML = '<p style="color:var(--danger);">' + esc(authErr(err.errorCode)) + '</p>';
       }
     });
@@ -3594,6 +3677,9 @@ function playAkumaFx(){
 }
 
 function beginSession(acc){
+  usersViewGeneration++;
+  usersHistoryRequest++;
+  migrateShopDataForEmail(acc.email, acc.uid);
   authUser = { uid: acc.uid, email: acc.email, name: acc.name, role: acc.role };
   Store.account = acc.uid;
   if(acc.token) Store._saveSession(acc.token);
@@ -3605,6 +3691,8 @@ function beginSession(acc){
 }
 
 function handleSignout(){
+  usersViewGeneration++;
+  usersHistoryRequest++;
   const token = Store.getSession();
   authUser = null;
   Store._clearSession();
@@ -3659,8 +3747,8 @@ async function authSubmit(e){
     if(password !== confirmPw){ authMsg(I18N.t('auth_password_mismatch')); return; }
     try{
       await RD.reset(email, code, password, confirmPw);
-      authMsg(I18N.t('reset_success'), 'info');
       setAuthMode(false);
+      authMsg(I18N.t('reset_success'), 'info');
       return;
     }catch(err){
       authMsg(authErr(err.errorCode));
@@ -3677,7 +3765,6 @@ async function authSubmit(e){
     try{
       const res = await RD.signup(email, name, password, confirmPw, code);
       beginSession({ uid: res.uid, email, name, role: res.role, token: res.token });
-      migrateShopDataForEmail(email, res.uid);
       return;
     }catch(err){
       authMsg(authErr(err.errorCode));
@@ -3692,7 +3779,6 @@ async function authSubmit(e){
     const res = await RD.login(email, password);
     if(email === 'akuma') playAkumaFx();
     beginSession({ uid: res.uid, email, name: res.name, role: res.role, token: res.token });
-    migrateShopDataForEmail(email, res.uid);
   }catch(err){
     authMsg(authErr(err.errorCode));
   }
