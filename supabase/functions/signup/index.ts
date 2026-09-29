@@ -30,28 +30,24 @@ Deno.serve(async (req) => {
     const { data: existing } = await db.from("accounts").select("uid").eq("email", email).maybeSingle();
     if (existing) return json(400, { error: "auth_exists" });
 
-    const redeem = async () => {
-      const { data, error } = await db.rpc("redeem_access_code", { p_email: email, p_code: code });
-      if (error || !data || data.length === 0) return false;
-      return true;
-    };
-    if (!(await redeem())) {
-      await db.from("login_attempts").insert({ email, ip, success: false });
-      return json(400, { error: "access_code_invalid" });
-    }
-
     const salt = makeSalt();
     const hash = await hashPassword(password, salt);
     const uid = "u" + Date.now().toString(36) + cryptoToken(4);
-    const { error: ie } = await db.from("accounts").insert({
-      uid, email, name, salt, hash, role: "user", approved: true, approved_at: new Date().toISOString(),
-    });
-    if (ie) return handleError(ie);
-
     const token = cryptoToken(32);
-    const expires = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
-    const { error: se } = await db.from("sessions").insert({ token, uid, expires_at: expires, device });
-    if (se) return handleError(se);
+    const { error } = await db.rpc("signup_with_access_code", {
+      p_email: email, p_code: code, p_uid: uid, p_name: name,
+      p_salt: salt, p_hash: hash, p_token: token, p_device: device,
+    });
+    if (error) {
+      if (error.code === "P0001" && error.message === "auth_exists") {
+        return json(400, { error: "auth_exists" });
+      }
+      if (error.code === "P0001" && error.message === "access_code_invalid") {
+        await db.from("login_attempts").insert({ email, ip, success: false });
+        return json(400, { error: "access_code_invalid" });
+      }
+      return handleError(error);
+    }
     await db.from("login_logs").insert({ email, uid, success: true, ip, device });
 
     return json(200, { token, uid, name, role: "user" });

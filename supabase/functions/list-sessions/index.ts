@@ -14,6 +14,7 @@ Deno.serve(async (req) => {
     const uid = url.searchParams.get("uid");
     let q = db.from("sessions")
       .select("token,device,created_at,last_seen_at,expires_at")
+      .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
       .limit(100);
     if (uid) q = q.eq("uid", uid);

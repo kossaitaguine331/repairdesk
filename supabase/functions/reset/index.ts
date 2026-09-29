@@ -31,21 +31,22 @@ Deno.serve(async (req) => {
       .maybeSingle();
     if (!acc) return json(400, { error: "reset_no_account" });
 
-    const { data: redeemData, error: redeemErr } = await db.rpc("redeem_access_code", { p_email: email, p_code: code });
-    if (redeemErr || !redeemData || redeemData.length === 0) {
-      await db.from("login_attempts").insert({ email, ip, success: false });
-      return json(400, { error: "reset_code_invalid" });
-    }
-
     const salt = makeSalt();
     const hash = await hashPassword(newPassword, salt);
-    const { error: ue } = await db.from("accounts")
-      .update({ salt, hash, approved: true })
-      .eq("uid", acc.uid);
-    if (ue) return handleError(ue);
-
-    await db.from("sessions").delete().eq("uid", acc.uid);
-    await db.from("login_logs").insert({ email, uid: acc.uid, success: true, ip, device });
+    const { data: uid, error } = await db.rpc("reset_with_access_code", {
+      p_email: email, p_code: code, p_salt: salt, p_hash: hash,
+    });
+    if (error) {
+      if (error.code === "P0001" && error.message === "reset_no_account") {
+        return json(400, { error: "reset_no_account" });
+      }
+      if (error.code === "P0001" && error.message === "reset_code_invalid") {
+        await db.from("login_attempts").insert({ email, ip, success: false });
+        return json(400, { error: "reset_code_invalid" });
+      }
+      return handleError(error);
+    }
+    await db.from("login_logs").insert({ email, uid, success: true, ip, device });
 
     return json(200, { success: true });
   } catch (e) {
