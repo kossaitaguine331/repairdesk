@@ -639,6 +639,7 @@ const I18N = {
       save_note:'Save Note',
       confirm_delete_note:'Delete this note?',
       notes_empty:'No notes yet. Click <strong>+ New Note</strong> to create your first one.',
+      print_blocked:'Your browser blocked the print window. Please allow pop-ups for this site and try again.',
       export_all:'Export CSV',
       export_csv:'Export CSV',
       receipts_empty:'No receipts yet. Click <strong>+ New Receipt</strong> to create your first one.',
@@ -917,6 +918,7 @@ const I18N = {
       save_note:'Enregistrer',
       confirm_delete_note:'Supprimer cette note ?',
       notes_empty:'Aucune note. Cliquez sur <strong>+ Nouvelle note</strong> pour en créer une.',
+      print_blocked:'Votre navigateur a bloqué la fenêtre d\'impression. Autorisez les pop-ups pour ce site et réessayez.',
       export_all:'Exporter CSV',
       export_csv:'Exporter CSV',
       receipts_empty:'Aucun reçu. Cliquez sur <strong>+ Nouveau reçu</strong> pour en créer un.',
@@ -1195,6 +1197,7 @@ ar: {
       save_note:'حفظ الملاحظة',
       confirm_delete_note:'حذف هذه الملاحظة؟',
       notes_empty:'لا توجد ملاحظات. انقر على <strong>+ ملاحظة جديدة</strong> لإنشاء أول ملاحظة.',
+      print_blocked:'حظر المتصفح نافذة الطباعة. يرجى السماح بالنوافذ المنبثقة لهذا الموقع ثم أعد المحاولة.',
       export_all:'تصدير CSV',
       export_csv:'تصدير CSV',
       receipts_empty:'لا توجد فواتير بعد. اضغط <strong>+ فاتورة جديدة</strong> لإنشاء أول فاتورة.',
@@ -2289,7 +2292,7 @@ function printPreview(template, fieldValues, format){
   const isA4 = format === 'a4';
   const printWin = window.open('','_blank','width=800,height=600');
   const pageCss = isA4 ? '.print-page{width:210mm;min-height:297mm;padding:15mm;font-size:13px;}' : '.print-page{width:80mm;padding:5mm;font-size:11px;}';
-  printWin.document.write('<!DOCTYPE html><html><head><title>Print</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"IBM Plex Sans",sans-serif;display:flex;justify-content:center;}@media print{body{margin:0;padding:0;}}' + pageCss + '</style></head><body><div class="print-page">' + html + '</div><script>window.onload=function(){window.print();window.close();}<\/script></body></html>');
+  printWin.document.write('<!DOCTYPE html><html><head><title>Print</title><link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"IBM Plex Sans",sans-serif;display:flex;justify-content:center;}@media print{body{margin:0;padding:0;}}' + pageCss + '</style></head><body><div class="print-page">' + html + '</div><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},200);};window.onafterprint=function(){window.close();};<\/script></body></html>');
   printWin.document.close();
 }
 
@@ -2642,6 +2645,7 @@ function printNotes(){
   const notes = getNotes();
   if(!notes.length){ alert(I18N.t('notes_empty').replace(/<[^>]+>/g,'')); return; }
   const printWin = window.open('','_blank','width=800,height=600');
+  if(!printWin){ alert(I18N.t('print_blocked')); return; }
   const items = notes.slice().sort((a,b) => b.updatedAt - a.updatedAt).map(n => {
     const bg = n.color || NOTE_COLORS[3];
     return '<div style="margin-bottom:12px;padding:12px 14px;border-left:5px solid '+bg+';border-radius:6px;background:#fafafa;page-break-inside:avoid;">'
@@ -2653,7 +2657,7 @@ function printNotes(){
     + '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
     + '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"IBM Plex Sans",sans-serif;padding:20mm;}.print-page{width:210mm;min-height:297mm;font-size:13px;}</style></head><body><div class="print-page">'
     + '<h1 style="font-size:18px;font-weight:600;margin-bottom:16px;border-bottom:2px solid #222;padding-bottom:8px;">'+esc(I18N.t('nav_notes'))+'</h1>'
-    + items + '</div><script>window.onload=function(){window.print();window.close();}<\/script></body></html>');
+    + items + '</div><script>window.onload=function(){setTimeout(function(){window.focus();window.print();},200);};window.onafterprint=function(){window.close();};<\/script></body></html>');
   printWin.document.close();
 }
 
