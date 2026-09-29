@@ -534,6 +534,7 @@ const I18N = {
       nav_receipts:'Receipts',
       nav_earnings:'Earnings',
       nav_notes:'Notes',
+      print_notes:'Print Notes',
       nav_templates:'Templates',
       nav_builder:'Template Builder',
       nav_manage:'Manage',
@@ -811,6 +812,7 @@ const I18N = {
       nav_receipts:'Reçus',
       nav_earnings:'Gains',
       nav_notes:'Notes',
+      print_notes:'Imprimer les notes',
       nav_templates:'Modèles',
       nav_builder:'Éditeur de modèle',
       nav_manage:'Gérer',
@@ -1088,6 +1090,7 @@ ar: {
       nav_receipts:'الفواتير',
       nav_earnings:'الأرباح',
       nav_notes:'ملاحظات',
+      print_notes:'طباعة الملاحظات',
       nav_templates:'النماذج',
       nav_builder:'مصمم النماذج',
       nav_manage:'إدارة',
@@ -2540,6 +2543,7 @@ function renderNotesView(el){
   let draftColor = NOTE_COLORS[3];
 
   let html = '<div class="content-header"><h2>' + I18N.t('nav_notes') + '</h2><div class="actions">';
+  html += '<button class="btn" id="printNotesBtn">' + I18N.t('print_notes') + '</button>';
   html += '<button class="btn primary" id="newNoteBtn">' + I18N.t('new_note') + '</button>';
   html += '</div></div>';
 
@@ -2631,6 +2635,26 @@ function renderNotesView(el){
     saveNotes(list);
     renderNotesView(el);
   }));
+  el.querySelector('#printNotesBtn')?.addEventListener('click', () => printNotes());
+}
+
+function printNotes(){
+  const notes = getNotes();
+  if(!notes.length){ alert(I18N.t('notes_empty').replace(/<[^>]+>/g,'')); return; }
+  const printWin = window.open('','_blank','width=800,height=600');
+  const items = notes.slice().sort((a,b) => b.updatedAt - a.updatedAt).map(n => {
+    const bg = n.color || NOTE_COLORS[3];
+    return '<div style="margin-bottom:12px;padding:12px 14px;border-left:5px solid '+bg+';border-radius:6px;background:#fafafa;page-break-inside:avoid;">'
+      + '<div style="font-size:13px;line-height:1.5;white-space:pre-wrap;word-break:break-word;">'+esc(n.text)+'</div>'
+      + '<div style="font-size:11px;color:#888;margin-top:8px;">'+formatDate(n.updatedAt||n.createdAt)+'</div>'
+      + '</div>';
+  }).join('');
+  printWin.document.write('<!DOCTYPE html><html><head><title>'+esc(I18N.t('nav_notes'))+'</title>'
+    + '<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">'
+    + '<style>*{box-sizing:border-box;margin:0;padding:0;}body{font-family:"IBM Plex Sans",sans-serif;padding:20mm;}.print-page{width:210mm;min-height:297mm;font-size:13px;}</style></head><body><div class="print-page">'
+    + '<h1 style="font-size:18px;font-weight:600;margin-bottom:16px;border-bottom:2px solid #222;padding-bottom:8px;">'+esc(I18N.t('nav_notes'))+'</h1>'
+    + items + '</div><script>window.onload=function(){window.print();window.close();}<\/script></body></html>');
+  printWin.document.close();
 }
 
 /* ----- TEMPLATES VIEW ----- */
