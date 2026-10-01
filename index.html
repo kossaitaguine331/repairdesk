@@ -1490,6 +1490,19 @@ const Store = {
         changed = true;
         return { ...tpl, fieldDefs:fd, elements:els, purchaseFieldsMigrated:true };
       }
+      if(!isPhoneTradeTemplate(tpl) && !tpl.repairFieldsStripped){
+        const isPhoneRepair = String(tpl.id || '').includes('tpl_phone_') || (tpl.name || '').toLowerCase().includes('phone repair');
+        if(isPhoneRepair){
+          const stripKeys = ['device_model','imei','repair_status'];
+          const nfd = fd.filter(f => !stripKeys.includes(f.key));
+          const nels = els.filter(el => !(el.type === 'field' && stripKeys.includes(el.config?.fieldKey)));
+          if(nfd.length !== fd.length || nels.length !== els.length){
+            changed = true;
+            return { ...tpl, fieldDefs:nfd, elements:nels, repairFieldsStripped:true };
+          }
+        }
+        return { ...tpl, fieldDefs:fd, elements:els, repairFieldsStripped:true };
+      }
       return { ...tpl, fieldDefs:fd, elements:els };
     });
     if(changed){ this.set(tenantId, 'templates', cleaned); }
@@ -1509,11 +1522,8 @@ const Store = {
           fieldDefs:[
             {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
             {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
-            {key:'device_model',label:'Device Model',type:'autocomplete',placeholder:'e.g. iPhone 15 Pro',group:'device',suggestions:['iPhone 16 Pro Max','iPhone 16 Pro','iPhone 16','iPhone 15 Pro Max','iPhone 15 Pro','iPhone 15','iPhone 14 Pro Max','iPhone 14 Pro','iPhone 14','iPhone 13 Pro','iPhone 13','iPhone 12','iPhone 11','Samsung Galaxy S25 Ultra','Samsung Galaxy S25','Samsung Galaxy S24 Ultra','Samsung Galaxy S24','Samsung Galaxy S23','Samsung Galaxy S22','Samsung Galaxy A55','Samsung Galaxy A54','Samsung Galaxy A34','Samsung Galaxy A15','Google Pixel 9 Pro','Google Pixel 9','Google Pixel 8 Pro','Google Pixel 8','Xiaomi 14','Redmi Note 13 Pro','OnePlus 12','Huawei P60 Pro']},
             {key:'device_color',label:'Device Color',type:'text',placeholder:'e.g. Space Black',group:'device'},
-            {key:'imei',label:'IMEI / Serial',type:'text',placeholder:'IMEI number',group:'device'},
             {key:'issue',label:'Issue Description',type:'textarea',placeholder:'e.g. Cracked screen, battery drain',required:true,group:'repair'},
-            {key:'repair_status',label:'Status',type:'select',options:['Received','Diagnosed','In Progress','Waiting for Parts','Completed','Ready for Pickup'],group:'repair',defaultVal:'Received'},
             {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true},
             {key:'warranty',label:'Warranty',type:'text',placeholder:'e.g. 30 days',group:'meta'},
             {key:'notes',label:'Notes',type:'textarea',placeholder:'Additional notes',group:'meta'}
@@ -1528,10 +1538,7 @@ const Store = {
             {id:'e7',type:'divider',config:{style:'solid'}},
             {id:'e8',type:'field',config:{fieldKey:'customer_name',layout:'inline'}},
             {id:'e9',type:'field',config:{fieldKey:'customer_phone',layout:'inline'}},
-            {id:'e10',type:'field',config:{fieldKey:'device_model',layout:'inline'}},
-            {id:'e11',type:'field',config:{fieldKey:'imei',layout:'inline'}},
             {id:'e12',type:'field',config:{fieldKey:'issue',layout:'inline'}},
-            {id:'e14',type:'field',config:{fieldKey:'repair_status',layout:'inline'}},
             {id:'e15',type:'divider',config:{style:'solid'}},
             {id:'e18',type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
             {id:'e20',type:'field',config:{fieldKey:'warranty',layout:'inline'}},
@@ -1547,11 +1554,8 @@ const Store = {
             {key:'customer_name',label:'Customer Name',type:'text',placeholder:'Customer name',required:true,group:'customer'},
             {key:'customer_phone',label:'Customer Phone',type:'phone',placeholder:'Phone number',group:'customer'},
             {key:'customer_email',label:'Customer Email',type:'email',placeholder:'Email address',group:'customer'},
-            {key:'device_model',label:'Device Model',type:'autocomplete',placeholder:'e.g. iPhone 15 Pro',group:'device',suggestions:['iPhone 16 Pro Max','iPhone 16 Pro','iPhone 16','iPhone 15 Pro Max','iPhone 15 Pro','iPhone 15','Samsung Galaxy S25 Ultra','Samsung Galaxy S24 Ultra','Google Pixel 9 Pro']},
             {key:'device_color',label:'Device Color',type:'text',placeholder:'Space Black',group:'device'},
-            {key:'imei',label:'IMEI / Serial',type:'text',placeholder:'IMEI number',group:'device'},
             {key:'issue',label:'Issue Description',type:'textarea',placeholder:'Describe the issue',required:true,group:'repair'},
-            {key:'repair_status',label:'Status',type:'select',options:['Received','Diagnosed','In Progress','Waiting for Parts','Completed','Ready for Pickup'],group:'repair',defaultVal:'Received'},
             {key:'total',label:'Total',type:'currency',placeholder:'0.00',group:'payment',required:true},
             {key:'warranty',label:'Warranty',type:'text',placeholder:'e.g. 30 days',group:'meta'},
             {key:'notes',label:'Notes',type:'textarea',placeholder:'Additional notes',group:'meta'}
@@ -1570,12 +1574,9 @@ const Store = {
             {id:'a11',type:'field',config:{fieldKey:'customer_email',layout:'inline'}},
             {id:'a12',type:'divider',config:{style:'solid'}},
             {id:'a13',type:'text',config:{content:'DEVICE DETAILS',align:'left',fontSize:10,fontWeight:'bold',color:'#9497a9'}},
-            {id:'a14',type:'field',config:{fieldKey:'device_model',layout:'inline'}},
             {id:'a15',type:'field',config:{fieldKey:'device_color',layout:'inline'}},
-            {id:'a16',type:'field',config:{fieldKey:'imei',layout:'inline'}},
             {id:'a17',type:'field',config:{fieldKey:'issue',layout:'inline'}},
             {id:'a18',type:'divider',config:{style:'solid'}},
-            {id:'a19',type:'field',config:{fieldKey:'repair_status',layout:'inline'}},
             {id:'a21',type:'field',config:{fieldKey:'warranty',layout:'inline'}},
             {id:'a22',type:'divider',config:{style:'solid'}},
             {id:'a25',type:'field',config:{fieldKey:'total',layout:'inline',bold:true}},
