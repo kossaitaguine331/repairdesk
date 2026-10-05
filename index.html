@@ -1513,37 +1513,34 @@ const Store = {
         changed = true;
         return { ...tpl, fieldDefs:fd, elements:els, purchaseFieldsMigrated:true };
       }
-      if(!isPhoneTradeTemplate(tpl) && !tpl.phoneModelUpdateFlag){
+      if(!isPhoneTradeTemplate(tpl) && !tpl.phoneModelV2){
         const isPhoneRepair = String(tpl.id || '').includes('tpl_phone_') || (tpl.name || '').toLowerCase().includes('phone repair');
         if(isPhoneRepair){
-          const hasColor = fd.some(f => f.key === 'device_color');
-          const hasModel = fd.some(f => f.key === 'device_model');
-          let nfd = fd, nels = els;
-          if(hasColor && !hasModel){
-            nfd = fd.map(f => f.key === 'device_color' ? {key:'device_model',label:'Phone Model',type:'autocomplete',placeholder:'Type phone model...',group:'device',suggestions:PHONE_MODEL_SUGGESTIONS} : f);
-            nels = els.map(el => (el.type === 'field' && el.config?.fieldKey === 'device_color') ? {...el, config:{...el.config, fieldKey:'device_model'}} : el);
-          } else if(hasColor && hasModel){
-            nfd = fd.filter(f => f.key !== 'device_color').map(f => f.key === 'device_model' ? {...f, type:'autocomplete', suggestions:f.suggestions || PHONE_MODEL_SUGGESTIONS} : f);
-            nels = els.filter(el => !(el.type === 'field' && el.config?.fieldKey === 'device_color'));
-          } else if(!hasColor && !hasModel){
-            nfd = [...fd];
-            const devIdx = nfd.findIndex(f => f.group === 'device');
-            nfd.splice(devIdx < 0 ? nfd.length : devIdx, 0, {key:'device_model',label:'Phone Model',type:'autocomplete',placeholder:'Type phone model...',group:'device',suggestions:PHONE_MODEL_SUGGESTIONS});
-            nels = [...els];
-            const afterIdx = nels.findIndex(el => el.type === 'field' && el.config?.fieldKey === 'customer_phone');
-            nels.splice(afterIdx < 0 ? 0 : afterIdx + 1, 0, {id:uid(),type:'field',config:{fieldKey:'device_model',layout:'inline'}});
+          const dropKeys = ['device_color','imei','repair_status'];
+          let nfd = fd.filter(f => !dropKeys.includes(f.key));
+          let nels = els.filter(el => !(el.type === 'field' && dropKeys.includes(el.config?.fieldKey)));
+          const modelDef = {key:'device_model',label:'Phone Model',type:'autocomplete',placeholder:'Type phone model...',group:'device',suggestions:PHONE_MODEL_SUGGESTIONS};
+          const mi = nfd.findIndex(f => f.key === 'device_model');
+          if(mi > -1){
+            nfd[mi] = {...nfd[mi], type:'autocomplete', placeholder:'Type phone model...', suggestions:(nfd[mi].suggestions && nfd[mi].suggestions.length) ? nfd[mi].suggestions : PHONE_MODEL_SUGGESTIONS};
           } else {
-            nfd = fd.map(f => f.key === 'device_model' ? {...f, type:'autocomplete', suggestions:f.suggestions || PHONE_MODEL_SUGGESTIONS} : f);
+            const di = nfd.findIndex(f => f.group === 'device');
+            nfd.splice(di < 0 ? nfd.length : di, 0, modelDef);
           }
-          nfd = nfd.filter(f => !['imei','repair_status'].includes(f.key));
-          nels = nels.filter(el => !(el.type === 'field' && ['imei','repair_status'].includes(el.config?.fieldKey)));
-          if(JSON.stringify(nfd) !== JSON.stringify(fd) || JSON.stringify(nels) !== JSON.stringify(els)){
-            changed = true;
-            return { ...tpl, fieldDefs:nfd, elements:nels, phoneModelUpdateFlag:true };
+          /* Invariant: renderPreview only prints fields that have a matching element,
+             so a device_model fieldDef without a device_model element silently
+             disappears from the printed receipt even though the form shows it.
+             Always guarantee the element exists. */
+          if(!nels.some(el => el.type === 'field' && el.config?.fieldKey === 'device_model')){
+            const anchors = tpl.format === 'a4' ? ['customer_email','customer_phone','customer_name'] : ['customer_phone','customer_name'];
+            let ai = -1;
+            for(const k of anchors){ ai = nels.findIndex(el => el.type === 'field' && el.config?.fieldKey === k); if(ai > -1) break; }
+            nels.splice(ai < 0 ? 0 : ai + 1, 0, {id:uid(),type:'field',config:{fieldKey:'device_model',layout:'inline'}});
           }
-          return { ...tpl, fieldDefs:nfd, elements:nels, phoneModelUpdateFlag:true };
+          changed = true;
+          return { ...tpl, fieldDefs:nfd, elements:nels, phoneModelV2:true };
         }
-        return { ...tpl, fieldDefs:fd, elements:els, phoneModelUpdateFlag:true };
+        return { ...tpl, fieldDefs:fd, elements:els, phoneModelV2:true };
       }
       return { ...tpl, fieldDefs:fd, elements:els };
     });
