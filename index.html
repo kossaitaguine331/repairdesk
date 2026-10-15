@@ -340,6 +340,69 @@ button{cursor:pointer;}
   .print-area.a4{width:210mm;padding:15mm;}
 .print-area.receipt-80{width:80mm;padding:5mm;font-size:11px;}
 }
+
+/* ===== STOCK MANAGEMENT ===== */
+.stock-tabs{display:flex;gap:4px;background:var(--shell);border-radius:var(--radius);padding:4px;margin-bottom:20px;flex-wrap:wrap;}
+.stock-tab{flex:1;min-width:80px;padding:8px 14px;border:none;border-radius:var(--radius-sm);background:none;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;transition:all .12s;white-space:nowrap;}
+.stock-tab:hover{color:var(--ink);}
+.stock-tab.active{background:var(--panel);color:var(--purple-dark);box-shadow:var(--shadow-micro);}
+.stock-dash{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px;}
+.stock-stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow-micro);text-align:center;}
+.stock-stat .ss-num{font-size:26px;font-weight:700;letter-spacing:-0.5px;margin-bottom:4px;}
+.stock-stat .ss-lab{font-size:11.5px;color:var(--muted);font-weight:500;}
+.stock-stat.value .ss-num{color:var(--purple-dark);}
+.stock-stat.low .ss-num{color:var(--amber);}
+.stock-stat.out .ss-num{color:var(--danger);}
+.stock-stat.ok .ss-num{color:var(--green);}
+.stock-section{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius-lg);padding:20px;box-shadow:var(--shadow-subtle);margin-bottom:20px;}
+.stock-section h3{font-size:15px;font-weight:600;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid var(--line-soft);display:flex;align-items:center;justify-content:space-between;}
+.stock-table{width:100%;border-collapse:collapse;font-size:13px;}
+.stock-table th{text-align:left;padding:8px 10px;border-bottom:2px solid var(--line);font-weight:600;font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.5px;white-space:nowrap;}
+.stock-table td{padding:9px 10px;border-bottom:1px solid var(--line-soft);vertical-align:middle;}
+.stock-table tr:last-child td{border-bottom:none;}
+.stock-table tr:hover td{background:var(--shell);}
+.stock-badge{display:inline-flex;align-items:center;gap:4px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:600;}
+.stock-badge.in-stock{background:var(--green-bg);color:var(--green-ink);}
+.stock-badge.low-stock{background:var(--amber-bg);color:var(--amber);}
+.stock-badge.out-stock{background:var(--danger-bg);color:var(--danger);}
+.stock-badge.cat{background:var(--purple-subtle);color:var(--purple-dark);}
+.stock-badge.move-in{background:var(--green-bg);color:var(--green-ink);}
+.stock-badge.move-out{background:var(--danger-bg);color:var(--danger);}
+.stock-badge.move-adj{background:var(--amber-bg);color:var(--amber);}
+.stock-toolbar{display:flex;gap:8px;align-items:center;margin-bottom:14px;flex-wrap:wrap;}
+.stock-toolbar input[type=text]{flex:1;min-width:180px;padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;}
+.stock-toolbar input[type=text]:focus{border-color:var(--purple);}
+.stock-toolbar select{padding:8px 10px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;color:var(--ink);background:#fff;outline:none;cursor:pointer;}
+.stock-form{display:flex;flex-direction:column;gap:14px;}
+.stock-form .sf-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.stock-form .sf-row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.stock-alert-bar{background:var(--amber-bg);border:1px solid rgba(217,119,6,0.3);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;display:flex;align-items:center;gap:10px;font-size:13px;color:var(--amber);}
+.stock-alert-bar .sa-count{font-weight:700;font-size:15px;}
+.stock-alert-bar.danger{background:var(--danger-bg);border-color:rgba(192,57,43,0.3);color:var(--danger);}
+.stock-qty-pill{display:inline-flex;align-items:center;gap:4px;font-weight:600;font-size:13px;}
+.supplier-card{display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);cursor:pointer;transition:all .12s;margin-bottom:6px;}
+.supplier-card:hover{border-color:var(--purple);background:var(--purple-subtle);}
+.supplier-card .sc-avatar{width:40px;height:40px;border-radius:var(--radius-sm);background:var(--purple-subtle);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:16px;color:var(--purple-dark);flex-shrink:0;}
+.supplier-card .sc-info{flex:1;min-width:0;}
+.supplier-card .sc-name{font-weight:600;font-size:14px;}
+.supplier-card .sc-meta{font-size:12px;color:var(--muted);margin-top:2px;}
+.stock-move-form .smf-reason{padding:8px 12px;border:1px solid var(--line);border-radius:var(--radius-sm);font-size:13px;width:100%;outline:none;}
+.stock-move-form .smf-reason:focus{border-color:var(--purple);}
+.report-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+@media(max-width:900px){.report-grid{grid-template-columns:1fr;}.stock-form .sf-row,.stock-form .sf-row3{grid-template-columns:1fr;}}
+/* ===== Stock Management v2 additions ===== */
+.btn.sm.active{background:var(--purple-subtle);color:var(--purple-dark);box-shadow:inset 0 0 0 1px var(--purple);}
+.stk-link{color:var(--purple-dark);cursor:pointer;font-weight:500;}
+.stk-link:hover{text-decoration:underline;}
+.stock-archived-row td{opacity:0.6;}
+.rd-toast-host{position:fixed;bottom:24px;inset-inline-end:24px;z-index:12000;display:flex;flex-direction:column;gap:8px;pointer-events:none;}
+.rd-toast{background:var(--ink);color:#fff;padding:10px 16px;border-radius:var(--radius-sm);font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,0.18);opacity:0;transform:translateY(6px);transition:opacity .22s, transform .22s;max-width:340px;}
+.rd-toast.show{opacity:1;transform:translateY(0);}
+.rd-toast.error{background:var(--danger);}
+.rd-confirm-overlay{z-index:11000;background:rgba(16,17,20,0.45);}
+.rd-confirm-modal{max-width:420px;}
+.rd-confirm-msg{font-size:13.5px;color:var(--muted);line-height:1.6;margin-bottom:6px;}
+.rd-confirm-modal .modal-actions{margin-top:18px;}
 /* Akuma (豪鬼) login animation */
 #akumaFx{position:fixed;inset:0;z-index:9000;display:flex;align-items:center;justify-content:center;pointer-events:none;}
 #akumaFx.hidden{display:none;}
@@ -502,6 +565,7 @@ button{cursor:pointer;}
     <button class="nav-item" data-view="notes"><span class="ni-icon">&#128221;</span><span data-i18n="nav_notes">Notes</span></button>
     <button class="nav-item" data-view="templates"><span class="ni-icon">&#9635;</span><span data-i18n="nav_templates">Templates</span></button>
     <button class="nav-item" data-view="builder"><span class="ni-icon">&#9998;</span><span data-i18n="nav_builder">Template Builder</span></button>
+    <button class="nav-item" data-view="stock"><span class="ni-icon">&#128230;</span><span data-i18n="nav_stock">Stock</span></button>
     <div class="nav-section" data-i18n="nav_manage">Manage</div>
     <button class="nav-item" data-view="settings"><span class="ni-icon">&#9881;</span><span data-i18n="nav_settings">Settings</span></button>
     <button class="nav-item" data-view="users" id="navUsersBtn" style="display:none;"><span class="ni-icon">&#128101;</span><span data-i18n="nav_users">Users</span></button>
@@ -537,6 +601,7 @@ const I18N = {
       print_notes:'Print Notes',
       nav_templates:'Templates',
       nav_builder:'Template Builder',
+      nav_stock:'Stock',
       nav_manage:'Manage',
       nav_settings:'Settings',
       nav_users:'Users',
@@ -804,7 +869,222 @@ const I18N = {
       left:'Left', center:'Center', right:'Right',
       normal:'Normal', bold:'Bold', semibold:'Semi-bold',
       layout_inline:'Inline (label: value)', layout_block:'Block (label above)',
-      solid:'Solid', dashed:'Dashed', dotted:'Dotted'
+      solid:'Solid', dashed:'Dashed', dotted:'Dotted',
+      /* ---- Stock Management ---- */
+      stk_title:'Stock Management',
+      stk_tab_dashboard:'Dashboard',
+      stk_tab_products:'Products',
+      stk_tab_in:'Stock In',
+      stk_tab_out:'Stock Out',
+      stk_tab_history:'History',
+      stk_tab_suppliers:'Suppliers',
+      stk_tab_reports:'Reports',
+      stk_total_value:'Total Inventory Value',
+      stk_stat_products:'Products',
+      stk_stat_units:'Total Units',
+      stk_stat_low:'Low Stock',
+      stk_stat_out:'Out of Stock',
+      stk_alerts:'Stock Alerts',
+      stk_recent_movements:'Recent Stock Movements',
+      stk_recent_purchases:'Recent Purchases',
+      stk_no_movements:'No stock movements yet.',
+      stk_no_purchases:'No purchases recorded yet.',
+      stk_view_all:'View all',
+      stk_alert_out_one:'{n} product is out of stock and needs restocking.',
+      stk_alert_out_many:'{n} products are out of stock and need restocking.',
+      stk_alert_low_one:'{n} product is running low on stock.',
+      stk_alert_low_many:'{n} products are running low on stock.',
+      stk_product:'Product',
+      stk_category:'Category',
+      stk_models:'Models',
+      stk_qty:'Qty',
+      stk_quantity:'Quantity',
+      stk_status:'Status',
+      stk_buy_price:'Buy Price',
+      stk_sell_price:'Sell Price',
+      stk_supplier:'Supplier',
+      stk_actions:'Actions',
+      stk_date:'Date',
+      stk_reason:'Reason',
+      stk_notes:'Notes',
+      stk_min:'min',
+      stk_min_header:'Min Threshold',
+      stk_min_label:'Minimum Stock Alert',
+      stk_current_qty:'Current Qty',
+      stk_prev:'Previous',
+      stk_new_total:'New Total',
+      stk_type:'Type',
+      stk_price_unit:'Price/Unit',
+      stk_total:'Total',
+      stk_ok:'OK',
+      stk_low:'Low',
+      stk_out:'Out',
+      stk_archived:'Archived',
+      stk_adjustment:'Adjustment',
+      stk_search_products:'Search products…',
+      stk_all_categories:'All Categories',
+      stk_sort_name:'Sort: Name',
+      stk_sort_qty:'Sort: Qty ↑',
+      stk_sort_value:'Sort: Value ↓',
+      stk_sort_date:'Sort: Newest',
+      stk_add_product:'+ Add Product',
+      stk_no_products:'No products yet. Click “+ Add Product” to get started.',
+      stk_no_match_products:'No products match your search.',
+      stk_no_restock:'No products need restocking.',
+      stk_restock_chip:'Needs restocking',
+      stk_show_archived:'Show archived',
+      stk_added:'Added',
+      stk_t_edit:'Edit',
+      stk_t_stock_in:'Stock In',
+      stk_t_stock_out:'Stock Out',
+      stk_t_adjust:'Adjust',
+      stk_t_archive:'Archive',
+      stk_t_restore:'Restore',
+      stk_t_purge:'Delete permanently',
+      stk_add_new_product:'Add New Product',
+      stk_edit_product:'Edit Product',
+      stk_product_name:'Product Name',
+      stk_name_ph:'e.g. iPhone 13 Screen OLED',
+      stk_models_ph:'e.g. iPhone 13, iPhone 13 Pro, iPhone 13 Mini',
+      stk_purchase_price:'Purchase Price',
+      stk_selling_price:'Selling Price',
+      stk_initial_qty:'Current Stock Qty (initial)',
+      stk_min_hint:'Alert when below this',
+      stk_variants:'Variants (optional)',
+      stk_variants_label:'Variants',
+      stk_variants_ph:'e.g. OLED / LCD / AMOLED',
+      stk_description:'Description',
+      stk_desc_ph:'Additional details…',
+      stk_notes_internal_ph:'Internal notes…',
+      stk_cancel:'Cancel',
+      stk_save:'Save Changes',
+      stk_add_btn:'Add Product',
+      stk_name_req:'Product name is required.',
+      stk_qty_locked:'Use Stock In / Stock Out to change quantity',
+      stk_archived_banner:'This product is archived. Restore it to use it again.',
+      stk_record_in:'Record Stock In — New Purchase',
+      stk_select_product:'— Select product —',
+      stk_none:'— None —',
+      stk_qty_in_ph:'e.g. 10',
+      stk_price_ph:'0.00',
+      stk_purchase_date:'Purchase Date',
+      stk_reason_notes:'Reason / Notes',
+      stk_reason_notes_ph:'e.g. Weekly restock, supplier order #123',
+      stk_record_in_btn:'Record Stock In',
+      stk_recent_in:'Recent Stock In',
+      stk_no_in_records:'No stock-in records yet.',
+      stk_qty_added:'Qty Added',
+      stk_opt_in:'{name} ({n} in stock)',
+      stk_record_out:'Record Stock Out',
+      stk_reason_req:'Reason *',
+      stk_notes_opt:'Notes (optional)',
+      stk_out_note_ph:'e.g. Receipt #0042, repair for customer',
+      stk_record_out_btn:'Record Stock Out',
+      stk_recent_out:'Recent Stock Out',
+      stk_no_out_records:'No stock-out records yet.',
+      stk_qty_removed:'Qty Removed',
+      stk_opt_out:'{name} ({n} available)',
+      stk_opt_out_zero:'{name} (0 — out of stock)',
+      stk_adjust_hint:'Need to correct a stock count?',
+      stk_adjust_link:'Record an adjustment',
+      stk_reason_repair:'Used in Repair',
+      stk_reason_sale:'Direct Sale',
+      stk_reason_damaged:'Damaged',
+      stk_reason_lost:'Lost',
+      stk_reason_adjust:'Manual Adjustment',
+      stk_reason_other:'Other',
+      stk_reason_initial:'Initial stock',
+      stk_reason_recount:'Stock take correction',
+      stk_over_title:'Not enough stock',
+      stk_over_one:'Only {n} unit is in stock. Remove that unit instead?',
+      stk_over_many:'Only {n} units are in stock. Remove all {n} instead?',
+      stk_confirm_title:'Please confirm',
+      stk_confirm_btn:'Confirm',
+      stk_adjust_title:'Stock Adjustment',
+      stk_adjust_current:'Current stock: {n}',
+      stk_direction:'Direction',
+      stk_increase:'Increase (+)',
+      stk_decrease:'Decrease (−)',
+      stk_adjust_reason_ph:'e.g. Stock take correction, damaged in transit',
+      stk_adjust_btn:'Record Adjustment',
+      stk_adjust_reason_req:'Please enter a reason for the adjustment.',
+      stk_adjust_preview:'New total will be: {n}',
+      stk_archive_title:'Archive this product?',
+      stk_archive_msg:'“{name}” will be hidden from active lists. Its movement history is kept and you can restore it anytime.',
+      stk_archive_btn:'Archive',
+      stk_purge_title:'Delete permanently?',
+      stk_purge_msg:'“{name}” and its entire movement history will be permanently erased. This cannot be undone.',
+      stk_purge_type:'Type {word} to confirm',
+      stk_purge_btn:'Delete forever',
+      stk_restored_msg:'Product restored.',
+      stk_add_supplier:'+ Add Supplier',
+      stk_add_supplier_btn:'Add Supplier',
+      stk_new_supplier:'New Supplier',
+      stk_no_suppliers:'No suppliers yet. Click “+ Add Supplier” to get started.',
+      stk_products_one:'{n} product',
+      stk_products_many:'{n} products',
+      stk_total_purchased_label:'Total purchased:',
+      stk_across_one:'{amount} across {n} order',
+      stk_across_many:'{amount} across {n} orders',
+      stk_last_order:'Last order: {date}',
+      stk_purchases:'Purchases',
+      stk_edit_supplier:'Edit Supplier',
+      stk_supplier_name:'Supplier Name',
+      stk_supplier_name_ph:'e.g. TechParts Ltd.',
+      stk_phone:'Phone',
+      stk_email:'Email',
+      stk_address:'Address',
+      stk_address_ph:'Street, City',
+      stk_sup_notes_ph:'Payment terms, lead times, etc.',
+      stk_supplier_name_req:'Supplier name is required.',
+      stk_supplied_products:'Supplied products:',
+      stk_purchase_history:'Purchase History',
+      stk_no_sup_purchases:'No purchases recorded from this supplier yet.',
+      stk_close:'Close',
+      stk_del_sup_title:'Delete this supplier?',
+      stk_del_sup_msg:'The supplier will be removed. Linked products keep their data and purchase history keeps the supplier name.',
+      stk_delete_btn:'Delete',
+      stk_search_moves:'Search movements…',
+      stk_all_types:'All Types',
+      stk_all_products:'All Products',
+      stk_all_dates:'All Dates',
+      stk_today:'Today',
+      stk_last_7:'Last 7 Days',
+      stk_last_30:'Last 30 Days',
+      stk_custom_range:'Custom Range',
+      stk_from:'From',
+      stk_to:'To',
+      stk_export_csv:'Export CSV',
+      stk_no_match_moves:'No movements match your filters.',
+      stk_moves_one:'{n} movement',
+      stk_moves_many:'{n} movements',
+      stk_most_used:'Most Used Products',
+      stk_units_used:'Units Used',
+      stk_current_stock:'Current Stock',
+      stk_no_outgoing:'No outgoing movements yet.',
+      stk_turnover:'Highest Turnover (30 days)',
+      stk_moves_col:'Movements',
+      stk_no_moves_30:'No movements in the last 30 days.',
+      stk_stagnant:'No Recent Movement (30+ days)',
+      stk_all_active:'All products have recent activity.',
+      stk_value_by_cat:'Value by Category',
+      stk_no_products_yet:'No products added yet.',
+      stk_total_spent:'Total spent: {amount}',
+      stk_in_recorded:'Stock In recorded. New quantity: {n}',
+      stk_out_recorded:'Stock Out recorded. New quantity: {n}',
+      stk_adjust_recorded:'Adjustment recorded. New quantity: {n}',
+      stk_product_saved:'Product saved.',
+      stk_product_added:'Product added.',
+      stk_supplier_saved:'Supplier saved.',
+      stk_archived_msg:'Product archived.',
+      stk_deleted_msg:'Product permanently deleted.',
+      stk_supplier_deleted:'Supplier deleted.',
+      stk_err_select_product:'Please select a product.',
+      stk_err_qty_min:'Quantity must be at least 1.',
+      stk_err_qty_gt0:'Quantity must be greater than 0.',
+      stk_err_product_missing:'Product not found.',
+      stk_err_no_stock:'There is no stock left to remove.',
+      stk_err_no_change:'The adjustment does not change the stock level.'
     },
     fr: {
       lang_choose:'Choisissez votre langue',
@@ -816,6 +1096,7 @@ const I18N = {
       print_notes:'Imprimer les notes',
       nav_templates:'Modèles',
       nav_builder:'Éditeur de modèle',
+      nav_stock:'Stock',
       nav_manage:'Gérer',
       nav_settings:'Paramètres',
       nav_users:'Utilisateurs',
@@ -1083,7 +1364,222 @@ const I18N = {
       left:'Gauche', center:'Centre', right:'Droite',
       normal:'Normal', bold:'Gras', semibold:'Semi-gras',
       layout_inline:'En ligne (libellé : valeur)', layout_block:'Bloc (libellé au-dessus)',
-      solid:'Plein', dashed:'Tirets', dotted:'Pointillés'
+      solid:'Plein', dashed:'Tirets', dotted:'Pointillés',
+      /* ---- Gestion du stock ---- */
+      stk_title:'Gestion du stock',
+      stk_tab_dashboard:'Tableau de bord',
+      stk_tab_products:'Produits',
+      stk_tab_in:'Entrées',
+      stk_tab_out:'Sorties',
+      stk_tab_history:'Historique',
+      stk_tab_suppliers:'Fournisseurs',
+      stk_tab_reports:'Rapports',
+      stk_total_value:'Valeur totale du stock',
+      stk_stat_products:'Produits',
+      stk_stat_units:'Unités totales',
+      stk_stat_low:'Stock faible',
+      stk_stat_out:'Rupture de stock',
+      stk_alerts:'Alertes de stock',
+      stk_recent_movements:'Mouvements récents',
+      stk_recent_purchases:'Achats récents',
+      stk_no_movements:'Aucun mouvement de stock pour le moment.',
+      stk_no_purchases:'Aucun achat enregistré pour le moment.',
+      stk_view_all:'Tout voir',
+      stk_alert_out_one:'{n} produit est en rupture de stock et doit être réapprovisionné.',
+      stk_alert_out_many:'{n} produits sont en rupture de stock et doivent être réapprovisionnés.',
+      stk_alert_low_one:'{n} produit est presque épuisé.',
+      stk_alert_low_many:'{n} produits sont presque épuisés.',
+      stk_product:'Produit',
+      stk_category:'Catégorie',
+      stk_models:'Modèles',
+      stk_qty:'Qté',
+      stk_quantity:'Quantité',
+      stk_status:'Statut',
+      stk_buy_price:'Prix d\'achat',
+      stk_sell_price:'Prix de vente',
+      stk_supplier:'Fournisseur',
+      stk_actions:'Actions',
+      stk_date:'Date',
+      stk_reason:'Raison',
+      stk_notes:'Notes',
+      stk_min:'min',
+      stk_min_header:'Seuil minimum',
+      stk_min_label:'Seuil d\'alerte de stock',
+      stk_current_qty:'Qté actuelle',
+      stk_prev:'Précédent',
+      stk_new_total:'Nouveau total',
+      stk_type:'Type',
+      stk_price_unit:'Prix/unité',
+      stk_total:'Total',
+      stk_ok:'OK',
+      stk_low:'Faible',
+      stk_out:'Rupture',
+      stk_archived:'Archivé',
+      stk_adjustment:'Ajustement',
+      stk_search_products:'Rechercher des produits…',
+      stk_all_categories:'Toutes les catégories',
+      stk_sort_name:'Tri : nom',
+      stk_sort_qty:'Tri : qté ↑',
+      stk_sort_value:'Tri : valeur ↓',
+      stk_sort_date:'Tri : plus récents',
+      stk_add_product:'+ Ajouter un produit',
+      stk_no_products:'Aucun produit. Cliquez sur « + Ajouter un produit » pour commencer.',
+      stk_no_match_products:'Aucun produit ne correspond à votre recherche.',
+      stk_no_restock:'Aucun produit à réapprovisionner.',
+      stk_restock_chip:'À réapprovisionner',
+      stk_show_archived:'Afficher les archivés',
+      stk_added:'Ajouté',
+      stk_t_edit:'Modifier',
+      stk_t_stock_in:'Entrée',
+      stk_t_stock_out:'Sortie',
+      stk_t_adjust:'Ajuster',
+      stk_t_archive:'Archiver',
+      stk_t_restore:'Restaurer',
+      stk_t_purge:'Supprimer définitivement',
+      stk_add_new_product:'Nouveau produit',
+      stk_edit_product:'Modifier le produit',
+      stk_product_name:'Nom du produit',
+      stk_name_ph:'ex. Écran iPhone 13 OLED',
+      stk_models_ph:'ex. iPhone 13, iPhone 13 Pro, iPhone 13 Mini',
+      stk_purchase_price:'Prix d\'achat',
+      stk_selling_price:'Prix de vente',
+      stk_initial_qty:'Quantité initiale en stock',
+      stk_min_hint:'Alerte en dessous de ce seuil',
+      stk_variants:'Variantes (facultatif)',
+      stk_variants_label:'Variantes',
+      stk_variants_ph:'ex. OLED / LCD / AMOLED',
+      stk_description:'Description',
+      stk_desc_ph:'Détails supplémentaires…',
+      stk_notes_internal_ph:'Notes internes…',
+      stk_cancel:'Annuler',
+      stk_save:'Enregistrer',
+      stk_add_btn:'Ajouter le produit',
+      stk_name_req:'Le nom du produit est requis.',
+      stk_qty_locked:'Utilisez Entrées / Sorties pour modifier la quantité',
+      stk_archived_banner:'Ce produit est archivé. Restaurez-le pour l\'utiliser à nouveau.',
+      stk_record_in:'Entrée de stock — Nouvel achat',
+      stk_select_product:'— Choisir un produit —',
+      stk_none:'— Aucun —',
+      stk_qty_in_ph:'ex. 10',
+      stk_price_ph:'0.00',
+      stk_purchase_date:'Date d\'achat',
+      stk_reason_notes:'Raison / Notes',
+      stk_reason_notes_ph:'ex. Réapprovisionnement hebdomadaire, commande n°123',
+      stk_record_in_btn:'Enregistrer l\'entrée',
+      stk_recent_in:'Entrées récentes',
+      stk_no_in_records:'Aucune entrée enregistrée pour le moment.',
+      stk_qty_added:'Qté ajoutée',
+      stk_opt_in:'{name} ({n} en stock)',
+      stk_record_out:'Sortie de stock',
+      stk_reason_req:'Raison *',
+      stk_notes_opt:'Notes (facultatif)',
+      stk_out_note_ph:'ex. Reçu n°0042, réparation client',
+      stk_record_out_btn:'Enregistrer la sortie',
+      stk_recent_out:'Sorties récentes',
+      stk_no_out_records:'Aucune sortie enregistrée pour le moment.',
+      stk_qty_removed:'Qté retirée',
+      stk_opt_out:'{name} ({n} disponibles)',
+      stk_opt_out_zero:'{name} (0 — rupture de stock)',
+      stk_adjust_hint:'Besoin de corriger une quantité ?',
+      stk_adjust_link:'Enregistrer un ajustement',
+      stk_reason_repair:'Utilisé en réparation',
+      stk_reason_sale:'Vente directe',
+      stk_reason_damaged:'Endommagé',
+      stk_reason_lost:'Perdu',
+      stk_reason_adjust:'Ajustement manuel',
+      stk_reason_other:'Autre',
+      stk_reason_initial:'Stock initial',
+      stk_reason_recount:'Correction d\'inventaire',
+      stk_over_title:'Stock insuffisant',
+      stk_over_one:'Seulement {n} unité en stock. Retirer cette unité à la place ?',
+      stk_over_many:'Seulement {n} unités en stock. Retirer les {n} à la place ?',
+      stk_confirm_title:'Veuillez confirmer',
+      stk_confirm_btn:'Confirmer',
+      stk_adjust_title:'Ajustement de stock',
+      stk_adjust_current:'Stock actuel : {n}',
+      stk_direction:'Sens',
+      stk_increase:'Augmenter (+)',
+      stk_decrease:'Diminuer (−)',
+      stk_adjust_reason_ph:'ex. Correction d\'inventaire, endommagé en transit',
+      stk_adjust_btn:'Enregistrer l\'ajustement',
+      stk_adjust_reason_req:'Veuillez saisir une raison pour l\'ajustement.',
+      stk_adjust_preview:'Nouveau total : {n}',
+      stk_archive_title:'Archiver ce produit ?',
+      stk_archive_msg:'« {name} » sera masqué des listes actives. Son historique de mouvements est conservé et vous pouvez le restaurer à tout moment.',
+      stk_archive_btn:'Archiver',
+      stk_purge_title:'Supprimer définitivement ?',
+      stk_purge_msg:'« {name} » et tout son historique de mouvements seront définitivement effacés. Cette action est irréversible.',
+      stk_purge_type:'Tapez {word} pour confirmer',
+      stk_purge_btn:'Supprimer définitivement',
+      stk_restored_msg:'Produit restauré.',
+      stk_add_supplier:'+ Ajouter un fournisseur',
+      stk_add_supplier_btn:'Ajouter le fournisseur',
+      stk_new_supplier:'Nouveau fournisseur',
+      stk_no_suppliers:'Aucun fournisseur. Cliquez sur « + Ajouter un fournisseur » pour commencer.',
+      stk_products_one:'{n} produit',
+      stk_products_many:'{n} produits',
+      stk_total_purchased_label:'Total acheté :',
+      stk_across_one:'{amount} sur {n} commande',
+      stk_across_many:'{amount} sur {n} commandes',
+      stk_last_order:'Dernière commande : {date}',
+      stk_purchases:'Achats',
+      stk_edit_supplier:'Modifier le fournisseur',
+      stk_supplier_name:'Nom du fournisseur',
+      stk_supplier_name_ph:'ex. TechParts SARL',
+      stk_phone:'Téléphone',
+      stk_email:'Email',
+      stk_address:'Adresse',
+      stk_address_ph:'Rue, ville',
+      stk_sup_notes_ph:'Conditions de paiement, délais, etc.',
+      stk_supplier_name_req:'Le nom du fournisseur est requis.',
+      stk_supplied_products:'Produits fournis :',
+      stk_purchase_history:'Historique des achats',
+      stk_no_sup_purchases:'Aucun achat enregistré chez ce fournisseur.',
+      stk_close:'Fermer',
+      stk_del_sup_title:'Supprimer ce fournisseur ?',
+      stk_del_sup_msg:'Le fournisseur sera retiré. Les produits liés gardent leurs données et l\'historique des achats conserve son nom.',
+      stk_delete_btn:'Supprimer',
+      stk_search_moves:'Rechercher des mouvements…',
+      stk_all_types:'Tous les types',
+      stk_all_products:'Tous les produits',
+      stk_all_dates:'Toutes les dates',
+      stk_today:'Aujourd\'hui',
+      stk_last_7:'7 derniers jours',
+      stk_last_30:'30 derniers jours',
+      stk_custom_range:'Période personnalisée',
+      stk_from:'Du',
+      stk_to:'Au',
+      stk_export_csv:'Exporter CSV',
+      stk_no_match_moves:'Aucun mouvement ne correspond aux filtres.',
+      stk_moves_one:'{n} mouvement',
+      stk_moves_many:'{n} mouvements',
+      stk_most_used:'Produits les plus utilisés',
+      stk_units_used:'Unités utilisées',
+      stk_current_stock:'Stock actuel',
+      stk_no_outgoing:'Aucune sortie enregistrée.',
+      stk_turnover:'Rotation la plus élevée (30 jours)',
+      stk_moves_col:'Mouvements',
+      stk_no_moves_30:'Aucun mouvement ces 30 derniers jours.',
+      stk_stagnant:'Sans mouvement récent (30+ jours)',
+      stk_all_active:'Tous les produits ont une activité récente.',
+      stk_value_by_cat:'Valeur par catégorie',
+      stk_no_products_yet:'Aucun produit ajouté.',
+      stk_total_spent:'Total dépensé : {amount}',
+      stk_in_recorded:'Entrée enregistrée. Nouvelle quantité : {n}',
+      stk_out_recorded:'Sortie enregistrée. Nouvelle quantité : {n}',
+      stk_adjust_recorded:'Ajustement enregistré. Nouvelle quantité : {n}',
+      stk_product_saved:'Produit enregistré.',
+      stk_product_added:'Produit ajouté.',
+      stk_supplier_saved:'Fournisseur enregistré.',
+      stk_archived_msg:'Produit archivé.',
+      stk_deleted_msg:'Produit supprimé définitivement.',
+      stk_supplier_deleted:'Fournisseur supprimé.',
+      stk_err_select_product:'Veuillez choisir un produit.',
+      stk_err_qty_min:'La quantité doit être d\'au moins 1.',
+      stk_err_qty_gt0:'La quantité doit être supérieure à 0.',
+      stk_err_product_missing:'Produit introuvable.',
+      stk_err_no_stock:'Il n\'y a plus de stock à retirer.',
+      stk_err_no_change:'L\'ajustement ne change pas le niveau de stock.'
     },
 ar: {
       lang_choose:'اختر لغتك',
@@ -1095,6 +1591,7 @@ ar: {
       print_notes:'طباعة الملاحظات',
       nav_templates:'النماذج',
       nav_builder:'مصمم النماذج',
+      nav_stock:'المخزون',
       nav_manage:'إدارة',
       nav_settings:'الإعدادات',
       nav_users:'المستخدمون',
@@ -1360,7 +1857,222 @@ ar: {
       left:'يسار', center:'وسط', right:'يمين',
       normal:'عادي', bold:'عريض', semibold:'شبه عريض',
       layout_inline:'أفقي (تسمية: قيمة)', layout_block:'عمودي (تسمية في الأعلى)',
-      solid:'صلب', dashed:'متقطع', dotted:'منقط'
+      solid:'صلب', dashed:'متقطع', dotted:'منقط',
+      /* ---- إدارة المخزون ---- */
+      stk_title:'إدارة المخزون',
+      stk_tab_dashboard:'لوحة المعلومات',
+      stk_tab_products:'المنتجات',
+      stk_tab_in:'إدخال مخزون',
+      stk_tab_out:'إخراج مخزون',
+      stk_tab_history:'السجل',
+      stk_tab_suppliers:'الموردون',
+      stk_tab_reports:'التقارير',
+      stk_total_value:'القيمة الإجمالية للمخزون',
+      stk_stat_products:'المنتجات',
+      stk_stat_units:'إجمالي الوحدات',
+      stk_stat_low:'مخزون منخفض',
+      stk_stat_out:'نفد من المخزون',
+      stk_alerts:'تنبيهات المخزون',
+      stk_recent_movements:'أحدث حركات المخزون',
+      stk_recent_purchases:'أحدث المشتريات',
+      stk_no_movements:'لا توجد حركات مخزون بعد.',
+      stk_no_purchases:'لا توجد مشتريات مسجلة بعد.',
+      stk_view_all:'عرض الكل',
+      stk_alert_out_one:'منتج واحد نفد من المخزون ويحتاج إلى إعادة تخزين.',
+      stk_alert_out_many:'{n} منتجات نفدت من المخزون وتحتاج إلى إعادة تخزين.',
+      stk_alert_low_one:'منتج واحد على وشك النفاد.',
+      stk_alert_low_many:'{n} منتجات على وشك النفاد.',
+      stk_product:'المنتج',
+      stk_category:'الفئة',
+      stk_models:'الموديلات',
+      stk_qty:'الكمية',
+      stk_quantity:'الكمية',
+      stk_status:'الحالة',
+      stk_buy_price:'سعر الشراء',
+      stk_sell_price:'سعر البيع',
+      stk_supplier:'المورد',
+      stk_actions:'إجراءات',
+      stk_date:'التاريخ',
+      stk_reason:'السبب',
+      stk_notes:'ملاحظات',
+      stk_min:'الأدنى',
+      stk_min_header:'الحد الأدنى',
+      stk_min_label:'حد التنبيه للمخزون',
+      stk_current_qty:'الكمية الحالية',
+      stk_prev:'السابق',
+      stk_new_total:'الإجمالي الجديد',
+      stk_type:'النوع',
+      stk_price_unit:'السعر/الوحدة',
+      stk_total:'الإجمالي',
+      stk_ok:'جيد',
+      stk_low:'منخفض',
+      stk_out:'نفد',
+      stk_archived:'مؤرشف',
+      stk_adjustment:'تسوية',
+      stk_search_products:'ابحث عن منتجات…',
+      stk_all_categories:'جميع الفئات',
+      stk_sort_name:'ترتيب: الاسم',
+      stk_sort_qty:'ترتيب: الكمية ↑',
+      stk_sort_value:'ترتيب: القيمة ↓',
+      stk_sort_date:'ترتيب: الأحدث',
+      stk_add_product:'+ إضافة منتج',
+      stk_no_products:'لا توجد منتجات بعد. اضغط على «+ إضافة منتج» للبدء.',
+      stk_no_match_products:'لا توجد منتجات مطابقة لبحثك.',
+      stk_no_restock:'لا توجد منتجات تحتاج إعادة تخزين.',
+      stk_restock_chip:'يحتاج إعادة تخزين',
+      stk_show_archived:'عرض المؤرشفة',
+      stk_added:'أُضيف',
+      stk_t_edit:'تعديل',
+      stk_t_stock_in:'إدخال',
+      stk_t_stock_out:'إخراج',
+      stk_t_adjust:'تسوية',
+      stk_t_archive:'أرشفة',
+      stk_t_restore:'استعادة',
+      stk_t_purge:'حذف نهائي',
+      stk_add_new_product:'منتج جديد',
+      stk_edit_product:'تعديل المنتج',
+      stk_product_name:'اسم المنتج',
+      stk_name_ph:'مثال: شاشة iPhone 13 OLED',
+      stk_models_ph:'مثال: iPhone 13, iPhone 13 Pro',
+      stk_purchase_price:'سعر الشراء',
+      stk_selling_price:'سعر البيع',
+      stk_initial_qty:'الكمية الابتدائية في المخزون',
+      stk_min_hint:'تنبيه عند النزول تحت هذا الحد',
+      stk_variants:'الأنواع (اختياري)',
+      stk_variants_label:'الأنواع',
+      stk_variants_ph:'مثال: OLED / LCD',
+      stk_description:'الوصف',
+      stk_desc_ph:'تفاصيل إضافية…',
+      stk_notes_internal_ph:'ملاحظات داخلية…',
+      stk_cancel:'إلغاء',
+      stk_save:'حفظ التغييرات',
+      stk_add_btn:'إضافة المنتج',
+      stk_name_req:'اسم المنتج مطلوب.',
+      stk_qty_locked:'استخدم إدخال/إخراج المخزون لتغيير الكمية',
+      stk_archived_banner:'هذا المنتج مؤرشف. استعده لاستخدامه مجدداً.',
+      stk_record_in:'إدخال مخزون — شراء جديد',
+      stk_select_product:'— اختر منتجاً —',
+      stk_none:'— لا شيء —',
+      stk_qty_in_ph:'مثال: 10',
+      stk_price_ph:'0.00',
+      stk_purchase_date:'تاريخ الشراء',
+      stk_reason_notes:'السبب / ملاحظات',
+      stk_reason_notes_ph:'مثال: إعادة تخزين أسبوعية، طلبية رقم 123',
+      stk_record_in_btn:'تسجيل الإدخال',
+      stk_recent_in:'أحدث عمليات الإدخال',
+      stk_no_in_records:'لا توجد عمليات إدخال بعد.',
+      stk_qty_added:'الكمية المضافة',
+      stk_opt_in:'{name} ({n} في المخزون)',
+      stk_record_out:'إخراج مخزون',
+      stk_reason_req:'السبب *',
+      stk_notes_opt:'ملاحظات (اختياري)',
+      stk_out_note_ph:'مثال: إيصال رقم 0042، إصلاح عميل',
+      stk_record_out_btn:'تسجيل الإخراج',
+      stk_recent_out:'أحدث عمليات الإخراج',
+      stk_no_out_records:'لا توجد عمليات إخراج بعد.',
+      stk_qty_removed:'الكمية المسحوبة',
+      stk_opt_out:'{name} ({n} متوفر)',
+      stk_opt_out_zero:'{name} (0 — نفد من المخزون)',
+      stk_adjust_hint:'تحتاج لتصحيح كمية؟',
+      stk_adjust_link:'تسجيل تسوية',
+      stk_reason_repair:'استُخدم في إصلاح',
+      stk_reason_sale:'بيع مباشر',
+      stk_reason_damaged:'تالف',
+      stk_reason_lost:'مفقود',
+      stk_reason_adjust:'تسوية يدوية',
+      stk_reason_other:'أخرى',
+      stk_reason_initial:'مخزون ابتدائي',
+      stk_reason_recount:'تصحيح جرد',
+      stk_over_title:'المخزون غير كافٍ',
+      stk_over_one:'توجد وحدة واحدة فقط في المخزون. سحب هذه الوحدة بدلاً من ذلك؟',
+      stk_over_many:'توجد {n} وحدات فقط في المخزون. سحب الكل بدلاً من ذلك؟',
+      stk_confirm_title:'يرجى التأكيد',
+      stk_confirm_btn:'تأكيد',
+      stk_adjust_title:'تسوية المخزون',
+      stk_adjust_current:'المخزون الحالي: {n}',
+      stk_direction:'الاتجاه',
+      stk_increase:'زيادة (+)',
+      stk_decrease:'إنقاص (−)',
+      stk_adjust_reason_ph:'مثال: تصحيح جرد، تلف أثناء النقل',
+      stk_adjust_btn:'تسجيل التسوية',
+      stk_adjust_reason_req:'يرجى إدخال سبب التسوية.',
+      stk_adjust_preview:'الإجمالي الجديد سيكون: {n}',
+      stk_archive_title:'أرشفة هذا المنتج؟',
+      stk_archive_msg:'سيُخفى «{name}» من القوائم النشطة. سيبقى سجل حركاته محفوظاً ويمكنك استعادته في أي وقت.',
+      stk_archive_btn:'أرشفة',
+      stk_purge_title:'حذف نهائي؟',
+      stk_purge_msg:'سيُحذف «{name}» وسجل حركاته بالكامل نهائياً. لا يمكن التراجع عن هذا الإجراء.',
+      stk_purge_type:'اكتب {word} للتأكيد',
+      stk_purge_btn:'حذف نهائي',
+      stk_restored_msg:'تمت استعادة المنتج.',
+      stk_add_supplier:'+ إضافة مورد',
+      stk_add_supplier_btn:'إضافة المورد',
+      stk_new_supplier:'مورد جديد',
+      stk_no_suppliers:'لا يوجد موردون بعد. اضغط على «+ إضافة مورد» للبدء.',
+      stk_products_one:'منتج {n}',
+      stk_products_many:'{n} منتجات',
+      stk_total_purchased_label:'إجمالي المشتريات:',
+      stk_across_one:'{amount} عبر طلبية {n}',
+      stk_across_many:'{amount} عبر {n} طلبيات',
+      stk_last_order:'آخر طلبية: {date}',
+      stk_purchases:'المشتريات',
+      stk_edit_supplier:'تعديل المورد',
+      stk_supplier_name:'اسم المورد',
+      stk_supplier_name_ph:'مثال: شركة تقنية القطع',
+      stk_phone:'الهاتف',
+      stk_email:'البريد الإلكتروني',
+      stk_address:'العنوان',
+      stk_address_ph:'الشارع، المدينة',
+      stk_sup_notes_ph:'شروط الدفع، المهل، إلخ.',
+      stk_supplier_name_req:'اسم المورد مطلوب.',
+      stk_supplied_products:'المنتجات الموردة:',
+      stk_purchase_history:'سجل المشتريات',
+      stk_no_sup_purchases:'لا توجد مشتريات مسجلة من هذا المورد.',
+      stk_close:'إغلاق',
+      stk_del_sup_title:'حذف هذا المورد؟',
+      stk_del_sup_msg:'سيُزال المورد من القائمة. المنتجات المرتبطة تحتفظ ببياناتها ويحتفظ سجل المشتريات باسمه.',
+      stk_delete_btn:'حذف',
+      stk_search_moves:'ابحث في الحركات…',
+      stk_all_types:'جميع الأنواع',
+      stk_all_products:'جميع المنتجات',
+      stk_all_dates:'جميع التواريخ',
+      stk_today:'اليوم',
+      stk_last_7:'آخر 7 أيام',
+      stk_last_30:'آخر 30 يوماً',
+      stk_custom_range:'نطاق مخصص',
+      stk_from:'من',
+      stk_to:'إلى',
+      stk_export_csv:'تصدير CSV',
+      stk_no_match_moves:'لا توجد حركات مطابقة للتصفية.',
+      stk_moves_one:'حركة {n}',
+      stk_moves_many:'{n} حركة',
+      stk_most_used:'الأكثر استخداماً',
+      stk_units_used:'الوحدات المستخدمة',
+      stk_current_stock:'المخزون الحالي',
+      stk_no_outgoing:'لا توجد حركات صادرة بعد.',
+      stk_turnover:'أعلى معدل دوران (30 يوماً)',
+      stk_moves_col:'الحركات',
+      stk_no_moves_30:'لا توجد حركات خلال آخر 30 يوماً.',
+      stk_stagnant:'بدون حركة حديثة (30+ يوماً)',
+      stk_all_active:'كل المنتجات لديها نشاط حديث.',
+      stk_value_by_cat:'القيمة حسب الفئة',
+      stk_no_products_yet:'لم تُضف منتجات بعد.',
+      stk_total_spent:'إجمالي المصروف: {amount}',
+      stk_in_recorded:'تم تسجيل الإدخال. الكمية الجديدة: {n}',
+      stk_out_recorded:'تم تسجيل الإخراج. الكمية الجديدة: {n}',
+      stk_adjust_recorded:'تم تسجيل التسوية. الكمية الجديدة: {n}',
+      stk_product_saved:'تم حفظ المنتج.',
+      stk_product_added:'تمت إضافة المنتج.',
+      stk_supplier_saved:'تم حفظ المورد.',
+      stk_archived_msg:'تمت أرشفة المنتج.',
+      stk_deleted_msg:'تم حذف المنتج نهائياً.',
+      stk_supplier_deleted:'تم حذف المورد.',
+      stk_err_select_product:'يرجى اختيار منتج.',
+      stk_err_qty_min:'يجب أن تكون الكمية 1 على الأقل.',
+      stk_err_qty_gt0:'يجب أن تكون الكمية أكبر من 0.',
+      stk_err_product_missing:'المنتج غير موجود.',
+      stk_err_no_stock:'لا يوجد مخزون متبقٍ للسحب.',
+      stk_err_no_change:'التسوية لا تغيّر مستوى المخزون.'
     }
   },
   lang:'en'
@@ -1485,7 +2197,7 @@ const Store = {
   deleteTenant(id){
     const list = this.getTenants().filter(t => t.id !== id);
     this.setTenants(list);
-    ['templates','receipts','settings'].forEach(k => this.remove(id, k));
+    ['templates','receipts','settings','inventory','inv_moves','inv_suppliers'].forEach(k => this.remove(id, k));
   },
   _accounts(){ return this._readLocal('accts') || []; },
   _saveAccounts(list){ this._writeLocal('accts', list); },
@@ -1877,6 +2589,7 @@ function renderView(){
     case 'builder': renderBuilderView(content); break;
     case 'settings': renderSettingsView(content); break;
     case 'users': renderUsersView(content); break;
+    case 'stock': renderStockView(content); break;
   }
 }
 
@@ -3312,7 +4025,10 @@ function renderSettingsView(el){
     const data = {
       settings: Store.getSettings(currentTenantId),
       templates: Store.getTemplates(currentTenantId),
-      receipts: Store.getReceipts(currentTenantId)
+      receipts: Store.getReceipts(currentTenantId),
+      inventory: INV.getProducts(currentTenantId),
+      inv_moves: INV.getMovements(currentTenantId),
+      inv_suppliers: INV.getSuppliers(currentTenantId)
     };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
     const a = document.createElement('a');
@@ -3330,7 +4046,10 @@ function renderSettingsView(el){
       businessType: t.businessType,
       settings: Store.getSettings(t.id),
       templates: Store.getTemplates(t.id),
-      receipts: Store.getReceipts(t.id)
+      receipts: Store.getReceipts(t.id),
+      inventory: INV.getProducts(t.id),
+      inv_moves: INV.getMovements(t.id),
+      inv_suppliers: INV.getSuppliers(t.id)
     }));
     const data = { app:'RepairDesk', version:1, exportedAt:Date.now(), notes:getNotes(), shops };
     const blob = new Blob([JSON.stringify(data, null, 2)], {type:'application/json'});
@@ -3378,13 +4097,19 @@ function renderSettingsView(el){
                 if(sh.settings) Store.setSettings(sh.id, sh.settings);
                 if(sh.templates) Store.setTemplates(sh.id, sh.templates);
                 if(sh.receipts) Store.setReceipts(sh.id, sh.receipts);
+                if(sh.inventory) INV.setProducts(sh.id, sh.inventory);
+                if(sh.inv_moves) INV.setMovements(sh.id, sh.inv_moves);
+                if(sh.inv_suppliers) INV.setSuppliers(sh.id, sh.inv_suppliers);
               });
               Store.setTenants(existing);
-            } else if(data.settings !== undefined || data.templates !== undefined || data.receipts !== undefined){
+            } else if(data.settings !== undefined || data.templates !== undefined || data.receipts !== undefined || data.inventory !== undefined){
               /* Single-shop backup */
               if(data.settings) Store.setSettings(currentTenantId, data.settings);
               if(data.templates) Store.setTemplates(currentTenantId, data.templates);
               if(data.receipts) Store.setReceipts(currentTenantId, data.receipts);
+              if(data.inventory) INV.setProducts(currentTenantId, data.inventory);
+              if(data.inv_moves) INV.setMovements(currentTenantId, data.inv_moves);
+              if(data.inv_suppliers) INV.setSuppliers(currentTenantId, data.inv_suppliers);
             } else {
               alert(I18N.t('restore_invalid'));
               return;
@@ -3558,6 +4283,1196 @@ async function renderUsersView(el){
   });
 }
 
+/* ===================================================================
+   STOCK MANAGEMENT — Storage helpers
+   =================================================================== */
+const INV = {
+  /* ---- products (active + archived) ---- */
+  getProducts(tid){ return Store.get(tid,'inventory') || []; },
+  setProducts(tid,list){ Store.set(tid,'inventory',list); },
+  getProduct(tid,id){ return this.getProducts(tid).find(p=>p.id===id)||null; },
+  getActiveProducts(tid){ return this.getProducts(tid).filter(p=>!p.archived); },
+  saveProduct(tid,p){
+    const list=this.getProducts(tid);
+    const idx=list.findIndex(x=>x.id===p.id);
+    if(idx>-1) list[idx]=p; else list.push(p);
+    this.setProducts(tid,list);
+  },
+  archiveProduct(tid,id,archived){
+    const list=this.getProducts(tid);
+    const idx=list.findIndex(p=>p.id===id);
+    if(idx>-1){ list[idx]={...list[idx], archived:!!archived, updatedAt:Date.now()}; this.setProducts(tid,list); }
+  },
+  deleteProduct(tid,id){ this.setProducts(tid,this.getProducts(tid).filter(p=>p.id!==id)); },
+  /* ---- movements ---- */
+  getMovements(tid){ return Store.get(tid,'inv_moves') || []; },
+  setMovements(tid,list){ Store.set(tid,'inv_moves',list); },
+  addMovement(tid,mov,whenTs){
+    const list=this.getMovements(tid);
+    const ts=(whenTs && !isNaN(whenTs))?whenTs:Date.now();
+    const rec={...mov, id:'m'+Date.now()+Math.random().toString(36).slice(2,7), createdAt:ts};
+    list.unshift(rec);
+    this.setMovements(tid,list);
+    return rec;
+  },
+  /* ---- suppliers ---- */
+  getSuppliers(tid){ return Store.get(tid,'inv_suppliers') || []; },
+  setSuppliers(tid,list){ Store.set(tid,'inv_suppliers',list); },
+  getSupplier(tid,id){ return this.getSuppliers(tid).find(s=>s.id===id)||null; },
+  saveSupplier(tid,s){
+    const list=this.getSuppliers(tid);
+    const idx=list.findIndex(x=>x.id===s.id);
+    if(idx>-1) list[idx]=s; else list.push(s);
+    this.setSuppliers(tid,list);
+  },
+  deleteSupplier(tid,id){ this.setSuppliers(tid,this.getSuppliers(tid).filter(s=>s.id!==id)); },
+  /* ---- computed stats (active products only) ---- */
+  stats(tid){
+    let totalValue=0, totalUnits=0, lowCount=0, outCount=0;
+    const products=this.getActiveProducts(tid);
+    products.forEach(p=>{
+      const qty=p.qty||0;
+      const min=p.minQty||0;
+      totalValue+=qty*(parseFloat(p.buyPrice)||0);
+      totalUnits+=qty;
+      if(qty===0) outCount++;
+      else if(qty<=min) lowCount++;
+    });
+    return {totalValue,totalUnits,lowCount,outCount,totalProducts:products.length};
+  },
+  /* ---- apply a stock movement (every call records history) ----
+     type: 'in' | 'out' | 'adjustment'
+     qty : positive magnitude for in/out; signed delta for adjustment
+     opts: { price, date (ts), supplierName }                        */
+  applyMovement(tid, productId, type, qty, reason, supplierId, note, opts){
+    opts=opts||{};
+    qty=parseInt(qty)||0;
+    if(type==='adjustment'){
+      if(!qty) return {ok:false, msg:'stk_err_no_change'};
+    } else {
+      qty=Math.abs(qty);
+      if(!qty) return {ok:false, msg:'stk_err_qty_gt0'};
+    }
+    const products=this.getProducts(tid);
+    const idx=products.findIndex(p=>p.id===productId);
+    if(idx===-1) return {ok:false, msg:'stk_err_product_missing'};
+    const product=products[idx];
+    const prevQty=product.qty||0;
+    let newQty=prevQty, actual=qty;
+    if(type==='in'){ newQty=prevQty+qty; actual=qty; }
+    else if(type==='out'){ newQty=Math.max(0,prevQty-qty); actual=newQty-prevQty; }
+    else { newQty=Math.max(0,prevQty+qty); actual=newQty-prevQty; }
+    if(type==='out' && actual===0) return {ok:false, msg:'stk_err_no_stock'};
+    if(type==='adjustment' && actual===0) return {ok:false, msg:'stk_err_no_change'};
+    products[idx]={...product, qty:newQty, updatedAt:Date.now()};
+    this.setProducts(tid,products);
+    const sup = supplierId ? (this.getSupplier(tid,supplierId)||null) : null;
+    const mov={
+      productId, productName:product.name, type,
+      qty:Math.abs(actual), prevQty, newQty,
+      reason:reason||'', supplierId:supplierId||'',
+      supplierName: opts.supplierName || (sup && sup.name) || '',
+      note:note||'', price:(parseFloat(opts.price)||0)
+    };
+    if(type==='adjustment') mov.delta=actual;
+    this.addMovement(tid,mov,opts.date);
+    return {ok:true, newQty, actualQty:actual};
+  }
+};
+
+/* ===================================================================
+   STOCK MANAGEMENT — shared helpers
+   =================================================================== */
+function stkT(key, params){ return I18N.t(key, params); }
+function stkPlural(base, n, params){
+  return I18N.t(base + (n===1?'_one':'_many'), Object.assign({n:n}, params||{}));
+}
+const STK_OUT_REASONS=['Used in Repair','Direct Sale','Damaged','Lost','Manual Adjustment','Other'];
+const STOCK_REASON_KEYS={
+  'Used in Repair':'stk_reason_repair',
+  'Direct Sale':'stk_reason_sale',
+  'Damaged':'stk_reason_damaged',
+  'Lost':'stk_reason_lost',
+  'Manual Adjustment':'stk_reason_adjust',
+  'Other':'stk_reason_other',
+  'Initial stock':'stk_reason_initial',
+  'Stock take correction':'stk_reason_recount'
+};
+/* Old rows were stored with a "Purchase: " prefix; strip it and translate known reasons. */
+function stkReasonText(reason){
+  const r=String(reason||'').replace(/^Purchase:\s*/i,'').trim();
+  if(!r) return '—';
+  return STOCK_REASON_KEYS[r] ? I18N.t(STOCK_REASON_KEYS[r]) : r;
+}
+function stkSupName(m){
+  if(m.supplierName) return m.supplierName;
+  if(m.supplierId){ const s=INV.getSupplier(currentTenantId,m.supplierId); if(s) return s.name; }
+  return '—';
+}
+function stkSortedMovements(tid){
+  return INV.getMovements(tid).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+}
+
+/* ---- non-blocking toast ---- */
+function rdToast(msg, type){
+  let host=document.getElementById('rdToastHost');
+  if(!host){
+    host=document.createElement('div');
+    host.id='rdToastHost';
+    host.className='rd-toast-host';
+    document.body.appendChild(host);
+  }
+  const el=document.createElement('div');
+  el.className='rd-toast'+(type==='error'?' error':'');
+  el.textContent=msg;
+  host.appendChild(el);
+  requestAnimationFrame(()=>el.classList.add('show'));
+  setTimeout(()=>{ el.classList.remove('show'); setTimeout(()=>el.remove(),260); }, 2600);
+}
+
+/* ---- promise-based confirm dialog (in-app, stackable) ---- */
+function rdConfirm(opts){
+  return new Promise(resolve=>{
+    const o=opts||{};
+    const overlay=document.createElement('div');
+    overlay.className='modal-overlay rd-confirm-overlay';
+    overlay.innerHTML=`<div class="modal rd-confirm-modal" role="dialog" aria-modal="true">
+      <h3>${esc(o.title||stkT('stk_confirm_title'))}</h3>
+      <p class="rd-confirm-msg">${o.message||''}</p>
+      ${o.requireText?`<div class="field" style="margin-top:12px;"><label>${esc(o.requireLabel||'')}</label><input id="rdConfirmInput" autocomplete="off" placeholder="${esc(o.requireText)}"></div>`:''}
+      <div class="modal-actions">
+        <button class="btn" data-rdc="0">${esc(o.cancelLabel||stkT('stk_cancel'))}</button>
+        <button class="btn ${o.danger?'danger':'primary'}" data-rdc="1" ${o.requireText?'disabled':''}>${esc(o.confirmLabel||stkT('stk_confirm_btn'))}</button>
+      </div></div>`;
+    document.body.appendChild(overlay);
+    const done=val=>{ overlay.remove(); document.removeEventListener('keydown',onKey); resolve(val); };
+    const onKey=e=>{ if(e.key==='Escape') done(false); };
+    document.addEventListener('keydown',onKey);
+    overlay.querySelectorAll('[data-rdc]').forEach(b=>b.addEventListener('click',()=>done(b.dataset.rdc==='1')));
+    overlay.addEventListener('click',e=>{ if(e.target===overlay) done(false); });
+    const inp=overlay.querySelector('#rdConfirmInput');
+    const okBtn=overlay.querySelector('[data-rdc="1"]');
+    if(inp&&okBtn){
+      inp.addEventListener('input',()=>{ okBtn.disabled=(inp.value.trim().toUpperCase()!==String(o.requireText||'').toUpperCase()); });
+      inp.focus();
+    }
+  });
+}
+
+/* ===================================================================
+   STOCK MANAGEMENT — Main view (tabs)
+   =================================================================== */
+const stockView = { tab:'dashboard', inPreselect:'' };
+const stkProducts = { q:'', cat:'all', sort:'name', archived:false, restock:false };
+const stkHistory = { q:'', type:'all', product:'all', date:'all', from:'', to:'' };
+
+function renderStockView(el){
+  const settings=Store.getSettings(currentTenantId);
+  const cur=settings.currency||'DZD';
+  const stats=INV.stats(currentTenantId);
+
+  let alertHtml='';
+  if(stats.outCount>0) alertHtml+=`<div class="stock-alert-bar danger">&#9888; ${stkPlural('stk_alert_out',stats.outCount)}</div>`;
+  if(stats.lowCount>0) alertHtml+=`<div class="stock-alert-bar">&#128203; ${stkPlural('stk_alert_low',stats.lowCount)}</div>`;
+
+  const tabs=[
+    {id:'dashboard',label:'&#128202; '+stkT('stk_tab_dashboard')},
+    {id:'products',label:'&#128230; '+stkT('stk_tab_products')},
+    {id:'stock-in',label:'&#8679; '+stkT('stk_tab_in')},
+    {id:'stock-out',label:'&#8681; '+stkT('stk_tab_out')},
+    {id:'history',label:'&#128338; '+stkT('stk_tab_history')},
+    {id:'suppliers',label:'&#128101; '+stkT('stk_tab_suppliers')},
+    {id:'reports',label:'&#128196; '+stkT('stk_tab_reports')}
+  ];
+  let html=`<div class="content-header"><h2>&#128230; ${esc(stkT('stk_title'))}</h2></div>`;
+  html+=alertHtml;
+  html+=`<div class="stock-tabs">`;
+  tabs.forEach(t=>{
+    html+=`<button class="stock-tab${stockView.tab===t.id?' active':''}" data-stab="${t.id}">${t.label}</button>`;
+  });
+  html+=`</div><div id="stockTabContent">`;
+  html+=renderStockTabContent(stockView.tab, cur, stats);
+  html+=`</div>`;
+  el.innerHTML=html;
+
+  el.querySelectorAll('.stock-tab').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      stockView.tab=btn.dataset.stab;
+      document.querySelectorAll('.stock-tab').forEach(b=>b.classList.toggle('active',b.dataset.stab===stockView.tab));
+      document.getElementById('stockTabContent').innerHTML=renderStockTabContent(stockView.tab, cur, INV.stats(currentTenantId));
+      bindStockTabEvents(stockView.tab, el, cur);
+    });
+  });
+  bindStockTabEvents(stockView.tab, el, cur);
+}
+
+function stkSwitchTab(el, tab, cur){
+  stockView.tab=tab;
+  document.querySelectorAll('.stock-tab').forEach(b=>b.classList.toggle('active',b.dataset.stab===tab));
+  document.getElementById('stockTabContent').innerHTML=renderStockTabContent(tab, cur, INV.stats(currentTenantId));
+  bindStockTabEvents(tab, el, cur);
+}
+
+function renderStockTabContent(tab, cur, stats){
+  switch(tab){
+    case 'dashboard': return renderStockDashboard(cur, stats);
+    case 'products': return renderStockProducts(cur);
+    case 'stock-in': return renderStockIn(cur);
+    case 'stock-out': return renderStockOut(cur);
+    case 'history': return renderStockHistory(cur);
+    case 'suppliers': return renderStockSuppliers(cur);
+    case 'reports': return renderStockReports(cur);
+    default: return '';
+  }
+}
+
+function bindStockTabEvents(tab, el, cur){
+  switch(tab){
+    case 'dashboard': bindStockDashboardEvents(el,cur); break;
+    case 'products': bindStockProductsEvents(el,cur); break;
+    case 'stock-in': bindStockInEvents(el,cur); break;
+    case 'stock-out': bindStockOutEvents(el,cur); break;
+    case 'history': bindStockHistoryEvents(el,cur); break;
+    case 'suppliers': bindStockSuppliersEvents(el,cur); break;
+    case 'reports': break;
+  }
+}
+
+/* =====================================================================
+   TAB 1: DASHBOARD
+   ===================================================================== */
+function renderStockDashboard(cur, stats){
+  const products=INV.getActiveProducts(currentTenantId);
+  const movements=stkSortedMovements(currentTenantId);
+
+  const lowOrOut=products.filter(p=>(p.qty||0)<=(p.minQty||0));
+  let html=`<div class="stock-dash">
+    <div class="stock-stat value"><div class="ss-num">${money(stats.totalValue,cur)}</div><div class="ss-lab">${esc(stkT('stk_total_value'))}</div></div>
+    <div class="stock-stat"><div class="ss-num">${stats.totalProducts}</div><div class="ss-lab">${esc(stkT('stk_stat_products'))}</div></div>
+    <div class="stock-stat ok"><div class="ss-num">${stats.totalUnits}</div><div class="ss-lab">${esc(stkT('stk_stat_units'))}</div></div>
+    <div class="stock-stat low" ${lowOrOut.length?`data-goto-restock="1" style="cursor:pointer;"`:''}><div class="ss-num">${stats.lowCount}</div><div class="ss-lab">${esc(stkT('stk_stat_low'))}</div></div>
+    <div class="stock-stat out" ${lowOrOut.length?`data-goto-restock="1" style="cursor:pointer;"`:''}><div class="ss-num">${stats.outCount}</div><div class="ss-lab">${esc(stkT('stk_stat_out'))}</div></div>
+  </div>`;
+
+  if(lowOrOut.length){
+    html+=`<div class="stock-section"><h3>&#9888; ${esc(stkT('stk_alerts'))}</h3>
+    <table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_category'))}</th><th>${esc(stkT('stk_current_qty'))}</th><th>${esc(stkT('stk_min_header'))}</th><th>${esc(stkT('stk_status'))}</th><th>${esc(stkT('stk_actions'))}</th></tr></thead><tbody>`;
+    lowOrOut.slice(0,8).forEach(p=>{
+      const qty=p.qty||0;
+      const min=p.minQty||0;
+      const status = qty===0 ? `<span class="stock-badge out-stock">${esc(stkT('stk_out'))}</span>` : `<span class="stock-badge low-stock">${esc(stkT('stk_low'))}</span>`;
+      html+=`<tr>
+        <td><b>${esc(p.name)}</b></td>
+        <td><span class="stock-badge cat">${esc(p.category||'—')}</span></td>
+        <td><span class="stock-qty-pill" style="color:${qty===0?'var(--danger)':'var(--amber)'}">${qty}</span></td>
+        <td>${min}</td>
+        <td>${status}</td>
+        <td><button class="btn sm" data-quick-in="${p.id}">+ ${esc(stkT('stk_t_stock_in'))}</button></td>
+      </tr>`;
+    });
+    html+=`</tbody></table>`;
+    if(lowOrOut.length>8){
+      html+=`<div style="margin-top:10px;"><button class="btn sm" data-goto-restock="1">${esc(stkT('stk_view_all'))} (${lowOrOut.length}) &#8594;</button></div>`;
+    }
+    html+=`</div>`;
+  }
+
+  const recent=movements.slice(0,8);
+  html+=`<div class="stock-section"><h3>${esc(stkT('stk_recent_movements'))}</h3>`;
+  if(!recent.length){
+    html+=`<div class="empty-state" style="padding:20px 0;">${esc(stkT('stk_no_movements'))}</div>`;
+  } else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_type'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_reason'))}</th><th>${esc(stkT('stk_date'))}</th></tr></thead><tbody>`;
+    recent.forEach(m=>{
+      const badge=m.type==='in'?`<span class="stock-badge move-in">&#8679; ${esc(stkT('stk_tab_in'))}</span>`:m.type==='out'?`<span class="stock-badge move-out">&#8681; ${esc(stkT('stk_tab_out'))}</span>`:`<span class="stock-badge move-adj">&#8644; ${esc(stkT('stk_adjustment'))}</span>`;
+      const qtyTxt = m.type==='in' ? '+'+m.qty : m.type==='adjustment' ? ((m.delta!=null && m.delta>0)?'+'+m.delta:'−'+m.qty) : '−'+m.qty;
+      html+=`<tr><td>${esc(m.productName)}</td><td>${badge}</td><td>${qtyTxt}</td><td>${esc(stkReasonText(m.reason))}</td><td>${formatDate(m.createdAt)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  const recentIn=movements.filter(m=>m.type==='in').slice(0,5);
+  html+=`<div class="stock-section"><h3>${esc(stkT('stk_recent_purchases'))}</h3>`;
+  if(!recentIn.length){
+    html+=`<div class="empty-state" style="padding:20px 0;">${esc(stkT('stk_no_purchases'))}</div>`;
+  } else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_qty_added'))}</th><th>${esc(stkT('stk_supplier'))}</th><th>${esc(stkT('stk_date'))}</th></tr></thead><tbody>`;
+    recentIn.forEach(m=>{
+      html+=`<tr><td>${esc(m.productName)}</td><td style="color:var(--green-ink);font-weight:600;">+${m.qty}</td><td>${esc(stkSupName(m))}</td><td>${formatDate(m.createdAt)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+function bindStockDashboardEvents(el, cur){
+  el.querySelectorAll('[data-quick-in]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      stockView.inPreselect=btn.dataset.quickIn;
+      stkSwitchTab(el,'stock-in',cur);
+    });
+  });
+  el.querySelectorAll('[data-goto-restock]').forEach(elm=>{
+    elm.addEventListener('click',()=>{
+      stkProducts.restock=true;
+      stkProducts.archived=false;
+      stkSwitchTab(el,'products',cur);
+    });
+  });
+}
+/* =====================================================================
+   TAB 2: PRODUCTS
+   ===================================================================== */
+const INV_CATEGORIES = ['Screens','Batteries','Charging Ports','Speakers','Cameras','Buttons','Frames','Cables','Tools','Accessories','Other'];
+
+function renderStockProducts(cur){
+  const products=INV.getProducts(currentTenantId);
+  const st=stkProducts;
+  const restockCount=products.filter(p=>!p.archived && (p.qty||0)<=(p.minQty||0)).length;
+  let filtered=products.filter(p=>{
+    if(!st.archived && p.archived) return false;
+    if(st.archived && !p.archived) return false;
+    if(st.restock && (p.qty||0) > (p.minQty||0)) return false;
+    if(st.cat!=='all' && p.category!==st.cat) return false;
+    if(st.q){
+      const q=st.q.toLowerCase();
+      return (p.name||'').toLowerCase().includes(q)||(p.models||'').toLowerCase().includes(q)||(p.supplierName||'').toLowerCase().includes(q);
+    }
+    return true;
+  });
+  if(st.sort==='name') filtered.sort((a,b)=>(a.name||'').localeCompare(b.name||''));
+  else if(st.sort==='qty') filtered.sort((a,b)=>(a.qty||0)-(b.qty||0));
+  else if(st.sort==='value') filtered.sort((a,b)=>((b.qty||0)*(parseFloat(b.buyPrice)||0))-((a.qty||0)*(parseFloat(a.buyPrice)||0)));
+  else if(st.sort==='date') filtered.sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+
+  let html=`<div class="stock-toolbar">
+    <input type="text" id="spSearch" value="${esc(st.q)}" placeholder="${esc(stkT('stk_search_products'))}">
+    <select id="spCat">
+      <option value="all"${st.cat==='all'?' selected':''}>${esc(stkT('stk_all_categories'))}</option>
+      ${INV_CATEGORIES.map(c=>`<option value="${esc(c)}"${st.cat===c?' selected':''}>${esc(c)}</option>`).join('')}
+    </select>
+    <select id="spSort">
+      <option value="name"${st.sort==='name'?' selected':''}>${esc(stkT('stk_sort_name'))}</option>
+      <option value="qty"${st.sort==='qty'?' selected':''}>${esc(stkT('stk_sort_qty'))}</option>
+      <option value="value"${st.sort==='value'?' selected':''}>${esc(stkT('stk_sort_value'))}</option>
+      <option value="date"${st.sort==='date'?' selected':''}>${esc(stkT('stk_sort_date'))}</option>
+    </select>
+    <button class="btn sm${st.restock?' active':''}" id="spRestockChip">&#9888; ${esc(stkT('stk_restock_chip'))}${restockCount?' ('+restockCount+')':''}</button>
+    <button class="btn sm${st.archived?' active':''}" id="spArchivedChip">&#128451; ${esc(stkT('stk_show_archived'))}</button>
+    <button class="btn primary" id="addProductBtn">${esc(stkT('stk_add_product'))}</button>
+  </div>`;
+
+  if(!filtered.length){
+    const msg = products.length===0 ? stkT('stk_no_products') : (st.restock ? stkT('stk_no_restock') : stkT('stk_no_match_products'));
+    html+=`<div class="empty-state">${esc(msg)}</div>`;
+  } else {
+    html+=`<div class="stock-section"><h3>${esc(stkPlural('stk_products', filtered.length))}</h3>
+    <div style="overflow-x:auto;"><table class="stock-table">
+      <thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_category'))}</th><th>${esc(stkT('stk_models'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_status'))}</th><th>${esc(stkT('stk_buy_price'))}</th><th>${esc(stkT('stk_sell_price'))}</th><th>${esc(stkT('stk_supplier'))}</th><th>${esc(stkT('stk_actions'))}</th></tr></thead><tbody>`;
+    filtered.forEach(p=>{
+      const qty=p.qty||0;
+      const min=p.minQty||0;
+      let badge;
+      if(p.archived){ badge=`<span class="stock-badge archived">&#128451; ${esc(stkT('stk_archived'))}</span>`; }
+      else if(qty===0){ badge=`<span class="stock-badge out-stock">${esc(stkT('stk_out'))}</span>`; }
+      else if(qty<=min){ badge=`<span class="stock-badge low-stock">${esc(stkT('stk_low'))}</span>`; }
+      else { badge=`<span class="stock-badge in-stock">${esc(stkT('stk_ok'))}</span>`; }
+      const actions = p.archived
+        ? `<button class="btn sm" data-edit-product="${p.id}" title="${esc(stkT('stk_t_edit'))}">&#9998;</button>
+           <button class="btn sm" data-restore-product="${p.id}" title="${esc(stkT('stk_t_restore'))}" style="color:var(--green-ink);">&#8634;</button>
+           <button class="btn sm danger" data-purge-product="${p.id}" title="${esc(stkT('stk_t_purge'))}">&#10005;</button>`
+        : `<button class="btn sm" data-edit-product="${p.id}" title="${esc(stkT('stk_t_edit'))}">&#9998;</button>
+           <button class="btn sm" data-move-in="${p.id}" title="${esc(stkT('stk_t_stock_in'))}" style="color:var(--green-ink);">+</button>
+           <button class="btn sm" data-move-out="${p.id}" title="${esc(stkT('stk_t_stock_out'))}" style="color:var(--danger);">−</button>
+           <button class="btn sm" data-adjust-product="${p.id}" title="${esc(stkT('stk_t_adjust'))}" style="color:var(--amber);">&#8644;</button>
+           <button class="btn sm" data-archive-product="${p.id}" title="${esc(stkT('stk_t_archive'))}">&#128451;</button>`;
+      html+=`<tr${p.archived?' class="stock-archived-row"':''}>
+        <td><b title="${esc(stkT('stk_added'))}: ${p.createdAt?formatDate(p.createdAt):'—'}">${esc(p.name)}</b>${p.description?`<br><span style="font-size:11px;color:var(--muted);">${esc(p.description.substring(0,40))}${p.description.length>40?'…':''}</span>`:''}
+        ${p.variants?`<br><span style="font-size:10px;color:var(--muted);">${esc(stkT('stk_variants_label'))}: ${esc(p.variants)}</span>`:''}
+        </td>
+        <td><span class="stock-badge cat">${esc(p.category||'—')}</span></td>
+        <td style="font-size:12px;color:var(--muted);">${esc((p.models||'').length>30?p.models.substring(0,30)+'…':(p.models||''))}</td>
+        <td><span class="stock-qty-pill" style="color:${p.archived?'var(--muted-soft)':qty===0?'var(--danger)':qty<=min?'var(--amber)':'var(--green)'}">${qty}</span> <span style="font-size:10px;color:var(--muted);">/ ${min} ${esc(stkT('stk_min'))}</span></td>
+        <td>${badge}</td>
+        <td>${p.buyPrice?money(p.buyPrice,cur):'—'}</td>
+        <td>${p.sellPrice?money(p.sellPrice,cur):'—'}</td>
+        <td style="font-size:12px;">${esc(p.supplierName||'—')}</td>
+        <td style="white-space:nowrap;">${actions}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  }
+  return html;
+}
+
+function bindStockProductsEvents(el, cur){
+  const tc=()=>document.getElementById('stockTabContent');
+  const redraw=()=>{ tc().innerHTML=renderStockProducts(cur); bindStockProductsEvents(el,cur); };
+  el.querySelector('#spSearch')?.addEventListener('input',e=>{
+    stkProducts.q=e.target.value;
+    const pos=[e.target.selectionStart,e.target.selectionEnd];
+    redraw();
+    const inp=el.querySelector('#spSearch');
+    if(inp){ inp.focus(); inp.setSelectionRange(pos[0],pos[1]); }
+  });
+  el.querySelector('#spCat')?.addEventListener('change',e=>{ stkProducts.cat=e.target.value; redraw(); });
+  el.querySelector('#spSort')?.addEventListener('change',e=>{ stkProducts.sort=e.target.value; redraw(); });
+  el.querySelector('#spRestockChip')?.addEventListener('click',()=>{ stkProducts.restock=!stkProducts.restock; redraw(); });
+  el.querySelector('#spArchivedChip')?.addEventListener('click',()=>{ stkProducts.archived=!stkProducts.archived; stkProducts.restock=false; redraw(); });
+  el.querySelector('#addProductBtn')?.addEventListener('click',()=>openProductModal(null,redraw));
+  el.querySelectorAll('[data-edit-product]').forEach(btn=>btn.addEventListener('click',()=>openProductModal(btn.dataset.editProduct,redraw)));
+  el.querySelectorAll('[data-move-in]').forEach(btn=>btn.addEventListener('click',()=>openMovementModal(btn.dataset.moveIn,'in',cur,redraw)));
+  el.querySelectorAll('[data-move-out]').forEach(btn=>btn.addEventListener('click',()=>openMovementModal(btn.dataset.moveOut,'out',cur,redraw)));
+  el.querySelectorAll('[data-adjust-product]').forEach(btn=>btn.addEventListener('click',()=>openAdjustModal(btn.dataset.adjustProduct,redraw)));
+  el.querySelectorAll('[data-archive-product]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const p=INV.getProduct(currentTenantId,btn.dataset.archiveProduct);
+    if(!p) return;
+    const ok=await rdConfirm({
+      title:stkT('stk_archive_title'),
+      message:stkT('stk_archive_msg',{name:esc(p.name)}),
+      confirmLabel:stkT('stk_archive_btn')
+    });
+    if(!ok) return;
+    INV.archiveProduct(currentTenantId,p.id,true);
+    rdToast(stkT('stk_archived_msg'));
+    redraw();
+  }));
+  el.querySelectorAll('[data-restore-product]').forEach(btn=>btn.addEventListener('click',()=>{
+    INV.archiveProduct(currentTenantId,btn.dataset.restoreProduct,false);
+    rdToast(stkT('stk_restored_msg'));
+    redraw();
+  }));
+  el.querySelectorAll('[data-purge-product]').forEach(btn=>btn.addEventListener('click',async()=>{
+    const p=INV.getProduct(currentTenantId,btn.dataset.purgeProduct);
+    if(!p) return;
+    const ok=await rdConfirm({
+      title:stkT('stk_purge_title'),
+      message:stkT('stk_purge_msg',{name:esc(p.name)}),
+      confirmLabel:stkT('stk_purge_btn'),
+      danger:true,
+      requireText:'DELETE',
+      requireLabel:stkT('stk_purge_type',{word:'DELETE'})
+    });
+    if(!ok) return;
+    INV.deleteProduct(currentTenantId,p.id);
+    INV.setMovements(currentTenantId,INV.getMovements(currentTenantId).filter(m=>m.productId!==p.id));
+    rdToast(stkT('stk_deleted_msg'));
+    redraw();
+  }));
+}
+
+/* =====================================================================
+   MODALS — Product Editor
+   ===================================================================== */
+function openProductModal(productId, onSave){
+  const isNew=!productId;
+  const p=isNew?{id:'p'+Date.now()+Math.random().toString(36).slice(2,7),qty:0}:(INV.getProduct(currentTenantId,productId)||{});
+  const suppliers=INV.getSuppliers(currentTenantId);
+
+  const formHtml=`<div class="modal-overlay" id="productModal"><div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+    <h3>${isNew?esc(stkT('stk_add_new_product')):esc(stkT('stk_edit_product'))}</h3>
+    ${p.archived?`<div class="field-hint" style="margin-bottom:10px;">&#128451; ${esc(stkT('stk_archived_banner'))}</div>`:''}
+    ${(!isNew&&p.createdAt)?`<div class="field-hint" style="margin-bottom:10px;">${esc(stkT('stk_added'))}: ${formatDate(p.createdAt)}</div>`:''}
+    <div class="stock-form">
+      <div class="sf-row">
+        <div class="field"><label>${esc(stkT('stk_product_name'))} *</label><input id="pmName" value="${esc(p.name||'')}" placeholder="${esc(stkT('stk_name_ph'))}"></div>
+        <div class="field"><label>${esc(stkT('stk_category'))}</label>
+          <select id="pmCategory">
+            ${INV_CATEGORIES.map(c=>`<option value="${esc(c)}"${(p.category||'')==c?' selected':''}>${esc(c)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_models'))}</label><input id="pmModels" value="${esc(p.models||'')}" placeholder="${esc(stkT('stk_models_ph'))}"></div>
+      <div class="sf-row">
+        <div class="field"><label>${esc(stkT('stk_purchase_price'))}</label><input type="number" id="pmBuyPrice" value="${p.buyPrice||''}" min="0" step="0.01" placeholder="${esc(stkT('stk_price_ph'))}"></div>
+        <div class="field"><label>${esc(stkT('stk_selling_price'))}</label><input type="number" id="pmSellPrice" value="${p.sellPrice||''}" min="0" step="0.01" placeholder="${esc(stkT('stk_price_ph'))}"></div>
+      </div>
+      <div class="sf-row">
+        <div class="field"><label>${esc(stkT('stk_initial_qty'))}</label><input type="number" id="pmQty" value="${p.qty||0}" min="0" ${isNew?'':`readonly style="background:var(--shell);" title="${esc(stkT('stk_qty_locked'))}"`}></div>
+        <div class="field"><label>${esc(stkT('stk_min_label'))}</label><input type="number" id="pmMinQty" value="${p.minQty||0}" min="0" placeholder="${esc(stkT('stk_min_hint'))}"></div>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_supplier'))}</label>
+        <select id="pmSupplier">
+          <option value="">${esc(stkT('stk_none'))}</option>
+          ${suppliers.map(s=>`<option value="${s.id}"${(p.supplierId||'')==s.id?' selected':''}>${esc(s.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_variants'))}</label><input id="pmVariants" value="${esc(p.variants||'')}" placeholder="${esc(stkT('stk_variants_ph'))}"></div>
+      <div class="field"><label>${esc(stkT('stk_description'))}</label><textarea id="pmDesc" rows="2" placeholder="${esc(stkT('stk_desc_ph'))}">${esc(p.description||'')}</textarea></div>
+      <div class="field"><label>${esc(stkT('stk_notes'))}</label><textarea id="pmNotes" rows="2" placeholder="${esc(stkT('stk_notes_internal_ph'))}">${esc(p.notes||'')}</textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="pmCancel">${esc(stkT('stk_cancel'))}</button>
+      <button class="btn primary" id="pmSave">${isNew?esc(stkT('stk_add_btn')):esc(stkT('stk_save'))}</button>
+    </div>
+  </div></div>`;
+
+  document.getElementById('modalRoot').innerHTML=formHtml;
+  document.getElementById('pmCancel').addEventListener('click',()=>document.getElementById('modalRoot').innerHTML='');
+  document.getElementById('pmSave').addEventListener('click',()=>{
+    const name=(document.getElementById('pmName').value||'').trim();
+    if(!name){ rdToast(stkT('stk_name_req'),'error'); return; }
+    const supplierId=document.getElementById('pmSupplier').value;
+    const supplierName=supplierId?(INV.getSupplier(currentTenantId,supplierId)||{}).name||'':'';
+    const initQty=isNew?Math.max(0,parseInt(document.getElementById('pmQty').value)||0):(p.qty||0);
+    const updated={
+      ...p, name,
+      category:document.getElementById('pmCategory').value,
+      models:document.getElementById('pmModels').value,
+      buyPrice:Math.max(0,parseFloat(document.getElementById('pmBuyPrice').value)||0),
+      sellPrice:Math.max(0,parseFloat(document.getElementById('pmSellPrice').value)||0),
+      minQty:Math.max(0,parseInt(document.getElementById('pmMinQty').value)||0),
+      supplierId, supplierName,
+      variants:document.getElementById('pmVariants').value,
+      description:document.getElementById('pmDesc').value,
+      notes:document.getElementById('pmNotes').value,
+      updatedAt:Date.now()
+    };
+    if(isNew){
+      updated.createdAt=Date.now();
+      updated.qty=0;
+      /* save the empty product first so the initial-stock movement can find it */
+      INV.saveProduct(currentTenantId,updated);
+      if(initQty>0){
+        INV.applyMovement(currentTenantId,updated.id,'in',initQty,'Initial stock','','',{});
+      }
+      rdToast(stkT('stk_product_added'));
+    } else {
+      updated.qty=p.qty||0; /* quantity only changes through movements */
+      INV.saveProduct(currentTenantId,updated);
+      rdToast(stkT('stk_product_saved'));
+    }
+    document.getElementById('modalRoot').innerHTML='';
+    if(onSave) onSave();
+  });
+}
+
+/* =====================================================================
+   MODALS — Quick Movement (from product row)
+   ===================================================================== */
+function openMovementModal(productId, type, cur, onSave){
+  const p=INV.getProduct(currentTenantId,productId);
+  if(!p) return;
+  const suppliers=INV.getSuppliers(currentTenantId);
+  const isIn=type==='in';
+  const formHtml=`<div class="modal-overlay" id="moveModal"><div class="modal">
+    <h3>${isIn?'&#8679; '+esc(stkT('stk_t_stock_in')):'&#8681; '+esc(stkT('stk_t_stock_out'))} — ${esc(p.name)}</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">${esc(stkT('stk_current_stock'))}: <b>${p.qty||0}</b></p>
+    <div class="field"><label>${esc(stkT('stk_quantity'))} *</label><input type="number" id="mvQty" min="1" value="1"></div>
+    ${isIn?`<div class="field" style="margin-top:10px;"><label>${esc(stkT('stk_price_unit'))}</label><input type="number" id="mvPrice" min="0" step="0.01" placeholder="${p.buyPrice||esc(stkT('stk_price_ph'))}"></div>
+      <div class="field" style="margin-top:10px;"><label>${esc(stkT('stk_supplier'))}</label><select id="mvSupplier"><option value="">${esc(stkT('stk_none'))}</option>${suppliers.map(s=>`<option value="${s.id}"${p.supplierId===s.id?' selected':''}>${esc(s.name)}</option>`).join('')}</select></div>`:''}
+    <div class="field" style="margin-top:10px;"><label>${isIn?esc(stkT('stk_reason_notes')):esc(stkT('stk_reason_req'))}</label>
+      ${isIn?`<input type="text" id="mvReason" placeholder="${esc(stkT('stk_reason_notes_ph'))}">`:
+        `<select id="mvReason">${STK_OUT_REASONS.map(r=>`<option value="${esc(r)}">${esc(stkReasonText(r))}</option>`).join('')}</select>`}
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="mvCancel">${esc(stkT('stk_cancel'))}</button>
+      <button class="btn primary" id="mvSave" style="${isIn?'':'background:var(--danger);'}">${isIn?esc(stkT('stk_record_in_btn')):esc(stkT('stk_record_out_btn'))}</button>
+    </div>
+  </div></div>`;
+  document.getElementById('modalRoot').innerHTML=formHtml;
+  document.getElementById('mvCancel').addEventListener('click',()=>document.getElementById('modalRoot').innerHTML='');
+  document.getElementById('mvSave').addEventListener('click',async()=>{
+    const qty=parseInt(document.getElementById('mvQty').value||0);
+    const reason=document.getElementById('mvReason').value||'';
+    const supplierId=isIn?(document.getElementById('mvSupplier')?.value||''):'';
+    const price=isIn?(document.getElementById('mvPrice')?.value||''):'';
+    if(!qty||qty<1){ rdToast(stkT('stk_err_qty_min'),'error'); return; }
+    if(!isIn && qty>(p.qty||0)){
+      const avail=p.qty||0;
+      const ok=await rdConfirm({
+        title:stkT('stk_over_title'),
+        message:avail===1?stkT('stk_over_one',{n:avail}):stkT('stk_over_many',{n:avail}),
+        confirmLabel:stkT('stk_confirm_btn'),
+        danger:true
+      });
+      if(!ok) return;
+    }
+    const res=INV.applyMovement(currentTenantId,productId,type,qty,reason,supplierId,'',{price});
+    if(!res.ok){ rdToast(stkT(res.msg),'error'); return; }
+    if(isIn && parseFloat(price)>0){
+      const p2=INV.getProduct(currentTenantId,productId);
+      if(p2) INV.saveProduct(currentTenantId,{...p2,buyPrice:parseFloat(price)});
+    }
+    rdToast(stkT(isIn?'stk_in_recorded':'stk_out_recorded',{n:res.newQty}));
+    document.getElementById('modalRoot').innerHTML='';
+    if(onSave) onSave();
+  });
+}
+
+/* =====================================================================
+   MODALS — Stock Adjustment (± count correction)
+   ===================================================================== */
+function openAdjustModal(productId, onSave){
+  const active=INV.getActiveProducts(currentTenantId);
+  if(!active.length){ rdToast(stkT('stk_no_products_yet'),'error'); return; }
+  const p=INV.getProduct(currentTenantId,productId)||active[0];
+  const formHtml=`<div class="modal-overlay" id="adjustModal"><div class="modal">
+    <h3>&#8644; ${esc(stkT('stk_adjust_title'))} — ${esc(p.name)}</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:14px;">${esc(stkT('stk_adjust_current',{n:p.qty||0}))}</p>
+    <div class="field"><label>${esc(stkT('stk_product'))}</label>
+      <select id="adjProduct">
+        ${active.map(ap=>`<option value="${ap.id}"${ap.id===p.id?' selected':''}>${esc(ap.name)} (${ap.qty||0})</option>`).join('')}
+      </select>
+    </div>
+    <div class="sf-row" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px;">
+      <div class="field"><label>${esc(stkT('stk_direction'))}</label>
+        <select id="adjDir">
+          <option value="1">${esc(stkT('stk_increase'))}</option>
+          <option value="-1">${esc(stkT('stk_decrease'))}</option>
+        </select>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_quantity'))} *</label><input type="number" id="adjQty" min="1" value="1"></div>
+    </div>
+    <p class="field-hint" id="adjPreview" style="margin:6px 0 0;"></p>
+    <div class="field" style="margin-top:10px;"><label>${esc(stkT('stk_reason_req'))}</label><input type="text" id="adjReason" placeholder="${esc(stkT('stk_adjust_reason_ph'))}"></div>
+    <div class="modal-actions">
+      <button class="btn" id="adjCancel">${esc(stkT('stk_cancel'))}</button>
+      <button class="btn primary" id="adjSave">${esc(stkT('stk_adjust_btn'))}</button>
+    </div>
+  </div></div>`;
+  document.getElementById('modalRoot').innerHTML=formHtml;
+  const selProd=document.getElementById('adjProduct');
+  const updPreview=()=>{
+    const prod=INV.getProduct(currentTenantId,selProd.value);
+    const dir=parseInt(document.getElementById('adjDir').value)||1;
+    const q=parseInt(document.getElementById('adjQty').value)||0;
+    const cur=prod?prod.qty||0:0;
+    const next=Math.max(0,cur+dir*q);
+    document.getElementById('adjPreview').textContent=stkT('stk_adjust_preview',{n:next});
+  };
+  ['adjDir','adjQty','adjProduct'].forEach(id=>{
+    document.getElementById(id).addEventListener('input',updPreview);
+    document.getElementById(id).addEventListener('change',updPreview);
+  });
+  updPreview();
+  document.getElementById('adjCancel').addEventListener('click',()=>document.getElementById('modalRoot').innerHTML='');
+  document.getElementById('adjSave').addEventListener('click',()=>{
+    const pid=selProd.value;
+    const dir=parseInt(document.getElementById('adjDir').value)||1;
+    const q=parseInt(document.getElementById('adjQty').value)||0;
+    const reason=(document.getElementById('adjReason').value||'').trim();
+    if(!q||q<1){ rdToast(stkT('stk_err_qty_min'),'error'); return; }
+    if(!reason){ rdToast(stkT('stk_adjust_reason_req'),'error'); return; }
+    const res=INV.applyMovement(currentTenantId,pid,'adjustment',dir*q,reason,'','',{});
+    if(!res.ok){ rdToast(stkT(res.msg),'error'); return; }
+    rdToast(stkT('stk_adjust_recorded',{n:res.newQty}));
+    document.getElementById('modalRoot').innerHTML='';
+    if(onSave) onSave();
+  });
+}
+/* =====================================================================
+   TAB 3: STOCK IN
+   ===================================================================== */
+function renderStockIn(cur){
+  const products=INV.getActiveProducts(currentTenantId);
+  const suppliers=INV.getSuppliers(currentTenantId);
+  const preselect=stockView.inPreselect||'';
+  stockView.inPreselect='';
+  const today=new Date().toISOString().slice(0,10);
+
+  let html=`<div class="stock-section"><h3>${esc(stkT('stk_record_in'))}</h3>
+  <div class="stock-form stock-move-form">
+    <div class="sf-row">
+      <div class="field"><label>${esc(stkT('stk_product'))} *</label>
+        <select id="siProduct">
+          <option value="">${esc(stkT('stk_select_product'))}</option>
+          ${products.map(p=>`<option value="${p.id}"${p.id===preselect?' selected':''}>${esc(stkT('stk_opt_in',{name:p.name,n:p.qty||0}))}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_quantity'))} *</label><input type="number" id="siQty" min="1" value="1" placeholder="${esc(stkT('stk_qty_in_ph'))}"></div>
+    </div>
+    <div class="sf-row">
+      <div class="field"><label>${esc(stkT('stk_price_unit'))}</label><input type="number" id="siPrice" min="0" step="0.01" placeholder="${esc(stkT('stk_price_ph'))}"></div>
+      <div class="field"><label>${esc(stkT('stk_supplier'))}</label>
+        <select id="siSupplier">
+          <option value="">${esc(stkT('stk_none'))}</option>
+          ${suppliers.map(s=>`<option value="${s.id}">${esc(s.name)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="field"><label>${esc(stkT('stk_purchase_date'))}</label><input type="date" id="siDate" value="${today}" max="${today}"></div>
+    <div class="field"><label>${esc(stkT('stk_reason_notes'))}</label><input type="text" id="siReason" placeholder="${esc(stkT('stk_reason_notes_ph'))}"></div>
+    <div><button class="btn primary" id="siSubmit">&#8679; ${esc(stkT('stk_record_in_btn'))}</button></div>
+  </div></div>`;
+
+  const inMoves=stkSortedMovements(currentTenantId).filter(m=>m.type==='in').slice(0,10);
+  html+=`<div class="stock-section"><h3>${esc(stkT('stk_recent_in'))}</h3>`;
+  if(!inMoves.length){ html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_in_records'))}</div>`; }
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_qty_added'))}</th><th>${esc(stkT('stk_new_total'))}</th><th>${esc(stkT('stk_price_unit'))}</th><th>${esc(stkT('stk_supplier'))}</th><th>${esc(stkT('stk_reason'))}</th><th>${esc(stkT('stk_date'))}</th></tr></thead><tbody>`;
+    inMoves.forEach(m=>{
+      html+=`<tr><td>${esc(m.productName)}</td><td style="color:var(--green-ink);font-weight:600;">+${m.qty}</td><td>${m.newQty}</td><td>${m.price?money(m.price,cur):'—'}</td><td>${esc(stkSupName(m))}</td><td style="font-size:12px;color:var(--muted);">${esc(stkReasonText(m.reason))}</td><td>${formatDate(m.createdAt)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+function bindStockInEvents(el, cur){
+  const tc=()=>document.getElementById('stockTabContent');
+  const redraw=()=>{ tc().innerHTML=renderStockIn(cur); bindStockInEvents(el,cur); };
+  el.querySelector('#siSubmit')?.addEventListener('click',()=>{
+    const productId=el.querySelector('#siProduct')?.value;
+    const qty=parseInt(el.querySelector('#siQty')?.value||0);
+    const price=el.querySelector('#siPrice')?.value||'';
+    const supplierId=el.querySelector('#siSupplier')?.value||'';
+    const dateStr=el.querySelector('#siDate')?.value||'';
+    const reason=(el.querySelector('#siReason')?.value||'').trim();
+    if(!productId){ rdToast(stkT('stk_err_select_product'),'error'); return; }
+    if(!qty||qty<1){ rdToast(stkT('stk_err_qty_min'),'error'); return; }
+    let ts=Date.now();
+    if(dateStr){
+      const picked=new Date(dateStr+'T12:00:00').getTime();
+      if(!isNaN(picked)) ts=Math.min(picked,Date.now());
+    }
+    const sup=supplierId?(INV.getSupplier(currentTenantId,supplierId)||null):null;
+    const res=INV.applyMovement(currentTenantId,productId,'in',qty,reason,supplierId,'',{price,date:ts,supplierName:sup?sup.name:''});
+    if(!res.ok){ rdToast(stkT(res.msg),'error'); return; }
+    if(parseFloat(price)>0){
+      const p2=INV.getProduct(currentTenantId,productId);
+      if(p2) INV.saveProduct(currentTenantId,{...p2,buyPrice:parseFloat(price)});
+    }
+    rdToast(stkT('stk_in_recorded',{n:res.newQty}));
+    redraw();
+  });
+}
+
+/* =====================================================================
+   TAB 4: STOCK OUT
+   ===================================================================== */
+function renderStockOut(cur){
+  const products=INV.getActiveProducts(currentTenantId);
+  const inStock=products.filter(p=>(p.qty||0)>0);
+  const outStock=products.filter(p=>(p.qty||0)===0);
+
+  let html=`<div class="stock-section"><h3>${esc(stkT('stk_record_out'))}</h3>
+  <div class="stock-form stock-move-form">
+    <div class="sf-row">
+      <div class="field"><label>${esc(stkT('stk_product'))} *</label>
+        <select id="soProduct">
+          <option value="">${esc(stkT('stk_select_product'))}</option>
+          ${inStock.map(p=>`<option value="${p.id}">${esc(stkT('stk_opt_out',{name:p.name,n:p.qty||0}))}</option>`).join('')}
+          ${outStock.map(p=>`<option value="${p.id}" disabled>${esc(stkT('stk_opt_out_zero',{name:p.name}))}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_quantity'))} *</label><input type="number" id="soQty" min="1" value="1"></div>
+    </div>
+    <div class="sf-row">
+      <div class="field"><label>${esc(stkT('stk_reason_req'))}</label>
+        <select id="soReason">
+          ${STK_OUT_REASONS.map(r=>`<option value="${esc(r)}">${esc(stkReasonText(r))}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_notes_opt'))}</label><input type="text" id="soNote" placeholder="${esc(stkT('stk_out_note_ph'))}"></div>
+    </div>
+    <div><button class="btn primary" id="soSubmit" style="background:var(--danger);">&#8681; ${esc(stkT('stk_record_out_btn'))}</button></div>
+    <div class="field-hint">${esc(stkT('stk_adjust_hint'))} <a class="stk-link" id="soAdjustLink">${esc(stkT('stk_adjust_link'))}</a></div>
+  </div></div>`;
+
+  const outMoves=stkSortedMovements(currentTenantId).filter(m=>m.type==='out'||m.type==='adjustment').slice(0,10);
+  html+=`<div class="stock-section"><h3>${esc(stkT('stk_recent_out'))}</h3>`;
+  if(!outMoves.length){ html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_out_records'))}</div>`; }
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_qty_removed'))}</th><th>${esc(stkT('stk_prev'))}</th><th>${esc(stkT('stk_new_total'))}</th><th>${esc(stkT('stk_reason'))}</th><th>${esc(stkT('stk_notes'))}</th><th>${esc(stkT('stk_date'))}</th></tr></thead><tbody>`;
+    outMoves.forEach(m=>{
+      const qtyTxt = m.type==='adjustment' ? ((m.delta!=null && m.delta>0)?'+'+m.delta:'−'+m.qty) : '−'+m.qty;
+      const qtyColor = (m.type==='adjustment' && m.delta!=null && m.delta>0) ? 'var(--green-ink)' : 'var(--danger)';
+      html+=`<tr><td>${esc(m.productName)}</td><td style="color:${qtyColor};font-weight:600;">${qtyTxt}</td><td>${m.prevQty}</td><td>${m.newQty}</td><td>${esc(stkReasonText(m.reason))}</td><td style="font-size:12px;color:var(--muted);">${esc(m.note||'—')}</td><td>${formatDate(m.createdAt)}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+  return html;
+}
+
+function bindStockOutEvents(el, cur){
+  const tc=()=>document.getElementById('stockTabContent');
+  const redraw=()=>{ tc().innerHTML=renderStockOut(cur); bindStockOutEvents(el,cur); };
+  el.querySelector('#soSubmit')?.addEventListener('click',async()=>{
+    const productId=el.querySelector('#soProduct')?.value;
+    const qty=parseInt(el.querySelector('#soQty')?.value||0);
+    const reason=el.querySelector('#soReason')?.value||'';
+    const note=(el.querySelector('#soNote')?.value||'').trim();
+    if(!productId){ rdToast(stkT('stk_err_select_product'),'error'); return; }
+    if(!qty||qty<1){ rdToast(stkT('stk_err_qty_min'),'error'); return; }
+    const product=INV.getProduct(currentTenantId,productId);
+    if(product&&qty>(product.qty||0)){
+      const avail=product.qty||0;
+      const ok=await rdConfirm({
+        title:stkT('stk_over_title'),
+        message:avail===1?stkT('stk_over_one',{n:avail}):stkT('stk_over_many',{n:avail}),
+        confirmLabel:stkT('stk_confirm_btn'),
+        danger:true
+      });
+      if(!ok) return;
+    }
+    const res=INV.applyMovement(currentTenantId,productId,'out',qty,reason,'',note,{});
+    if(!res.ok){ rdToast(stkT(res.msg),'error'); return; }
+    rdToast(stkT('stk_out_recorded',{n:res.newQty}));
+    redraw();
+  });
+  el.querySelector('#soAdjustLink')?.addEventListener('click',()=>{
+    const sel=el.querySelector('#soProduct')?.value;
+    openAdjustModal(sel||null,redraw);
+  });
+}
+/* =====================================================================
+   TAB 5: HISTORY
+   ===================================================================== */
+function renderStockHistory(cur){
+  const movements=stkSortedMovements(currentTenantId);
+  const products=INV.getProducts(currentTenantId);
+  const st=stkHistory;
+  const now=Date.now();
+  const startOfToday=new Date(); startOfToday.setHours(0,0,0,0);
+  const startOfWeek=now-7*24*3600*1000;
+  const startOfMonth=now-30*24*3600*1000;
+  const fromTs=st.from?new Date(st.from+'T00:00:00').getTime():null;
+  const toTs=st.to?new Date(st.to+'T23:59:59').getTime():null;
+
+  const q=st.q.toLowerCase();
+  let filtered=movements.filter(m=>{
+    if(st.type!=='all'&&m.type!==st.type) return false;
+    if(st.product!=='all'&&m.productId!==st.product) return false;
+    if(st.date==='today'&&m.createdAt<startOfToday.getTime()) return false;
+    if(st.date==='week'&&m.createdAt<startOfWeek) return false;
+    if(st.date==='month'&&m.createdAt<startOfMonth) return false;
+    if(st.date==='custom'){
+      if(fromTs!=null&&!isNaN(fromTs)&&m.createdAt<fromTs) return false;
+      if(toTs!=null&&!isNaN(toTs)&&m.createdAt>toTs) return false;
+    }
+    if(q){
+      return (m.productName||'').toLowerCase().includes(q)||(m.reason||'').toLowerCase().includes(q)||(m.note||'').toLowerCase().includes(q);
+    }
+    return true;
+  });
+
+  let html=`<div class="stock-toolbar">
+    <input type="text" id="shSearch" value="${esc(st.q)}" placeholder="${esc(stkT('stk_search_moves'))}">
+    <select id="shType">
+      <option value="all"${st.type==='all'?' selected':''}>${esc(stkT('stk_all_types'))}</option>
+      <option value="in"${st.type==='in'?' selected':''}>${esc(stkT('stk_tab_in'))}</option>
+      <option value="out"${st.type==='out'?' selected':''}>${esc(stkT('stk_tab_out'))}</option>
+      <option value="adjustment"${st.type==='adjustment'?' selected':''}>${esc(stkT('stk_adjustment'))}</option>
+    </select>
+    <select id="shProduct">
+      <option value="all">${esc(stkT('stk_all_products'))}</option>
+      ${products.map(p=>`<option value="${p.id}"${st.product===p.id?' selected':''}>${esc(p.name)}</option>`).join('')}
+    </select>
+    <select id="shDate">
+      <option value="all"${st.date==='all'?' selected':''}>${esc(stkT('stk_all_dates'))}</option>
+      <option value="today"${st.date==='today'?' selected':''}>${esc(stkT('stk_today'))}</option>
+      <option value="week"${st.date==='week'?' selected':''}>${esc(stkT('stk_last_7'))}</option>
+      <option value="month"${st.date==='month'?' selected':''}>${esc(stkT('stk_last_30'))}</option>
+      <option value="custom"${st.date==='custom'?' selected':''}>${esc(stkT('stk_custom_range'))}</option>
+    </select>
+    ${st.date==='custom'?`<input type="date" id="shFrom" value="${esc(st.from)}" title="${esc(stkT('stk_from'))}">
+    <input type="date" id="shTo" value="${esc(st.to)}" title="${esc(stkT('stk_to'))}">`:''}
+    <button class="btn" id="shExportCsv">${esc(stkT('stk_export_csv'))}</button>
+  </div>`;
+  if(!filtered.length){
+    html+=`<div class="empty-state">${movements.length===0?esc(stkT('stk_no_movements')):esc(stkT('stk_no_match_moves'))}</div>`;
+  } else {
+    html+=`<div class="stock-section"><h3>${esc(stkPlural('stk_moves',filtered.length))}</h3><div style="overflow-x:auto;"><table class="stock-table">
+    <thead><tr><th>${esc(stkT('stk_date'))}</th><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_type'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_prev'))}</th><th>${esc(stkT('stk_new_total'))}</th><th>${esc(stkT('stk_reason'))}</th><th>${esc(stkT('stk_notes'))}</th><th>${esc(stkT('stk_supplier'))}</th></tr></thead><tbody>`;
+    filtered.forEach(m=>{
+      const badge=m.type==='in'?`<span class="stock-badge move-in">&#8679; ${esc(stkT('stk_tab_in'))}</span>`:m.type==='out'?`<span class="stock-badge move-out">&#8681; ${esc(stkT('stk_tab_out'))}</span>`:`<span class="stock-badge move-adj">&#8644; ${esc(stkT('stk_adjustment'))}</span>`;
+      const qtyTxt = m.type==='in' ? '+'+m.qty : m.type==='adjustment' ? ((m.delta!=null && m.delta>0)?'+'+m.delta:'−'+m.qty) : '−'+m.qty;
+      const qtyColor = m.type==='in' ? 'var(--green-ink)' : (m.type==='adjustment'&&m.delta!=null&&m.delta>0) ? 'var(--green-ink)' : 'var(--danger)';
+      html+=`<tr><td style="white-space:nowrap;font-size:12px;">${formatDate(m.createdAt)}</td><td>${esc(m.productName)}</td><td>${badge}</td><td style="font-weight:600;color:${qtyColor};">${qtyTxt}</td><td>${m.prevQty}</td><td>${m.newQty}</td><td>${esc(stkReasonText(m.reason))}</td><td style="font-size:12px;color:var(--muted);">${esc(m.note||'—')}</td><td>${esc(stkSupName(m))}</td></tr>`;
+    });
+    html+=`</tbody></table></div></div>`;
+  }
+  return html;
+}
+
+function bindStockHistoryEvents(el, cur){
+  const tc=()=>document.getElementById('stockTabContent');
+  const redraw=()=>{ tc().innerHTML=renderStockHistory(cur); bindStockHistoryEvents(el,cur); };
+  el.querySelector('#shSearch')?.addEventListener('input',e=>{
+    stkHistory.q=e.target.value;
+    const pos=[e.target.selectionStart,e.target.selectionEnd];
+    redraw();
+    const inp=el.querySelector('#shSearch'); if(inp){ inp.focus(); inp.setSelectionRange(pos[0],pos[1]); }
+  });
+  el.querySelector('#shType')?.addEventListener('change',e=>{ stkHistory.type=e.target.value; redraw(); });
+  el.querySelector('#shProduct')?.addEventListener('change',e=>{ stkHistory.product=e.target.value; redraw(); });
+  el.querySelector('#shDate')?.addEventListener('change',e=>{ stkHistory.date=e.target.value; redraw(); });
+  el.querySelector('#shFrom')?.addEventListener('change',e=>{ stkHistory.from=e.target.value; redraw(); });
+  el.querySelector('#shTo')?.addEventListener('change',e=>{ stkHistory.to=e.target.value; redraw(); });
+  el.querySelector('#shExportCsv')?.addEventListener('click',()=>{
+    const products=INV.getProducts(currentTenantId);
+    const st=stkHistory;
+    const now=Date.now();
+    const startOfToday=new Date(); startOfToday.setHours(0,0,0,0);
+    const fromTs=st.from?new Date(st.from+'T00:00:00').getTime():null;
+    const toTs=st.to?new Date(st.to+'T23:59:59').getTime():null;
+    const q=st.q.toLowerCase();
+    const rows=stkSortedMovements(currentTenantId).filter(m=>{
+      if(st.type!=='all'&&m.type!==st.type) return false;
+      if(st.product!=='all'&&m.productId!==st.product) return false;
+      if(st.date==='today'&&m.createdAt<startOfToday.getTime()) return false;
+      if(st.date==='week'&&m.createdAt<now-7*24*3600*1000) return false;
+      if(st.date==='month'&&m.createdAt<now-30*24*3600*1000) return false;
+      if(st.date==='custom'){
+        if(fromTs!=null&&!isNaN(fromTs)&&m.createdAt<fromTs) return false;
+        if(toTs!=null&&!isNaN(toTs)&&m.createdAt>toTs) return false;
+      }
+      if(q) return (m.productName||'').toLowerCase().includes(q)||(m.reason||'').toLowerCase().includes(q)||(m.note||'').toLowerCase().includes(q);
+      return true;
+    });
+    const escCsv=v=>{ const s=String(v==null?'':v); return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s; };
+    const headers=[stkT('stk_date'),stkT('stk_product'),stkT('stk_type'),stkT('stk_qty'),stkT('stk_prev'),stkT('stk_new_total'),stkT('stk_reason'),stkT('stk_notes'),stkT('stk_supplier')].map(escCsv);
+    const lines=[headers.join(',')];
+    rows.forEach(m=>{
+      const typeLabel=m.type==='in'?stkT('stk_tab_in'):m.type==='out'?stkT('stk_tab_out'):stkT('stk_adjustment');
+      const qtyTxt = m.type==='in' ? '+'+m.qty : m.type==='adjustment' ? ((m.delta!=null && m.delta>0)?'+'+m.delta:'-'+m.qty) : '-'+m.qty;
+      lines.push([
+        escCsv(new Date(m.createdAt).toLocaleString()),
+        escCsv(m.productName),
+        escCsv(typeLabel),
+        escCsv(qtyTxt),
+        m.prevQty,
+        m.newQty,
+        escCsv(stkReasonText(m.reason)),
+        escCsv(m.note||''),
+        escCsv(stkSupName(m))
+      ].join(','));
+    });
+    const blob=new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8;'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(blob);
+    a.download='stock_history_'+new Date().toISOString().slice(0,10)+'.csv';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  });
+}
+
+/* =====================================================================
+   TAB 6: SUPPLIERS
+   ===================================================================== */
+function renderStockSuppliers(cur){
+  const suppliers=INV.getSuppliers(currentTenantId);
+  const products=INV.getProducts(currentTenantId);
+  const movements=INV.getMovements(currentTenantId);
+
+  let html=`<div style="margin-bottom:14px;"><button class="btn primary" id="addSupplierBtn">${esc(stkT('stk_add_supplier'))}</button></div>`;
+  if(!suppliers.length){
+    html+=`<div class="empty-state">${esc(stkT('stk_no_suppliers'))}</div>`;
+  } else {
+    suppliers.forEach(s=>{
+      const productCount=products.filter(p=>p.supplierId===s.id).length;
+      const totalPurchases=movements.filter(m=>(m.supplierId===s.id||m.supplierName===s.name)&&m.type==='in').reduce((sum,m)=>sum+(m.qty*(m.price||0)),0);
+      const lastOrder=stkSortedMovements(currentTenantId).filter(m=>(m.supplierId===s.id||m.supplierName===s.name)&&m.type==='in')[0];
+      html+=`<div class="supplier-card">
+        <div class="sc-avatar">${esc((s.name||'?')[0].toUpperCase())}</div>
+        <div class="sc-info">
+          <div class="sc-name">${esc(s.name)}</div>
+          <div class="sc-meta">${s.phone?'&#128222; '+esc(s.phone)+'  ':''}${s.email?'&#9993; '+esc(s.email)+'  ':''}${s.address?'&#128205; '+esc(s.address):''}
+          ${productCount>0?`<span style="margin-inline-start:8px;">&#128230; ${esc(stkPlural('stk_products',productCount))}</span>`:''}
+          ${totalPurchases>0?`<span style="margin-inline-start:8px;color:var(--green-ink);font-weight:600;">&#128176; ${esc(stkT('stk_total_purchased_label'))} ${money(totalPurchases,cur)}</span>`:''}
+          ${lastOrder?`<span style="margin-inline-start:8px;color:var(--muted);">${esc(stkT('stk_last_order',{date:formatDate(lastOrder.createdAt)}))}</span>`:''}
+          </div>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn sm" data-purchases-sup="${s.id}" title="${esc(stkT('stk_purchase_history'))}">&#128196; ${esc(stkT('stk_purchases'))}</button>
+          <button class="btn sm" data-edit-sup="${s.id}" title="${esc(stkT('stk_t_edit'))}">&#9998;</button>
+          <button class="btn sm danger" data-del-sup="${s.id}" title="${esc(stkT('stk_delete_btn'))}">&#10005;</button>
+        </div>
+      </div>`;
+      const supProducts=products.filter(p=>p.supplierId===s.id);
+      if(supProducts.length){
+        html+=`<div style="margin:-4px 0 10px;padding:8px 8px 8px 52px;background:var(--shell);border-radius:var(--radius-sm);font-size:12px;color:var(--muted);">`;
+        html+=`<b>${esc(stkT('stk_supplied_products'))}</b> `+supProducts.map(p=>`<span style="margin-inline-end:12px;">${esc(p.name)} (${p.qty||0})</span>`).join('');
+        html+=`</div>`;
+      }
+    });
+  }
+  return html;
+}
+
+function bindStockSuppliersEvents(el, cur){
+  const tc=()=>document.getElementById('stockTabContent');
+  const redraw=()=>{ tc().innerHTML=renderStockSuppliers(cur); bindStockSuppliersEvents(el,cur); };
+  el.querySelector('#addSupplierBtn')?.addEventListener('click',()=>openSupplierModal(null,redraw));
+  el.querySelectorAll('[data-edit-sup]').forEach(btn=>btn.addEventListener('click',(e)=>{ e.stopPropagation(); openSupplierModal(btn.dataset.editSup,redraw); }));
+  el.querySelectorAll('[data-del-sup]').forEach(btn=>btn.addEventListener('click',async(e)=>{
+    e.stopPropagation();
+    const ok=await rdConfirm({
+      title:stkT('stk_del_sup_title'),
+      message:stkT('stk_del_sup_msg'),
+      confirmLabel:stkT('stk_delete_btn'),
+      danger:true
+    });
+    if(!ok) return;
+    INV.deleteSupplier(currentTenantId,btn.dataset.delSup);
+    rdToast(stkT('stk_supplier_deleted'));
+    redraw();
+  }));
+  el.querySelectorAll('[data-purchases-sup]').forEach(btn=>btn.addEventListener('click',(e)=>{
+    e.stopPropagation();
+    openSupplierPurchasesModal(btn.dataset.purchasesSup, cur);
+  }));
+}
+
+function openSupplierPurchasesModal(supplierId, cur){
+  const s=INV.getSupplier(currentTenantId,supplierId);
+  if(!s) return;
+  const purchases=stkSortedMovements(currentTenantId).filter(m=>(m.supplierId===supplierId||m.supplierName===s.name)&&m.type==='in');
+  const total=purchases.reduce((sum,m)=>sum+(m.qty*(m.price||0)),0);
+  let html=`<div class="modal-overlay" id="supplierPurchasesModal"><div class="modal" style="max-width:650px;max-height:85vh;overflow-y:auto;">
+    <h3>${esc(stkT('stk_purchase_history'))} — ${esc(s.name)}</h3>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:12px;">${esc(stkT('stk_total_purchased_label'))} <b style="color:var(--green-ink);">${money(total,cur)}</b> — ${esc(purchases.length===1?stkT('stk_across_one',{amount:'',n:purchases.length}).trim():stkT('stk_across_many',{amount:'',n:purchases.length}).trim())}</p>`;
+  if(!purchases.length){
+    html+=`<div class="empty-state" style="padding:20px 0;">${esc(stkT('stk_no_sup_purchases'))}</div>`;
+  } else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_date'))}</th><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_price_unit'))}</th><th>${esc(stkT('stk_total'))}</th><th>${esc(stkT('stk_reason'))}</th></tr></thead><tbody>`;
+    purchases.forEach(m=>{
+      const lineTotal=m.qty*(m.price||0);
+      html+=`<tr>
+        <td style="font-size:12px;white-space:nowrap;">${formatDate(m.createdAt)}</td>
+        <td><b>${esc(m.productName)}</b></td>
+        <td style="color:var(--green-ink);font-weight:600;">+${m.qty}</td>
+        <td>${m.price?money(m.price,cur):'—'}</td>
+        <td style="font-weight:600;">${lineTotal?money(lineTotal,cur):'—'}</td>
+        <td style="font-size:12px;color:var(--muted);">${esc(stkReasonText(m.reason))}</td>
+      </tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`<div class="modal-actions"><button class="btn primary" id="spmClose">${esc(stkT('stk_close'))}</button></div></div></div>`;
+  document.getElementById('modalRoot').innerHTML=html;
+  document.getElementById('spmClose').addEventListener('click',()=>document.getElementById('modalRoot').innerHTML='');
+}
+
+/* =====================================================================
+   TAB 7: REPORTS
+   ===================================================================== */
+function renderStockReports(cur){
+  const products=INV.getActiveProducts(currentTenantId);
+  const movements=INV.getMovements(currentTenantId);
+  const now=Date.now();
+  const thirtyDays=now-30*24*3600*1000;
+
+  const usageMap={};
+  movements.filter(m=>m.type==='out').forEach(m=>{ usageMap[m.productId]=(usageMap[m.productId]||0)+m.qty; });
+  const topUsed=products.map(p=>({...p,used:usageMap[p.id]||0})).filter(p=>p.used>0).sort((a,b)=>b.used-a.used).slice(0,5);
+
+  const turnoverMap={};
+  movements.filter(m=>m.createdAt>=thirtyDays).forEach(m=>{ turnoverMap[m.productId]=(turnoverMap[m.productId]||0)+Math.abs(m.delta!=null?m.delta:m.qty); });
+  const topTurnover=products.map(p=>({...p,turnover:turnoverMap[p.id]||0})).filter(p=>p.turnover>0).sort((a,b)=>b.turnover-a.turnover).slice(0,5);
+
+  const activeIds=new Set(movements.filter(m=>m.createdAt>=thirtyDays).map(m=>m.productId));
+  const stagnant=products.filter(p=>!activeIds.has(p.id)&&(p.qty||0)>0).slice(0,5);
+
+  const catValues={};
+  products.forEach(p=>{ const c=p.category||'Other'; catValues[c]=(catValues[c]||0)+(p.qty||0)*(parseFloat(p.buyPrice)||0); });
+  const catSorted=Object.entries(catValues).sort((a,b)=>b[1]-a[1]);
+
+  const purchases=stkSortedMovements(currentTenantId).filter(m=>m.type==='in');
+  const totalSpent=purchases.reduce((sum,m)=>sum+(m.qty*(m.price||0)),0);
+
+  let html=`<div class="report-grid">`;
+
+  html+=`<div class="stock-section"><h3>&#128200; ${esc(stkT('stk_most_used'))}</h3>`;
+  if(!topUsed.length) html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_outgoing'))}</div>`;
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_units_used'))}</th><th>${esc(stkT('stk_current_stock'))}</th></tr></thead><tbody>`;
+    topUsed.forEach(p=>{ html+=`<tr><td>${esc(p.name)}</td><td style="font-weight:600;color:var(--danger);">−${p.used}</td><td>${p.qty||0}</td></tr>`; });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  html+=`<div class="stock-section"><h3>&#128257; ${esc(stkT('stk_turnover'))}</h3>`;
+  if(!topTurnover.length) html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_moves_30'))}</div>`;
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_moves_col'))}</th><th>${esc(stkT('stk_current_qty'))}</th></tr></thead><tbody>`;
+    topTurnover.forEach(p=>{ html+=`<tr><td>${esc(p.name)}</td><td style="font-weight:600;">${p.turnover}</td><td>${p.qty||0}</td></tr>`; });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  html+=`<div class="stock-section"><h3>&#128256; ${esc(stkT('stk_stagnant'))}</h3>`;
+  if(!stagnant.length) html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_all_active'))}</div>`;
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_category'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_total'))}</th></tr></thead><tbody>`;
+    stagnant.forEach(p=>{ html+=`<tr><td>${esc(p.name)}</td><td>${esc(p.category||'—')}</td><td>${p.qty||0}</td><td>${money((p.qty||0)*(parseFloat(p.buyPrice)||0),cur)}</td></tr>`; });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  html+=`<div class="stock-section"><h3>&#128176; ${esc(stkT('stk_value_by_cat'))}</h3>`;
+  if(!catSorted.length) html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_products_yet'))}</div>`;
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_category'))}</th><th>${esc(stkT('stk_total'))}</th></tr></thead><tbody>`;
+    catSorted.forEach(([cat,val])=>{ html+=`<tr><td><span class="stock-badge cat">${esc(cat)}</span></td><td style="font-weight:600;">${money(val,cur)}</td></tr>`; });
+    const total=catSorted.reduce((s,[,v])=>s+v,0);
+    html+=`<tr style="border-top:2px solid var(--line);"><td><b>${esc(stkT('stk_total'))}</b></td><td><b>${money(total,cur)}</b></td></tr>`;
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  html+=`<div class="stock-section"><h3>&#128722; ${esc(stkT('stk_purchase_history'))}</h3>`;
+  html+=`<p style="font-size:13px;color:var(--muted);margin-bottom:10px;">${esc(stkT('stk_total_spent',{amount:money(totalSpent,cur)}))}</p>`;
+  if(!purchases.length) html+=`<div class="empty-state" style="padding:16px 0;">${esc(stkT('stk_no_purchases'))}</div>`;
+  else {
+    html+=`<table class="stock-table"><thead><tr><th>${esc(stkT('stk_date'))}</th><th>${esc(stkT('stk_product'))}</th><th>${esc(stkT('stk_qty'))}</th><th>${esc(stkT('stk_price_unit'))}</th><th>${esc(stkT('stk_total'))}</th><th>${esc(stkT('stk_supplier'))}</th></tr></thead><tbody>`;
+    purchases.slice(0,20).forEach(m=>{
+      const lineTotal=m.qty*(m.price||0);
+      html+=`<tr><td style="font-size:12px;white-space:nowrap;">${formatDate(m.createdAt)}</td><td>${esc(m.productName)}</td><td style="font-weight:600;color:var(--green-ink);">+${m.qty}</td><td>${m.price?money(m.price,cur):'—'}</td><td>${lineTotal?money(lineTotal,cur):'—'}</td><td style="font-size:12px;">${esc(stkSupName(m))}</td></tr>`;
+    });
+    html+=`</tbody></table>`;
+  }
+  html+=`</div>`;
+
+  html+=`</div>`;
+  return html;
+}
+
+/* =====================================================================
+   MODALS — Supplier Editor
+   ===================================================================== */
+function openSupplierModal(supplierId, onSave){
+  const isNew=!supplierId;
+  const s=isNew?{id:'s'+Date.now()+Math.random().toString(36).slice(2,7)}:(INV.getSupplier(currentTenantId,supplierId)||{});
+  const formHtml=`<div class="modal-overlay" id="supplierModal"><div class="modal">
+    <h3>${isNew?esc(stkT('stk_new_supplier')):esc(stkT('stk_edit_supplier'))}</h3>
+    <div class="stock-form">
+      <div class="field"><label>${esc(stkT('stk_supplier_name'))} *</label><input id="smName" value="${esc(s.name||'')}" placeholder="${esc(stkT('stk_supplier_name_ph'))}"></div>
+      <div class="sf-row">
+        <div class="field"><label>${esc(stkT('stk_phone'))}</label><input id="smPhone" value="${esc(s.phone||'')}" placeholder="+213 …"></div>
+        <div class="field"><label>${esc(stkT('stk_email'))}</label><input type="email" id="smEmail" value="${esc(s.email||'')}" placeholder="supplier@email.com"></div>
+      </div>
+      <div class="field"><label>${esc(stkT('stk_address'))}</label><input id="smAddress" value="${esc(s.address||'')}" placeholder="${esc(stkT('stk_address_ph'))}"></div>
+      <div class="field"><label>${esc(stkT('stk_notes'))}</label><textarea id="smNotes" rows="2" placeholder="${esc(stkT('stk_sup_notes_ph'))}">${esc(s.notes||'')}</textarea></div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn" id="smCancel">${esc(stkT('stk_cancel'))}</button>
+      <button class="btn primary" id="smSave">${isNew?esc(stkT('stk_add_supplier_btn')):esc(stkT('stk_save'))}</button>
+    </div>
+  </div></div>`;
+  document.getElementById('modalRoot').innerHTML=formHtml;
+  document.getElementById('smCancel').addEventListener('click',()=>document.getElementById('modalRoot').innerHTML='');
+  document.getElementById('smSave').addEventListener('click',()=>{
+    const name=(document.getElementById('smName').value||'').trim();
+    if(!name){ rdToast(stkT('stk_supplier_name_req'),'error'); return; }
+    INV.saveSupplier(currentTenantId,{
+      ...s, name,
+      phone:document.getElementById('smPhone').value,
+      email:document.getElementById('smEmail').value,
+      address:document.getElementById('smAddress').value,
+      notes:document.getElementById('smNotes').value,
+      updatedAt:Date.now(), createdAt:s.createdAt||Date.now()
+    });
+    rdToast(stkT('stk_supplier_saved'));
+    document.getElementById('modalRoot').innerHTML='';
+    if(onSave) onSave();
+  });
+}
 /* ===================================================================
    TENANT SCREEN
    =================================================================== */
