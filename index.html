@@ -4973,6 +4973,10 @@ function renderStockIn(cur){
   stockView.inPreselect='';
   const today=new Date().toISOString().slice(0,10);
 
+  if(!products.length){
+    return `<div class="stock-section"><div class="empty-state" style="padding:28px 0;">${esc(stkT('stk_no_products'))}</div><div style="text-align:center;padding-bottom:10px;"><button class="btn primary" id="siAddFirst">${esc(stkT('stk_add_product'))}</button></div></div>`;
+  }
+
   let html=`<div class="stock-section"><h3>${esc(stkT('stk_record_in'))}</h3>
   <div class="stock-form stock-move-form">
     <div class="sf-row">
@@ -5015,6 +5019,7 @@ function renderStockIn(cur){
 function bindStockInEvents(el, cur){
   const tc=()=>document.getElementById('stockTabContent');
   const redraw=()=>{ tc().innerHTML=renderStockIn(cur); bindStockInEvents(el,cur); };
+  el.querySelector('#siAddFirst')?.addEventListener('click',()=>openProductModal(null,redraw));
   el.querySelector('#siSubmit')?.addEventListener('click',()=>{
     const productId=el.querySelector('#siProduct')?.value;
     const qty=parseInt(el.querySelector('#siQty')?.value||0);
@@ -5048,6 +5053,10 @@ function renderStockOut(cur){
   const products=INV.getActiveProducts(currentTenantId);
   const inStock=products.filter(p=>(p.qty||0)>0);
   const outStock=products.filter(p=>(p.qty||0)===0);
+
+  if(!products.length){
+    return `<div class="stock-section"><div class="empty-state" style="padding:28px 0;">${esc(stkT('stk_no_products'))}</div><div style="text-align:center;padding-bottom:10px;"><button class="btn primary" id="soAddFirst">${esc(stkT('stk_add_product'))}</button></div></div>`;
+  }
 
   let html=`<div class="stock-section"><h3>${esc(stkT('stk_record_out'))}</h3>
   <div class="stock-form stock-move-form">
@@ -5092,6 +5101,7 @@ function renderStockOut(cur){
 function bindStockOutEvents(el, cur){
   const tc=()=>document.getElementById('stockTabContent');
   const redraw=()=>{ tc().innerHTML=renderStockOut(cur); bindStockOutEvents(el,cur); };
+  el.querySelector('#soAddFirst')?.addEventListener('click',()=>openProductModal(null,redraw));
   el.querySelector('#soSubmit')?.addEventListener('click',async()=>{
     const productId=el.querySelector('#soProduct')?.value;
     const qty=parseInt(el.querySelector('#soQty')?.value||0);
